@@ -1024,7 +1024,7 @@ function copy(learned: Learned): Learned {
 - `views.ts`: `PollError`, `Snapshot`, `Tone`, `KeyView`, `levelView(s)`, `etaHours(estimate)`, `etaView(s, hours)`
 - `render.ts`: `renderKey(view): string`, `toDataUri(markup): string`
 
-- [ ] **4.1 Write the failing `format.test.ts`:**
+- [x] **4.1 Write the failing `format.test.ts`:**
 
 ```ts
 import { expect, test } from "vitest";
@@ -1059,9 +1059,9 @@ test("the stabiliser forgets when there is no estimate", () => {
 });
 ```
 
-- [ ] **4.2 Run `npm test`.** Expected: FAIL, cannot resolve `./format`.
+- [x] **4.2 Run `npm test`.** Expected: FAIL, cannot resolve `./format`.
 
-- [ ] **4.3 Write `format.ts`:**
+- [x] **4.3 Write `format.ts`:**
 
 ```ts
 export function formatDuration(hours: number): string {
@@ -1093,7 +1093,7 @@ function stepHours(hours: number): number {
 }
 ```
 
-- [ ] **4.4 Write the failing `views.test.ts`:**
+- [x] **4.4 Write the failing `views.test.ts`:**
 
 ```ts
 import { expect, test } from "vitest";
@@ -1174,9 +1174,9 @@ test("a stale key is drawn without the accent colours", () => {
 });
 ```
 
-- [ ] **4.5 Run `npm test`.** Expected: FAIL, cannot resolve `./render` and `./views`.
+- [x] **4.5 Run `npm test`.** Expected: FAIL, cannot resolve `./render` and `./views`.
 
-- [ ] **4.6 Write `views.ts`:**
+- [x] **4.6 Write `views.ts`:**
 
 ```ts
 import type { DeviceErrorKind } from "./client";
@@ -1238,7 +1238,7 @@ function blank(label: string, s: Snapshot): KeyView {
 }
 ```
 
-- [ ] **4.7 Write `render.ts`.** Colours and layout follow `streamdeck-ipscut-visitors/src/render.ts`:
+- [x] **4.7 Write `render.ts`.** Colours and layout follow `streamdeck-ipscut-visitors/src/render.ts`:
 
 ```ts
 import type { KeyView } from "./views";
@@ -1300,9 +1300,9 @@ function escapeXml(content: string): string {
 
 A stale key still paints the red dot, so the last test asserts only that the green accent is gone.
 
-- [ ] **4.8 Run `npm test && npm run typecheck`.** Expected: 54 passed.
+- [x] **4.8 Run `npm test && npm run typecheck`.** Expected: 54 passed.
 
-- [ ] **4.9 Commit:** `git add -A && git commit -m "feat: add duration format, key views and svg rendering"`
+- [x] **4.9 Commit:** `git add -A && git commit -m "feat: add duration format, key views and svg rendering"`
 
 ---
 
@@ -1318,7 +1318,7 @@ A stale key still paints the red dot, so the last test asserts only that the gre
 - `settings.ts`: `Settings`, `Resolved`, `SettingsError`, `resolve(settings): Resolved`, `restoreLearned(settings): Learned`
 - `poller.ts`: `PollerDeps`, `class Poller` with `snapshot`, `start()`, `kick(): Promise<void>`, `reconfigure()`, `stop()`
 
-- [ ] **5.1 Write the failing `settings.test.ts`:**
+- [x] **5.1 Write the failing `settings.test.ts`:**
 
 ```ts
 import { expect, test } from "vitest";
@@ -1357,9 +1357,9 @@ test("falls back to defaults when learned values are damaged", () => {
 });
 ```
 
-- [ ] **5.2 Run `npm test`.** Expected: FAIL, cannot resolve `./settings`.
+- [x] **5.2 Run `npm test`.** Expected: FAIL, cannot resolve `./settings`.
 
-- [ ] **5.3 Write `settings.ts`:**
+- [x] **5.3 Write `settings.ts`:**
 
 ```ts
 import { defaultLearned } from "./estimator";
@@ -1408,7 +1408,7 @@ function inRange(value: number, low: number, high: number): boolean {
 }
 ```
 
-- [ ] **5.4 Write the failing `poller.test.ts`:**
+- [x] **5.4 Write the failing `poller.test.ts`:**
 
 ```ts
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -1537,9 +1537,9 @@ test("overlapping kicks share one poll", async () => {
 });
 ```
 
-- [ ] **5.5 Run `npm test`.** Expected: FAIL, cannot resolve `./poller`.
+- [x] **5.5 Run `npm test`.** Expected: FAIL, cannot resolve `./poller`.
 
-- [ ] **5.6 Write `poller.ts`:**
+- [x] **5.6 Write `poller.ts`:**
 
 ```ts
 import { type Device, DeviceError } from "./client";
@@ -1648,9 +1648,9 @@ export class Poller {
 }
 ```
 
-- [ ] **5.7 Run `npm test && npm run typecheck`.** Expected: 70 passed.
+- [x] **5.7 Run `npm test && npm run typecheck`.** Expected: 70 passed.
 
-- [ ] **5.8 Write `src/probe.ts`**, a terminal check of the whole core against the real battery:
+- [x] **5.8 Write `src/probe.ts`**, a terminal check of the whole core against the real battery:
 
 ```ts
 import { MarstekClient } from "./core/client";
@@ -1688,9 +1688,9 @@ const poller = new Poller({
 poller.start();
 ```
 
-- [ ] **5.9 Gate on the real device:** `MARSTEK_HOST=192.168.68.50 npm run probe`, leave it 2 minutes. Expected: a line every 15 s with the same percent and watts the Marstek app shows. While charging, `full` is within 10 % of `(5120 − remaining Wh) ÷ (watts × 0.88)`. Stop with Ctrl-C.
+- [x] **5.9 Gate on the real device:** `MARSTEK_HOST=192.168.68.50 npm run probe`, leave it 2 minutes. Expected: a line every 15 s with the same percent and watts the Marstek app shows. While charging, `full` is within 10 % of `(5120 − remaining Wh) ÷ (watts × 0.88)`. Stop with Ctrl-C.
 
-- [ ] **5.10 Commit:** `git add -A && git commit -m "feat: add settings, poller and terminal probe"`
+- [x] **5.10 Commit:** `git add -A && git commit -m "feat: add settings, poller and terminal probe"`
 
 ---
 
