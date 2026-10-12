@@ -1,0 +1,28 @@
+{
+	"Name": "Marstek Battery",
+	"Version": "0.1.0.0",
+	"Author": "Nikita Lapin",
+	"Description": "Shows the charge level, time until full and time until empty of a Marstek Venus battery.",
+	"Category": "Marstek",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"Icon": "imgs/plugin/marketplace",
+	"CodePath": "bin/plugin.js",
+	"SDKVersion": 3,
+	"UUID": "com.mlapin.marstek",
+	"Nodejs": { "Version": "24", "Debug": "enabled" },
+	"Software": { "MinimumVersion": "7.1" },
+	"OS": [
+		{ "Platform": "mac", "MinimumVersion": "12" },
+		{ "Platform": "windows", "MinimumVersion": "10" }
+	],
+	"Actions": [
+		{
+			"Name": "Battery level",
+			"UUID": "com.mlapin.marstek.level",
+			"Icon": "imgs/actions/battery/icon",
+			"Tooltip": "Charge percent and current power.",
+			"Controllers": ["Keypad"],
+			"States": [{ "Image": "imgs/actions/battery/key", "TitleAlignment": "middle" }]
+		}
+	]
+}

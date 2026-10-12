@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"lib": ["ES2022"],
+		"types": ["node"],
+		"module": "ES2022",
+		"moduleResolution": "Bundler",
+		"target": "ES2022",
+		"strict": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"rootDir": "src",
+		"sourceMap": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/**/*"]
+}

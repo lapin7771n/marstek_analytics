@@ -41,6 +41,14 @@ Learned values (two ratios, taper table, typical load) persist in the plugin's g
 - Conventional Commits, one subject line. Work on branch `feat/streamdeck-battery-eta`.
 - All commands run from `streamdeck/`.
 
+## Batches
+
+- A: Task 1 (main thread)
+- B: Tasks 2, 3
+- C: Tasks 4, 5
+- D: Task 6 (main thread)
+- Task 7 needs the owner at the battery.
+
 ## Review focus
 
 1. Mac asleep or off the home network: keys keep the last value dimmed, show `NO LINK` after 3 failed polls, and recover within one poll of waking. (Task 5 test.)
@@ -61,16 +69,16 @@ Proves the two unverified points before any real code: `node:dgram` works in the
 - Create: `streamdeck/com.mlapin.marstek.sdPlugin/manifest.json`, `…/imgs/**`, `…/ui/sdpi-components.js`
 - Create: `streamdeck/src/plugin.ts`
 
-- [ ] **1.1 Init the repo.** From the repo root:
+- [x] **1.1 Init the repo.** From the repo root:
 
 ```bash
 git init -b main
-printf 'node_modules/\n*.sdPlugin/bin/\n*.sdPlugin/logs/\n*.streamDeckPlugin\n.DS_Store\n' > .gitignore
+printf 'node_modules/\n**/*.sdPlugin/bin/\n**/*.sdPlugin/logs/\n*.streamDeckPlugin\n.DS_Store\n' > .gitignore
 git add .gitignore plans && git commit -m "docs: add stream deck battery plan"
 git switch -c feat/streamdeck-battery-eta
 ```
 
-- [ ] **1.2 Write `CLAUDE.md`** at the repo root:
+- [x] **1.2 Write `CLAUDE.md`** at the repo root:
 
 ```markdown
 # CLAUDE.md
@@ -91,7 +99,7 @@ Tools for a Marstek Venus E 3.0 home battery. `streamdeck/` is a Stream Deck plu
 - Device facts and the ETA design: `plans/2026-10-12-streamdeck-battery-eta.md`.
 ```
 
-- [ ] **1.3 Create `streamdeck/package.json`** and install:
+- [x] **1.3 Create `streamdeck/package.json`** and install:
 
 ```json
 {
@@ -111,10 +119,12 @@ Tools for a Marstek Venus E 3.0 home battery. `streamdeck/` is a Stream Deck plu
 
 ```bash
 npm i @elgato/streamdeck@^3.0.2
-npm i -D @elgato/cli@^1.10.2 @rollup/plugin-commonjs @rollup/plugin-node-resolve @rollup/plugin-typescript @types/node rollup tslib typescript vitest tsx
+npm i -D @elgato/cli@^1.10.2 @rollup/plugin-commonjs @rollup/plugin-node-resolve @rollup/plugin-typescript @types/node rollup tslib typescript@^5.9 vitest tsx
 ```
 
-- [ ] **1.4 Create `streamdeck/tsconfig.json`:**
+TypeScript stays on 5.x: `@rollup/plugin-typescript` cannot load TypeScript 7.
+
+- [x] **1.4 Create `streamdeck/tsconfig.json`:**
 
 ```json
 {
@@ -135,9 +145,9 @@ npm i -D @elgato/cli@^1.10.2 @rollup/plugin-commonjs @rollup/plugin-node-resolve
 }
 ```
 
-- [ ] **1.5 Copy `rollup.config.mjs`** from `streamdeck-ipscut-visitors/rollup.config.mjs` and change one line to `const sdPlugin = "com.mlapin.marstek.sdPlugin";`.
+- [x] **1.5 Copy `rollup.config.mjs`** from `streamdeck-ipscut-visitors/rollup.config.mjs` and change one line to `const sdPlugin = "com.mlapin.marstek.sdPlugin";`.
 
-- [ ] **1.6 Copy assets** from the existing plugin:
+- [x] **1.6 Copy assets** from the existing plugin:
 
 ```bash
 SRC="$HOME/Development/personal/my_projects/streamdeck-ipscut-visitors/com.mlapin.posthog-visitors.sdPlugin"
@@ -148,7 +158,7 @@ cp -R "$SRC/imgs/actions/visitors" $DST/imgs/actions/battery
 cp "$SRC/ui/sdpi-components.js" $DST/ui/
 ```
 
-- [ ] **1.7 Create `manifest.json`** with one action for now:
+- [x] **1.7 Create `manifest.json`** with one action for now:
 
 ```json
 {
@@ -181,7 +191,7 @@ cp "$SRC/ui/sdpi-components.js" $DST/ui/
 }
 ```
 
-- [ ] **1.8 Write the skeleton `src/plugin.ts`:**
+- [x] **1.8 Write the skeleton `src/plugin.ts`:**
 
 ```ts
 import streamDeck, { action, SingletonAction, type WillAppearEvent } from "@elgato/streamdeck";
@@ -224,7 +234,7 @@ streamDeck.actions.registerAction(new LevelKey());
 await streamDeck.connect();
 ```
 
-- [ ] **1.9 Build, link, run:**
+- [x] **1.9 Build, link, run** (Stream Deck loads a newly linked plugin only when the app starts; quit and reopen it once):
 
 ```bash
 npm run typecheck && npm run build
