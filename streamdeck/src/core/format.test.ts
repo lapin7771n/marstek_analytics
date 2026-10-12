@@ -22,6 +22,12 @@ test("the stabiliser holds a value until it moves most of a display step", () =>
 	expect(stable.next(2.8)).toBe(2.8);
 });
 
+test("the stabiliser lets zero through from under a minute", () => {
+	const stable = new Stabiliser();
+	expect(stable.next(0.012)).toBe(0.012);
+	expect(stable.next(0)).toBe(0);
+});
+
 test("the stabiliser forgets when there is no estimate", () => {
 	const stable = new Stabiliser();
 	stable.next(3.0);

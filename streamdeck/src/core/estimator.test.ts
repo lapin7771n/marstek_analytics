@@ -162,6 +162,41 @@ test("the discharge ratio is learned from the capacity counter", () => {
 	expect(est.learned.dischargeRatio).toBeLessThan(1.2);
 });
 
+test("a capacity change across a gap is not learned as a ratio", () => {
+	const est = new Estimator();
+	const rig = new Rig(est, 2000);
+	rig.run({ seconds: 720, ongridW: -800 });
+	rig.t += 3 * 3600;
+	rig.capacityWh += 10;
+	rig.run({ seconds: 15, ongridW: -800 });
+	expect(est.learned.chargeRatio).toBe(0.88);
+});
+
+test("a ratio outside the plausible range is discarded, not clamped", () => {
+	const charge = new Estimator();
+	const charging = new Rig(charge, 2000);
+	charging.run({ seconds: 690, ongridW: -800 });
+	charging.capacityWh += 200;
+	charging.run({ seconds: 45, ongridW: -800 });
+	expect(charge.learned.chargeRatio).toBe(0.88);
+
+	const discharge = new Estimator();
+	const discharging = new Rig(discharge, 4500);
+	discharging.run({ seconds: 690, ongridW: 0, offgridW: 800 });
+	discharging.capacityWh -= 200;
+	discharging.run({ seconds: 45, ongridW: 0, offgridW: 800 });
+	expect(discharge.learned.dischargeRatio).toBe(1.09);
+});
+
+test("a ratio inside the range is still learned after a discarded one", () => {
+	const est = new Estimator();
+	const rig = new Rig(est, 2000, 0.8);
+	rig.run({ seconds: 690, ongridW: -800 });
+	rig.capacityWh += 200;
+	rig.run({ seconds: 750, ongridW: -800 });
+	expect(est.learned.chargeRatio).toBeCloseTo(0.88 + 0.2 * (0.8 - 0.88), 3);
+});
+
 test("a power drop above 90 percent is learned as taper", () => {
 	const est = new Estimator();
 	const rig = new Rig(est, RATED * 0.895);

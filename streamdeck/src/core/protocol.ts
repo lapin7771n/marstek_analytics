@@ -37,12 +37,9 @@ export function toEsStatus(result: JsonObject, t: number): EsStatus {
 }
 
 export function toBatStatus(result: JsonObject, t: number): BatStatus {
-	return {
-		t,
-		capacityWh: num(result, "bat_capacity"),
-		ratedWh: num(result, "rated_capacity"),
-		tempC: num(result, "bat_temp"),
-	};
+	const ratedWh = num(result, "rated_capacity");
+	if (ratedWh <= 0) throw new ProtocolError(`Reply has rated_capacity ${ratedWh}`);
+	return { t, capacityWh: num(result, "bat_capacity"), ratedWh, tempC: num(result, "bat_temp") };
 }
 
 function isObject(value: Json | undefined): value is JsonObject {

@@ -70,6 +70,15 @@ test("rendered keys never contain NaN or Infinity and escape markup", () => {
 	expect(svg).not.toMatch(/NaN|Infinity/);
 });
 
+test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])("an estimate of %f hours shows the placeholder", (hours) => {
+	for (const estimate of [{ ...charging, toFullH: hours }, { ...discharging, toEmptyH: hours }]) {
+		expect(etaHours(estimate)).toBeNull();
+		const view = etaView({ estimate }, etaHours(estimate));
+		expect(view.value).toBe("··");
+		expect(renderKey(view)).not.toMatch(/NaN|Infinity/);
+	}
+});
+
 test("a stale key is drawn without the accent colours", () => {
 	const svg = renderKey(levelView({ estimate: charging, error: "timeout" }));
 	expect(svg).not.toContain("#4ADE80");

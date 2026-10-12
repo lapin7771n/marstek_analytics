@@ -14,7 +14,7 @@ export class Stabiliser {
 	#shown: number | null = null;
 
 	next(hours: number | null): number | null {
-		if (hours === null || this.#shown === null || Math.abs(hours - this.#shown) >= 0.75 * stepHours(hours)) {
+		if (hours === null || hours === 0 || this.#shown === null || Math.abs(hours - this.#shown) >= 0.75 * stepHours(hours)) {
 			this.#shown = hours;
 		}
 		return this.#shown;

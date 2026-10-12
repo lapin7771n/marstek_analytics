@@ -31,6 +31,11 @@ test("a missing field is a protocol error, never a zero", () => {
 	expect(() => toEsStatus({ bat_soc: 80, ongrid_power: -797 }, 0)).toThrow(/offgrid_power/);
 });
 
+test.each([0, -5120])("a rated capacity of %d is a protocol error", (rated) => {
+	expect(() => toBatStatus({ bat_capacity: 2560, rated_capacity: rated, bat_temp: 24 }, 0)).toThrow(ProtocolError);
+	expect(() => toBatStatus({ bat_capacity: 2560, rated_capacity: rated, bat_temp: 24 }, 0)).toThrow(/rated_capacity/);
+});
+
 test("non-JSON is a protocol error", () => {
 	expect(() => envelope("garbage")).toThrow(ProtocolError);
 });

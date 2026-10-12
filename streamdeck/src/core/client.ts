@@ -29,6 +29,8 @@ export class MarstekClient implements Device {
 	readonly #timeoutMs: number;
 	readonly #gapMs: number;
 	#socket?: dgram.Socket;
+	#closed = false;
+	#abort?: (err: DeviceError) => void;
 	#nextId = 1;
 	#queue: Promise<void> = Promise.resolve();
 
@@ -54,6 +56,8 @@ export class MarstekClient implements Device {
 	}
 
 	close(): void {
+		this.#closed = true;
+		this.#abort?.(closedError());
 		this.#socket?.close();
 		this.#socket = undefined;
 	}
@@ -61,23 +65,32 @@ export class MarstekClient implements Device {
 	#open(): dgram.Socket {
 		if (this.#socket !== undefined) return this.#socket;
 		const socket = dgram.createSocket("udp4");
-		socket.on("error", () => {
-			if (this.#socket === socket) this.close();
+		socket.on("error", (err) => {
+			if (this.#socket !== socket) return;
+			this.#socket = undefined;
+			socket.close();
+			this.#abort?.(DeviceError.fromSend(err));
 		});
 		this.#socket = socket;
 		return socket;
 	}
 
 	#attempt(method: string): Promise<JsonObject> {
+		if (this.#closed) return Promise.reject(closedError());
 		const socket = this.#open();
 		const id = this.#nextId++;
 
 		return new Promise((resolve, reject) => {
+			let settled = false;
 			const settle = (act: () => void) => {
+				if (settled) return;
+				settled = true;
 				clearTimeout(timer);
 				socket.off("message", onMessage);
+				this.#abort = undefined;
 				act();
 			};
+			const fail = (err: DeviceError) => settle(() => reject(err));
 			const onMessage = (data: Buffer) => {
 				try {
 					const reply = envelope(data.toString("utf8"));
@@ -85,19 +98,20 @@ export class MarstekClient implements Device {
 					const result = resultOf(reply.body);
 					settle(() => resolve(result));
 				} catch (err) {
-					const message = err instanceof ProtocolError ? err.message : "Bad reply";
-					settle(() => reject(new DeviceError("protocol", message)));
+					fail(new DeviceError("protocol", err instanceof ProtocolError ? err.message : "Bad reply"));
 				}
 			};
-			const timer = setTimeout(
-				() => settle(() => reject(new DeviceError("timeout", `No reply to ${method}`))),
-				this.#timeoutMs,
-			);
+			const timer = setTimeout(() => fail(new DeviceError("timeout", `No reply to ${method}`)), this.#timeoutMs);
 
+			this.#abort = fail;
 			socket.on("message", onMessage);
 			socket.send(request(id, method), this.port, this.host, (err) => {
-				if (err) settle(() => reject(DeviceError.fromSend(err)));
+				if (err) fail(DeviceError.fromSend(err));
 			});
 		});
 	}
+}
+
+function closedError(): DeviceError {
+	return new DeviceError("network", "Client is closed");
 }

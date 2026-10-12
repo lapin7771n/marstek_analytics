@@ -31,7 +31,8 @@ export function levelView(s: Snapshot): KeyView {
 
 export function etaHours(est: Estimate | undefined): number | null {
 	if (est === undefined) return null;
-	return est.mode === "charging" ? est.toFullH : est.toEmptyH;
+	const hours = est.mode === "charging" ? est.toFullH : est.toEmptyH;
+	return hours !== null && Number.isFinite(hours) ? hours : null;
 }
 
 export function etaView(s: Snapshot, hours: number | null): KeyView {

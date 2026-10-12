@@ -63,7 +63,9 @@ export class Estimator {
 	}
 
 	battery(bat: BatStatus): void {
+		const previous = this.#bat;
 		this.#bat = bat;
+		if (previous !== undefined && (bat.t - previous.t) / 1000 > GAP_S) this.#cal = undefined;
 		if (this.#mode === "idle") return;
 		if (this.#cal === undefined) {
 			this.#cal = { capacityWh: bat.capacityWh, acWh: 0 };
@@ -75,10 +77,10 @@ export class Estimator {
 		if (this.#cal.acWh < CAL_MIN_AC_WH || moved <= 0) return;
 
 		const ratio = moved / this.#cal.acWh;
-		if (this.#mode === "charging") {
-			this.#learned.chargeRatio += CAL_GAIN * (clamp(ratio, 0.7, 1) - this.#learned.chargeRatio);
-		} else {
-			this.#learned.dischargeRatio += CAL_GAIN * (clamp(ratio, 1, 1.5) - this.#learned.dischargeRatio);
+		if (this.#mode === "charging" && within(ratio, 0.7, 1)) {
+			this.#learned.chargeRatio += CAL_GAIN * (ratio - this.#learned.chargeRatio);
+		} else if (this.#mode === "discharging" && within(ratio, 1, 1.5)) {
+			this.#learned.dischargeRatio += CAL_GAIN * (ratio - this.#learned.dischargeRatio);
 		}
 		this.#cal = { capacityWh: bat.capacityWh, acWh: 0 };
 	}
@@ -201,6 +203,10 @@ function median(values: number[]): number {
 
 function clamp(value: number, low: number, high: number): number {
 	return Math.min(high, Math.max(low, value));
+}
+
+function within(value: number, low: number, high: number): boolean {
+	return value >= low && value <= high;
 }
 
 function copy(learned: Learned): Learned {

@@ -1879,9 +1879,10 @@ async function saveLearned(): Promise<void> {
 
 ## Task 7: Field checks on the real battery
 
-Each check needs you at the battery. Run `MARSTEK_HOST=192.168.68.50 npm run probe` in a terminal during all three; its last column prints the learned values.
+Each check needs you at the battery. Run `MARSTEK_HOST=192.168.68.50 npm run probe` in a terminal during the battery checks; its last column prints the learned values.
 
 - [ ] **7.1 Backup-socket sum.** With the grid connected, plug a kettle into the backup socket and switch it on. Expected: `offgrid_power` rises by the kettle's power and the probe's watts column stays where it was (the mode does not flip to discharging). If the watts column jumps by the kettle's power, `ongrid_power` does not include the pass-through: report it, and the fix is one line in `Estimator.sample` (`acW`) plus its tests.
 - [ ] **7.2 Discharge and the reserve.** Unplug the battery from the wall with a steady load of 300–1000 W on the backup socket for 20 minutes. Expected: `EMPTY IN` appears after about 45 s, and after 20 minutes it has dropped by 20 minutes ± 10 %. The learned `dischargeRatio` moves off 1.09 once 150 Wh have been delivered. If you ever run it to shut-off, note the percent it stops at and put it in the Reserve setting.
 - [ ] **7.3 Charge to 100 %.** Let one charge run from below 90 % to full with the probe on. Expected: the `taper` array in the last column changes from all 1s if the battery reduces power near the top, and on the next charge `FULL IN` near 90 % lands within 10 minutes of the real finish.
-- [ ] **7.4** Record any constant that had to change in this plan's "Device facts", commit, then move the plan to `plans/completed_plans/`.
+- [ ] **7.4 Wi-Fi off.** Turn the Mac's Wi-Fi off for a minute. Expected: the keys keep their values, dim after about 45 s, and recover when Wi-Fi returns. If they dim at once and a key with no reading shows `LAN`, macOS reports a missing route with the same error as a denied Local Network permission; report it, and the fix is to treat `blocked` like `network` unless it is the first poll after start.
+- [ ] **7.5** Record any constant that had to change in this plan's "Device facts", commit, then move the plan to `plans/completed_plans/`.
