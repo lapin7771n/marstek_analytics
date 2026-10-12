@@ -1703,7 +1703,7 @@ poller.start();
 
 **Consumes:** `Poller`, `Estimator`, `MarstekClient`, `resolve`, `restoreLearned`, `Settings`, `Snapshot`, `levelView`, `etaView`, `etaHours`, `renderKey`, `toDataUri`, `Stabiliser`.
 
-- [ ] **6.1 Write `src/actions/keys.ts`:**
+- [x] **6.1 Write `src/actions/keys.ts`:**
 
 ```ts
 import { action, SingletonAction, type WillAppearEvent } from "@elgato/streamdeck";
@@ -1755,7 +1755,7 @@ export class EtaKey extends BatteryKey {
 }
 ```
 
-- [ ] **6.2 Replace `src/plugin.ts`:**
+- [x] **6.2 Replace `src/plugin.ts`:**
 
 ```ts
 import streamDeck from "@elgato/streamdeck";
@@ -1807,7 +1807,7 @@ async function saveLearned(): Promise<void> {
 }
 ```
 
-- [ ] **6.3 Write `ui/settings.html`:**
+- [x] **6.3 Write `ui/settings.html`:**
 
 ```html
 <!doctype html>
@@ -1839,7 +1839,7 @@ async function saveLearned(): Promise<void> {
 </html>
 ```
 
-- [ ] **6.4 Replace the `Actions` array in `manifest.json`:**
+- [x] **6.4 Replace the `Actions` array in `manifest.json`:**
 
 ```json
 "Actions": [
@@ -1864,7 +1864,7 @@ async function saveLearned(): Promise<void> {
 ]
 ```
 
-- [ ] **6.5 Build and validate:** `npm run typecheck && npm test && npm run build && npx streamdeck validate com.mlapin.marstek.sdPlugin && npx streamdeck restart com.mlapin.marstek`. Expected: no type errors, 70 passed, validation reports no errors.
+- [x] **6.5 Build and validate:** `npm run typecheck && npm test && npm run build && npx streamdeck validate com.mlapin.marstek.sdPlugin && npx streamdeck restart com.mlapin.marstek`. Expected: no type errors, 70 passed, validation reports no errors.
 
 - [ ] **6.6 Gate in Stream Deck.** Remove the skeleton key, place the two actions, open one key's settings, type `192.168.68.50`.
   - Before the IP is set every key shows `SET IP`.

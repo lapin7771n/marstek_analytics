@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+	<head lang="en">
+		<meta charset="utf-8" />
+		<script src="sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="Battery IP">
+			<sdpi-textfield global setting="host" placeholder="192.168.68.50"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Port">
+			<sdpi-textfield global setting="port" placeholder="30000"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Reserve %">
+			<sdpi-textfield global setting="floorPercent" placeholder="12"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item>
+			<sdpi-item-label></sdpi-item-label>
+			<small>
+				Turn on Local API in the Marstek app (Settings) and reserve this IP for the battery in the router.
+				Reserve is the charge percent at which the battery stops discharging.
+			</small>
+		</sdpi-item>
+	</body>
+</html>

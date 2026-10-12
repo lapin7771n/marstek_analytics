@@ -1,38 +1,47 @@
-import streamDeck, { action, SingletonAction, type WillAppearEvent } from "@elgato/streamdeck";
-import dgram from "node:dgram";
+import streamDeck from "@elgato/streamdeck";
 
-const HOST = "192.168.68.50";
-const PORT = 30000;
+import { EtaKey, LevelKey } from "./actions/keys";
+import { MarstekClient } from "./core/client";
+import { Estimator } from "./core/estimator";
+import { Poller } from "./core/poller";
+import { resolve, restoreLearned, type Settings } from "./core/settings";
 
-function readSoc(): Promise<string> {
-	return new Promise((resolve) => {
-		const socket = dgram.createSocket("udp4");
-		const done = (text: string) => {
-			clearTimeout(timer);
-			socket.close();
-			resolve(text);
-		};
-		const timer = setTimeout(() => done("timeout"), 3000);
-		socket.on("error", (err) => done(err.message));
-		socket.on("message", (data) => {
-			const match = /"bat_soc":\s*(\d+)/.exec(data.toString("utf8"));
-			done(match ? `${match[1]}%` : "no soc");
-		});
-		socket.send(JSON.stringify({ id: 1, method: "ES.GetStatus", params: { id: 0 } }), PORT, HOST, (err) => {
-			if (err) done(err.message);
-		});
-	});
+const SAVE_EVERY_MS = 10 * 60_000;
+
+const estimator = new Estimator();
+const keys = [new LevelKey(), new EtaKey()];
+
+const poller = new Poller({
+	estimator,
+	now: () => Date.now(),
+	connect: async () => {
+		const settings = resolve(await streamDeck.settings.getGlobalSettings<Settings>());
+		return { device: new MarstekClient(settings.host, settings.port), floorPct: settings.floorPct };
+	},
+	publish: (snapshot) => {
+		if (snapshot.error !== undefined) streamDeck.logger.warn(`poll failed: ${snapshot.error} ${snapshot.message ?? ""}`);
+		for (const key of keys) void key.repaint(snapshot);
+	},
+});
+
+for (const key of keys) {
+	key.poller = poller;
+	streamDeck.actions.registerAction(key);
 }
 
-@action({ UUID: "com.mlapin.marstek.level" })
-class LevelKey extends SingletonAction {
-	override async onWillAppear(ev: WillAppearEvent): Promise<void> {
-		if (!ev.action.isKey()) return;
-		await ev.action.setTitle(await readSoc());
-	}
-}
+streamDeck.settings.onDidReceiveGlobalSettings<Settings>(() => poller.reconfigure());
+streamDeck.system.onSystemDidWakeUp(() => void poller.kick());
 
-streamDeck.actions.registerAction(new LevelKey());
 await streamDeck.connect();
 
-streamDeck.logger.info(`skeleton read: ${await readSoc()}`);
+estimator.restore(restoreLearned(await streamDeck.settings.getGlobalSettings<Settings>()));
+poller.start();
+
+setInterval(() => void saveLearned(), SAVE_EVERY_MS);
+
+async function saveLearned(): Promise<void> {
+	const stored = await streamDeck.settings.getGlobalSettings<Settings>();
+	const learned = estimator.learned;
+	if (JSON.stringify(stored.learned) === JSON.stringify(learned)) return;
+	await streamDeck.settings.setGlobalSettings<Settings>({ ...stored, learned });
+}
