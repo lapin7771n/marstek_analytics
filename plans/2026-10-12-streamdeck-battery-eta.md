@@ -262,7 +262,7 @@ Drag "Battery level" onto a key. If macOS asks to let Stream Deck find devices o
 - `protocol.ts`: `Json`, `JsonObject`, `ProtocolError`, `request(id, method): string`, `envelope(text): { id: number; body: JsonObject }`, `resultOf(body): JsonObject`, `toEsStatus(result, t): EsStatus`, `toBatStatus(result, t): BatStatus`
 - `client.ts`: `DeviceErrorKind`, `DeviceError`, `Device`, `MarstekClient`
 
-- [ ] **2.1 Write `types.ts`:**
+- [x] **2.1 Write `types.ts`:**
 
 ```ts
 export type EsStatus = { t: number; socPct: number; ongridW: number; offgridW: number };
@@ -291,7 +291,7 @@ export type Learned = {
 
 `t` is epoch milliseconds. `batteryAcW` is positive while discharging. `projected` is true when `toEmptyH` is the on-grid "if the power fails now" figure.
 
-- [ ] **2.2 Write the failing `protocol.test.ts`:**
+- [x] **2.2 Write the failing `protocol.test.ts`:**
 
 ```ts
 import { expect, test } from "vitest";
@@ -332,9 +332,9 @@ test("non-JSON is a protocol error", () => {
 });
 ```
 
-- [ ] **2.3 Run `npm test`.** Expected: FAIL, cannot resolve `./protocol`.
+- [x] **2.3 Run `npm test`.** Expected: FAIL, cannot resolve `./protocol`.
 
-- [ ] **2.4 Write `protocol.ts`:**
+- [x] **2.4 Write `protocol.ts`:**
 
 ```ts
 import type { BatStatus, EsStatus } from "./types";
@@ -395,9 +395,9 @@ function num(result: JsonObject, key: string): number {
 }
 ```
 
-- [ ] **2.5 Run `npm test`.** Expected: 7 passed.
+- [x] **2.5 Run `npm test`.** Expected: 7 passed.
 
-- [ ] **2.6 Write the failing `client.test.ts`.** It talks to a fake device on `127.0.0.1`:
+- [x] **2.6 Write the failing `client.test.ts`.** It talks to a fake device on `127.0.0.1`:
 
 ```ts
 import dgram from "node:dgram";
@@ -477,9 +477,9 @@ test("EHOSTUNREACH maps to kind blocked", () => {
 });
 ```
 
-- [ ] **2.7 Run `npm test`.** Expected: FAIL, cannot resolve `./client`.
+- [x] **2.7 Run `npm test`.** Expected: FAIL, cannot resolve `./client`.
 
-- [ ] **2.8 Write `client.ts`:**
+- [x] **2.8 Write `client.ts`:**
 
 ```ts
 import dgram from "node:dgram";
@@ -587,9 +587,9 @@ export class MarstekClient implements Device {
 }
 ```
 
-- [ ] **2.9 Run `npm test && npm run typecheck`.** Expected: 14 passed, no type errors.
+- [x] **2.9 Run `npm test && npm run typecheck`.** Expected: 14 passed, no type errors.
 
-- [ ] **2.10 Commit:** `git add -A && git commit -m "feat: add marstek open api protocol and udp client"`
+- [x] **2.10 Commit:** `git add -A && git commit -m "feat: add marstek open api protocol and udp client"`
 
 ---
 
@@ -603,7 +603,7 @@ export class MarstekClient implements Device {
 
 **Produces:** `defaultLearned(): Learned`, `solveRuntime(acWh, nowW, baseW): number`, `class Estimator` with `constructor(learned?, floorPct?)`, `restore(learned)`, `learned` (getter, a copy), `floorPct` (settable), `battery(bat: BatStatus): void`, `sample(es: EsStatus): Estimate`.
 
-- [ ] **3.1 Write the failing `estimator.test.ts`:**
+- [x] **3.1 Write the failing `estimator.test.ts`:**
 
 ```ts
 import { expect, test } from "vitest";
@@ -790,9 +790,9 @@ function rigUsable(startWh: number, seconds: number, loadW: number): number {
 }
 ```
 
-- [ ] **3.2 Run `npm test`.** Expected: FAIL, cannot resolve `./estimator`.
+- [x] **3.2 Run `npm test`.** Expected: FAIL, cannot resolve `./estimator`.
 
-- [ ] **3.3 Write `estimator.ts`:**
+- [x] **3.3 Write `estimator.ts`:**
 
 ```ts
 import type { BatStatus, EsStatus, Estimate, Learned, Mode } from "./types";
@@ -1005,9 +1005,9 @@ function copy(learned: Learned): Learned {
 }
 ```
 
-- [ ] **3.4 Run `npm test && npm run typecheck`.** Expected: 33 passed. If a learning test misses its bounds by a few percent, fix the estimator only when its arithmetic is wrong; the bounds come from the constants above (`CAL_GAIN` 0.2 with one update per 150 AC Wh; `TAPER_GAIN` 0.05 per sample).
+- [x] **3.4 Run `npm test && npm run typecheck`.** Expected: 35 passed. If a learning test misses its bounds by a few percent, fix the estimator only when its arithmetic is wrong; the bounds come from the constants above (`CAL_GAIN` 0.2 with one update per 150 AC Wh; `TAPER_GAIN` 0.05 per sample).
 
-- [ ] **3.5 Commit:** `git add -A && git commit -m "feat: add battery eta estimator with learned ratios and taper"`
+- [x] **3.5 Commit:** `git add -A && git commit -m "feat: add battery eta estimator with learned ratios and taper"`
 
 ---
 
@@ -1300,7 +1300,7 @@ function escapeXml(content: string): string {
 
 A stale key still paints the red dot, so the last test asserts only that the green accent is gone.
 
-- [ ] **4.8 Run `npm test && npm run typecheck`.** Expected: 52 passed.
+- [ ] **4.8 Run `npm test && npm run typecheck`.** Expected: 54 passed.
 
 - [ ] **4.9 Commit:** `git add -A && git commit -m "feat: add duration format, key views and svg rendering"`
 
@@ -1648,7 +1648,7 @@ export class Poller {
 }
 ```
 
-- [ ] **5.7 Run `npm test && npm run typecheck`.** Expected: 68 passed.
+- [ ] **5.7 Run `npm test && npm run typecheck`.** Expected: 70 passed.
 
 - [ ] **5.8 Write `src/probe.ts`**, a terminal check of the whole core against the real battery:
 
@@ -1864,7 +1864,7 @@ async function saveLearned(): Promise<void> {
 ]
 ```
 
-- [ ] **6.5 Build and validate:** `npm run typecheck && npm test && npm run build && npx streamdeck validate com.mlapin.marstek.sdPlugin && npx streamdeck restart com.mlapin.marstek`. Expected: no type errors, 68 passed, validation reports no errors.
+- [ ] **6.5 Build and validate:** `npm run typecheck && npm test && npm run build && npx streamdeck validate com.mlapin.marstek.sdPlugin && npx streamdeck restart com.mlapin.marstek`. Expected: no type errors, 70 passed, validation reports no errors.
 
 - [ ] **6.6 Gate in Stream Deck.** Remove the skeleton key, place the two actions, open one key's settings, type `192.168.68.50`.
   - Before the IP is set every key shows `SET IP`.
