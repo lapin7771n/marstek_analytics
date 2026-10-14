@@ -26,7 +26,7 @@ Time: about 30 minutes, plus 5 minutes on the iPad.
 - Modify: `ios/Shared/Face.swift`, `ios/App/BatteryApp.swift`, `ios/Widget/BatteryWidgets.swift`, `ios/project.yml`, `ios/Shared/Localizable.xcstrings`
 - Test: `ios/Tests/FaceTests.swift`
 
-- [ ] **1.1 Test first.** Append to `FaceTests` (it has `snap(_:_:)` and the `reading(...)` helper):
+- [x] **1.1 Test first.** Append to `FaceTests` (it has `snap(_:_:)` and the `reading(...)` helper):
 
 ```swift
     @Test func onlyADeniedPermissionLinksToSettings() {
@@ -39,7 +39,7 @@ Time: about 30 minutes, plus 5 minutes on the iPad.
 
 Run `make test`. Expected: the build fails because `Face` has no `blocked`.
 
-- [ ] **1.2 Face and link.**
+- [x] **1.2 Face and link.**
   - In `ios/Shared/Face.swift`, add `var blocked = false` after `var problem: String?`.
   - In `init(_:floorPct:)`, add `blocked = snapshot?.error == .blocked` right after `problem = snapshot?.error?.text`.
   - Create `ios/Shared/AppLinks.swift`:
@@ -60,7 +60,7 @@ enum AppLinks {
             CFBundleURLSchemes: [batteryeta]
 ```
 
-- [ ] **1.3 App.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
+- [x] **1.3 App.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
   - Add `@Environment(\.openURL) private var openURL`.
   - Add the helper below:
 
@@ -87,7 +87,7 @@ enum AppLinks {
 
   - After `.task { await poll() }`, add `.onOpenURL { url in if url == AppLinks.localNetwork { openSettings() } }`.
 
-- [ ] **1.4 Widgets and strings.**
+- [x] **1.4 Widgets and strings.**
   - In `ios/Widget/BatteryWidgets.swift`, add `.widgetURL(entry.face.blocked ? AppLinks.localNetwork : nil)` after `.containerBackground(...)` in all three configurations (`RingWidget`, `EtaWidget`, `LockWidget`).
   - In `ios/Shared/Localizable.xcstrings`, delete the key `"Settings › Privacy & Security › Local Network › turn on Battery ETA."` and add:
 
