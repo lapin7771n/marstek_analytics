@@ -29,5 +29,7 @@ struct LocalizationTests {
         #expect(uk.localizedString(forKey: "Copy", value: nil, table: nil) == "Копіювати")
         #expect(uk.localizedString(forKey: "Copied", value: nil, table: nil) == "Скопійовано")
         #expect(uk.localizedString(forKey: "Debug info", value: nil, table: nil) == "Технічні дані")
+        #expect(uk.localizedString(forKey: "Lasts until %@, %@ to spare.", value: nil, table: nil) == "Вистачить до %1$@, запас %2$@.")
+        #expect(uk.localizedString(forKey: "%lld h %@ min", value: nil, table: nil) == "%lld год %@ хв")
     }
 }

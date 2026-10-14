@@ -273,7 +273,7 @@ In `Refresher`, add `static let appPollInterval: Duration = .seconds(30)` above 
 - Modify: `ios/Shared/Faces.swift`, `ios/App/BatteryApp.swift`, `ios/Widget/BatteryWidgets.swift`, `ios/Shared/Localizable.xcstrings`
 - Test: `ios/Tests/LocalizationTests.swift`
 
-- [ ] **2.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
+- [x] **2.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
 
 ```swift
         #expect(uk.localizedString(forKey: "Lasts until %@, %@ to spare.", value: nil, table: nil) == "Вистачить до %1$@, запас %2$@.")
@@ -282,7 +282,7 @@ In `Refresher`, add `static let appPollInterval: Duration = .seconds(30)` above 
 
 Run `make test`. Expected: both expectations fail.
 
-- [ ] **2.2 Views.** Create `ios/Shared/OutageViews.swift`:
+- [x] **2.2 Views.** Create `ios/Shared/OutageViews.swift`:
 
 ```swift
 import SwiftUI
@@ -345,7 +345,7 @@ struct OutageLine: View {
 
 `formatSpan`'s `String(localized:)` with `\(minutes / 60)` and a `String` argument extracts as `%lld h %@ min`; the test in 2.1 uses that key.
 
-- [ ] **2.3 Widget line.** In `ios/Shared/Faces.swift` `MediumFace`, wrap the existing `Group { if let updated … }` so the verdict replaces it only on a fresh reading:
+- [x] **2.3 Widget line.** In `ios/Shared/Faces.swift` `MediumFace`, wrap the existing `Group { if let updated … }` so the verdict replaces it only on a fresh reading:
 
 ```swift
                 if let outage = face.outage, !face.stale {
@@ -357,7 +357,7 @@ struct OutageLine: View {
                 }
 ```
 
-- [ ] **2.4 Settings section.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
+- [x] **2.4 Settings section.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
   - Add `@State private var powerBack = Store().powerBack`.
   - Leave the "Now" card's `Face(snapshot, floorPct:)` calls as they are, so the card keeps "Updated …".
   - Add this section after "Now":
@@ -413,7 +413,7 @@ struct OutageLine: View {
 
   - The 30 s poll replaces `snapshot`, so the section redraws and drops the verdict after the time passes.
 
-- [ ] **2.5 Widget.** In `ios/Widget/BatteryWidgets.swift`:
+- [x] **2.5 Widget.** In `ios/Widget/BatteryWidgets.swift`:
   - `getSnapshot`: pass `powerBack: store.powerBack` to `Face`.
   - `getTimeline`: read `let powerBack = Store().powerBack` next to `floorPct`, pass `powerBack: powerBack` to every `Face(...)`, and before `completion` add:
 
@@ -424,7 +424,7 @@ struct OutageLine: View {
             }
 ```
 
-- [ ] **2.6 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings`, each with `"state": "translated"`. Run the `ukrainian-translation-review` skill on the values before committing.
+- [x] **2.6 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings`, each with `"state": "translated"`. Run the `ukrainian-translation-review` skill on the values before committing.
 
 | Key | uk |
 |-----|----|
@@ -447,11 +447,11 @@ struct OutageLine: View {
 | `%lld h %@ min` | `%lld год %@ хв` |
 | `Uses the current load. The answer changes as the load changes.` | `Рахує за поточним навантаженням. Відповідь змінюється разом із ним.` |
 
-- [ ] **2.7 Gate.** Run `make test`. Expected: exit 0.
+- [x] **2.7 Gate.** Run `make test`. Expected: exit 0.
 
 - [ ] **2.8 Look.** Run the app in the `iPhone 18 Pro` simulator, tap "Set", and screenshot the section in English and Ukrainian. Compare with the artboard. With no battery on the LAN there is no reading and no verdict row, so the owner checks the verdict on a real phone.
 
-- [ ] **2.9 Commit.** `feat: show whether the battery lasts until power returns`
+- [x] **2.9 Commit.** `feat: show whether the battery lasts until power returns`
 
 ---
 

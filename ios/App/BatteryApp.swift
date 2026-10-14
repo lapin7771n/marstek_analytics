@@ -25,6 +25,7 @@ struct SettingsScreen: View {
     @State private var snapshot = Store().snapshot
     @State private var history = Store().history
     @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
+    @State private var powerBack = Store().powerBack
     @State private var checking = false
     @State private var alertOn = Store().alert.on
     @State private var alertDenied = false
@@ -82,6 +83,35 @@ struct SettingsScreen: View {
                 }
 
                 Section {
+                    LabeledContent("Grid returns") {
+                        if let back = powerBack, back > .now {
+                            HStack(spacing: 6) {
+                                Menu {
+                                    Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
+                                    Button("Tomorrow") { setPowerBack(Outage.moved(back, tomorrow: true, now: .now)) }
+                                    Button("Clear", role: .destructive) { setPowerBack(nil) }
+                                } label: {
+                                    Text(Calendar.current.isDateInToday(back) ? "Today" : "Tomorrow")
+                                        .padding(.horizontal, 11).frame(height: 34)
+                                        .background(Color(hex: 0x2C2C2E), in: RoundedRectangle(cornerRadius: 8))
+                                }
+                                .foregroundStyle(.white)
+                                DatePicker("Time", selection: backTime, displayedComponents: .hourAndMinute).labelsHidden()
+                            }
+                        } else {
+                            Button("Set") { setPowerBack(Calendar.current.nextDate(after: .now.addingTimeInterval(3600), matching: DateComponents(minute: 0), matchingPolicy: .nextTime)) }
+                        }
+                    }
+                    if let outage = face.outage {
+                        OutageRow(outage: outage, stale: face.stale)
+                    }
+                } header: {
+                    Text("Power back at")
+                } footer: {
+                    Text("Uses the current load. The answer changes as the load changes.")
+                }
+
+                Section {
                     TodayCard(day: day)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
@@ -131,6 +161,20 @@ struct SettingsScreen: View {
         // A background alert run wakes the app; the poll must not wake with it.
         .task(id: phase) { if phase == .active { await poll() } }
         .onOpenURL { url in if url == AppLinks.localNetwork { openSettings() } }
+    }
+
+    private var face: Face {
+        Face(snapshot, floorPct: settings.floorPct, powerBack: powerBack)
+    }
+
+    private var backTime: Binding<Date> {
+        Binding(get: { powerBack ?? .now }, set: { setPowerBack(Outage.nextTime($0, after: .now)) })
+    }
+
+    private func setPowerBack(_ date: Date?) {
+        powerBack = date
+        store.powerBack = date
+        WidgetCenter.shared.reloadTimelines(ofKind: "eta")
     }
 
     private var saveDisabled: Bool {

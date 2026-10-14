@@ -41,6 +41,26 @@
         }
       }
     },
+    "%lld h %@ min": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld год %@ хв"
+          }
+        }
+      }
+    },
+    "%lld min": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld хв"
+          }
+        }
+      }
+    },
     "+%lld W": {
       "localizations": {
         "uk": {
@@ -371,6 +391,16 @@
         }
       }
     },
+    "Grid returns": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло дадуть"
+          }
+        }
+      }
+    },
     "Hour": {
       "localizations": {
         "uk": {
@@ -421,6 +451,16 @@
         }
       }
     },
+    "LASTS": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ВИСТАЧИТЬ"
+          }
+        }
+      }
+    },
     "LOGS": {
       "localizations": {
         "uk": {
@@ -447,6 +487,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Останні дані"
+          }
+        }
+      }
+    },
+    "Lasts until %@, %@ to spare.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вистачить до %1$@, запас %2$@."
+          }
+        }
+      }
+    },
+    "Lasts until %@.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вистачить до %@."
           }
         }
       }
@@ -601,12 +661,62 @@
         }
       }
     },
+    "Power back %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %@"
+          }
+        }
+      }
+    },
+    "Power back %@ · +%@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %1$@ · +%2$@"
+          }
+        }
+      }
+    },
+    "Power back %@ · −%@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %1$@ · −%2$@"
+          }
+        }
+      }
+    },
+    "Power back at": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли дадуть світло"
+          }
+        }
+      }
+    },
     "Privacy policy": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Політика конфіденційності"
+          }
+        }
+      }
+    },
+    "RUNS OUT %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СЯДЕ О %@"
           }
         }
       }
@@ -651,6 +761,16 @@
         }
       }
     },
+    "Runs out at %@, %@ short.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сяде о %1$@, бракує %2$@."
+          }
+        }
+      }
+    },
     "SET IP": {
       "localizations": {
         "uk": {
@@ -677,6 +797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відрізок"
+          }
+        }
+      }
+    },
+    "Set": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вказати"
           }
         }
       }
@@ -751,6 +881,16 @@
         }
       }
     },
+    "Tomorrow": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завтра"
+          }
+        }
+      }
+    },
     "Under 30 min left": {
       "localizations": {
         "uk": {
@@ -777,6 +917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Витрачено"
+          }
+        }
+      }
+    },
+    "Uses the current load. The answer changes as the load changes.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рахує за поточним навантаженням. Відповідь змінюється разом із ним."
           }
         }
       }
