@@ -4,39 +4,82 @@ import WidgetKit
 @main
 struct BatteryWidgets: WidgetBundle {
     var body: some Widget {
-        SpikeWidget()
+        RingWidget()
+        EtaWidget()
+        LockWidget()
     }
 }
 
-struct SpikeEntry: TimelineEntry {
+struct BatteryEntry: TimelineEntry {
     let date: Date
-    let text: String
+    let face: Face
 }
 
-struct SpikeProvider: TimelineProvider {
-    func placeholder(in context: Context) -> SpikeEntry {
-        SpikeEntry(date: .now, text: "··")
+struct BatteryProvider: TimelineProvider {
+    func placeholder(in context: Context) -> BatteryEntry {
+        BatteryEntry(date: .now, face: .sample)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (SpikeEntry) -> Void) {
-        completion(placeholder(in: context))
+    func getSnapshot(in context: Context, completion: @escaping (BatteryEntry) -> Void) {
+        let store = Store()
+        let face = context.isPreview ? .sample : Face(store.snapshot, floorPct: store.settings.floorPct)
+        completion(BatteryEntry(date: .now, face: face))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<SpikeEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<BatteryEntry>) -> Void) {
         Task {
-            let host = UserDefaults(suiteName: AppGroup.id)?.string(forKey: "host") ?? ""
-            let text: String
-            do { text = "\(try await MarstekClient(host: host, port: 30000).reading().socPct)%" } catch { text = "\(error)" }
-            completion(Timeline(entries: [SpikeEntry(date: .now, text: text)], policy: .after(.now.addingTimeInterval(900))))
+            let store = Store()
+            let snapshot = await Refresher.refresh(store)
+            let entry = BatteryEntry(date: .now, face: Face(snapshot, floorPct: store.settings.floorPct))
+            completion(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60))))
         }
     }
 }
 
-struct SpikeWidget: Widget {
+struct RingWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "spike", provider: SpikeProvider()) { entry in
-            Text(entry.text).font(.caption).containerBackground(.black, for: .widget)
+        StaticConfiguration(kind: "ring", provider: BatteryProvider()) { entry in
+            SmallFace(face: entry.face).containerBackground(Palette.bg, for: .widget)
         }
+        .configurationDisplayName("Battery")
+        .description("Charge and power.")
         .supportedFamilies([.systemSmall])
+        .contentMarginsDisabled()
+    }
+}
+
+struct EtaWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "eta", provider: BatteryProvider()) { entry in
+            MediumFace(face: entry.face).containerBackground(Palette.bg, for: .widget)
+        }
+        .configurationDisplayName("Battery and ETA")
+        .description("Charge, power and time until full or empty.")
+        .supportedFamilies([.systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
+struct LockWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "lock", provider: BatteryProvider()) { entry in
+            LockFace(face: entry.face).containerBackground(Color.clear, for: .widget)
+        }
+        .configurationDisplayName("Battery")
+        .description("Charge on the Lock Screen.")
+        .supportedFamilies([.accessoryCircular, .accessoryRectangular])
+    }
+}
+
+struct LockFace: View {
+    @Environment(\.widgetFamily) private var family
+    let face: Face
+
+    var body: some View {
+        if family == .accessoryCircular {
+            CircularFace(face: face)
+        } else {
+            RectangularFace(face: face)
+        }
     }
 }
