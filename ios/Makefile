@@ -17,4 +17,4 @@ archive: project
 	xcodebuild archive -project BatteryETA.xcodeproj -scheme BatteryETA -configuration Release -destination 'generic/platform=iOS' -archivePath $(ARCHIVE) -allowProvisioningUpdates CURRENT_PROJECT_VERSION=$(BUILD)
 
 upload: archive
-	xcodebuild -exportArchive -archivePath $(ARCHIVE) -exportOptionsPlist ExportOptions.plist -exportPath build/export -allowProvisioningUpdates
+	PATH=/usr/bin:$$PATH xcodebuild -exportArchive -archivePath $(ARCHIVE) -exportOptionsPlist ExportOptions.plist -exportPath build/export -allowProvisioningUpdates
