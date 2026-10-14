@@ -38,6 +38,18 @@ MARSTEK_HOST=192.168.1.50 npm run probe
 
 It prints a line every 15 s with the percent and watts. They should match the Marstek app.
 
+## iPhone widgets
+
+`ios/` holds Battery ETA, an iPhone app with three widgets: a charge ring, charge with ETA, and a Lock Screen gauge. The phone reads the battery directly, so the widgets update only on the battery's Wi‑Fi; elsewhere they show the last reading and `NO LINK`. iOS refreshes widgets about every 15–30 minutes, and the widget ETA is energy left ÷ current power.
+
+```bash
+cd ios
+make test
+make upload BUILD=2
+```
+
+Requires Xcode, `brew install xcodegen librsvg imagemagick`, and team `WSCTL2V8W5`. Raise `BUILD` for every upload.
+
 ## How the ETA works
 
 The estimator forecasts load from a 1-minute and a 15-minute average, so a kettle barely moves a 10-hour estimate. It learns the charge and discharge efficiency and the slow-down above 90 % from the battery's own counters and keeps them in the plugin settings. Details: [plans/2026-10-12-streamdeck-battery-eta.md](plans/2026-10-12-streamdeck-battery-eta.md).
