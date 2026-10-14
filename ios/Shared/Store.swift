@@ -86,6 +86,11 @@ final class Store {
         set { save(newValue, "log") }
     }
 
+    var powerBack: Date? {
+        get { load("powerBack") }
+        set { save(newValue, "powerBack") }
+    }
+
     private func load<T: Decodable>(_ key: String) -> T? {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(T.self, from: $0) }
     }
@@ -96,6 +101,7 @@ final class Store {
 }
 
 enum Refresher {
+    static let appPollInterval: Duration = .seconds(30)
     static let widgetMaxAge: TimeInterval = 10 * 60
 
     static func refresh(

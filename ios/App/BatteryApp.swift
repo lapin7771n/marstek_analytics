@@ -199,7 +199,7 @@ struct SettingsScreen: View {
     private func poll() async {
         while !Task.isCancelled {
             if store.settings.problem == nil { await refresh() }
-            try? await Task.sleep(for: .seconds(30))
+            try? await Task.sleep(for: Refresher.appPollInterval)
         }
     }
 }

@@ -53,7 +53,7 @@ Time: about 1½ hours, plus 10 minutes to check the screen in the simulator.
 - Modify: `ios/Shared/Store.swift`, `ios/Shared/Face.swift`, `ios/App/BatteryApp.swift` (one line in `poll()`)
 - Test: `ios/Tests/StoreTests.swift`, `ios/Tests/FaceTests.swift`
 
-- [ ] **1.1 Tests first.** Create `ios/Tests/OutageTests.swift`. `reading(...)` lives in `EstimateTests.swift`; its time is `1_760_000_000`, and `reading(acW: 400)` at a 12 % reserve lasts 8.0427 h.
+- [x] **1.1 Tests first.** Create `ios/Tests/OutageTests.swift`. `reading(...)` lives in `EstimateTests.swift`; its time is `1_760_000_000`, and `reading(acW: 400)` at a 12 % reserve lasts 8.0427 h.
 
 ```swift
 import Foundation
@@ -188,7 +188,7 @@ Append to `FaceTests`:
 
 Run `make test`. Expected: the build fails because `Outage`, `formatSpan`, `Store.powerBack`, `Refresher.appPollInterval` and `Face.outage` do not exist.
 
-- [ ] **1.2 Model.** Create `ios/Shared/Outage.swift`:
+- [x] **1.2 Model.** Create `ios/Shared/Outage.swift`:
 
 ```swift
 import Foundation
@@ -240,7 +240,7 @@ func formatSpan(_ hours: Double) -> String {
 
 `startOfDay + 86_400` is off by an hour on a DST night; `date(bySettingHour:of:)` works on the calendar day, so the result still lands on the right day.
 
-- [ ] **1.3 Store.** In `ios/Shared/Store.swift`, add below `var snapshot`:
+- [x] **1.3 Store.** In `ios/Shared/Store.swift`, add below `var snapshot`:
 
 ```swift
     var powerBack: Date? {
@@ -251,7 +251,7 @@ func formatSpan(_ hours: Double) -> String {
 
 In `Refresher`, add `static let appPollInterval: Duration = .seconds(30)` above `widgetMaxAge`. In `ios/App/BatteryApp.swift` `poll()`, replace `.seconds(30)` with `Refresher.appPollInterval`.
 
-- [ ] **1.4 Face.**
+- [x] **1.4 Face.**
   - In `ios/Shared/Face.swift`, add `var outage: Outage?` after `var updated: Date?`.
   - Change the init to `init(_ snapshot: Snapshot?, floorPct: Int, powerBack: Date? = nil, now: Date = .now)`. The default keeps every existing caller compiling.
   - After `updated = r.time`, add:
@@ -260,9 +260,9 @@ In `Refresher`, add `static let appPollInterval: Duration = .seconds(30)` above 
         outage = powerBack.flatMap { Outage.verdict(r, floorPct: floorPct, powerBack: $0, now: now) }
 ```
 
-- [ ] **1.5 Gate.** Run `make test`. Expected: exit 0. Then change `r.time` to `now` in `Outage.verdict`, check that `countsFromTheReadingNotFromNow` fails, and restore it.
+- [x] **1.5 Gate.** Run `make test`. Expected: exit 0. Then change `r.time` to `now` in `Outage.verdict`, check that `countsFromTheReadingNotFromNow` fails, and restore it.
 
-- [ ] **1.6 Commit.** `feat: compute whether the battery lasts until power returns`
+- [x] **1.6 Commit.** `feat: compute whether the battery lasts until power returns`
 
 ---
 

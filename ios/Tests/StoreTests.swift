@@ -151,6 +151,33 @@ struct StoreTests {
         #expect(first == .reserve(socPct: 12, watts: 100))
         #expect(second == nil)
     }
+
+    @Test func powerBackIsStored() {
+        let store = store()
+        #expect(store.powerBack == nil)
+        let back = Date(timeIntervalSince1970: 1_760_020_000)
+        store.powerBack = back
+        #expect(store.powerBack == back)
+        store.powerBack = nil
+        #expect(store.powerBack == nil)
+    }
+
+    @Test func aPowerBackTimeSendsNoBatteryRequest() async {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        let counter = FetchCounter()
+        let now = good.time.addingTimeInterval(60)
+        store.powerBack = good.time.addingTimeInterval(6 * 3600)
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { await counter.read($0) }
+        #expect(Face(snapshot, floorPct: store.settings.floorPct, powerBack: store.powerBack, now: now).outage != nil)
+        #expect(await counter.count == 0)
+    }
+
+    @Test func pollingStaysAsItIs() {
+        #expect(Refresher.appPollInterval == .seconds(30))
+        #expect(Refresher.widgetMaxAge == 10 * 60)
+    }
 }
 
 actor FetchCounter {
@@ -163,6 +190,11 @@ actor FetchCounter {
     }
 
     func fetchReading() -> Reading {
+        count += 1
+        return reading(acW: 400)
+    }
+
+    func read(_ settings: BatterySettings) -> Reading {
         count += 1
         return reading(acW: 400)
     }
