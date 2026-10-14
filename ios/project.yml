@@ -12,7 +12,7 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
-    TARGETED_DEVICE_FAMILY: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
 targets:
   BatteryETA:
     type: application
@@ -30,13 +30,24 @@ targets:
         CFBundleDisplayName: Battery ETA
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         NSLocalNetworkUsageDescription: Battery ETA reads your Marstek battery over your home Wi-Fi.
         ITSAppUsesNonExemptEncryption: false
         CFBundleLocalizations: [en, uk]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleURLTypes:
+          - CFBundleURLName: com.mlapin.marstek.battery
+            CFBundleURLSchemes: [batteryeta]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mlapin.marstek.battery
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
     scheme:
       testTargets: [BatteryTests]
   BatteryWidget:
@@ -54,10 +65,13 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         CFBundleLocalizations: [en, uk]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mlapin.marstek.battery.widget
         SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
   BatteryTests:
     type: bundle.unit-test
     platform: iOS

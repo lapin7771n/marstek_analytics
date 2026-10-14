@@ -6,10 +6,18 @@ struct BatterySettings: Codable, Equatable {
     var floorPct = 12
 
     var problem: String? {
-        if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil { return String(localized: "Enter the battery IP address") }
+        if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil || !isIPv4OrName {
+            return String(localized: "Enter the battery IP address")
+        }
         if !(1...65535).contains(port) { return String(localized: "Port must be 1 to 65535") }
         if !(0...50).contains(floorPct) { return String(localized: "Reserve must be 0 to 50 %") }
         return nil
+    }
+
+    private var isIPv4OrName: Bool {
+        guard host.allSatisfy({ $0.isASCII && ($0.isNumber || $0 == ".") }) else { return true }
+        let octets = host.split(separator: ".", omittingEmptySubsequences: false)
+        return octets.count == 4 && octets.allSatisfy { $0.count <= 3 && (Int($0).map { (0...255).contains($0) } ?? false) }
     }
 }
 

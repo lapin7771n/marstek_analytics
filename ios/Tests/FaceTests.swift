@@ -3,12 +3,14 @@ import Testing
 @testable import BatteryETA
 
 struct FaceTests {
+    private let readAt = Date(timeIntervalSince1970: 1_760_000_000)
+
     private func snap(_ r: Reading?, _ error: FetchError? = nil) -> Snapshot {
         Snapshot(reading: r, error: error, checkedAt: .now)
     }
 
     @Test func discharging() {
-        let face = Face(snap(reading(acW: 400)), floorPct: 12)
+        let face = Face(snap(reading(acW: 400)), floorPct: 12, now: readAt)
         #expect(face.percent == "80%")
         #expect(face.power == "−400 W")
         #expect(face.etaLabel == "EMPTY IN")
@@ -37,7 +39,7 @@ struct FaceTests {
         #expect(face.percent == "80%")
         #expect(face.stale)
         #expect(face.problem == "NO LINK")
-        #expect(face.updated != nil)
+        #expect(face.updated == readAt)
     }
 
     @Test func noReadingShowsTheProblem() {
@@ -49,5 +51,27 @@ struct FaceTests {
 
     @Test func blockedSaysAllowLan() {
         #expect(Face(snap(nil, .blocked), floorPct: 12).eta == "ALLOW LAN")
+    }
+
+    @Test func onlyADeniedPermissionLinksToSettings() {
+        #expect(Face(snap(nil, .blocked), floorPct: 12).blocked)
+        #expect(Face(snap(reading(acW: 400), .blocked), floorPct: 12).blocked)
+        #expect(!Face(snap(reading(acW: 400), .noLink), floorPct: 12).blocked)
+        #expect(!Face(snap(reading(acW: 400)), floorPct: 12).blocked)
+    }
+
+    @Test func aReadingUnderHalfAnHourOldIsFresh() {
+        #expect(!Face(snap(reading(acW: 400)), floorPct: 12, now: readAt.addingTimeInterval(29 * 60)).stale)
+    }
+
+    @Test func aReadingHalfAnHourOldIsStaleWithoutAnError() {
+        #expect(Face(snap(reading(acW: 400)), floorPct: 12, now: readAt.addingTimeInterval(30 * 60)).stale)
+        #expect(Face(snap(reading(acW: 400)), floorPct: 12, now: readAt.addingTimeInterval(31 * 60)).stale)
+    }
+
+    @Test func aBadReplySaysError() {
+        let face = Face(snap(reading(acW: 400), .badReply), floorPct: 12, now: readAt)
+        #expect(face.problem == "ERROR")
+        #expect(face.stale)
     }
 }

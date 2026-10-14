@@ -18,6 +18,7 @@ struct SettingsScreen: View {
     @State private var settings = Store().settings
     @State private var snapshot = Store().snapshot
     @State private var checking = false
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         NavigationStack {
@@ -66,16 +67,26 @@ struct SettingsScreen: View {
                         .background(Palette.bg, in: RoundedRectangle(cornerRadius: 22))
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
+                        .onTapGesture { if Face(snapshot, floorPct: settings.floorPct).blocked { openSettings() } }
                 }
 
                 Section("If it fails") {
-                    hint("ALLOW LAN", "Settings › Privacy & Security › Local Network › turn on Battery ETA.")
+                    Button(action: openSettings) {
+                        HStack {
+                            hint("ALLOW LAN", "Tap to open Settings and turn on Local Network. If it is not there: Privacy & Security › Local Network.")
+                            Spacer(minLength: 8)
+                            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                     hint("NO LINK", "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.")
                 }
             }
             .navigationTitle("Battery ETA")
         }
         .task { await poll() }
+        .onOpenURL { url in if url == AppLinks.localNetwork { openSettings() } }
     }
 
     private var saveDisabled: Bool {
@@ -88,6 +99,10 @@ struct SettingsScreen: View {
             Text(text).font(.subheadline)
         }
         .padding(.vertical, 2)
+    }
+
+    private func openSettings() {
+        openURL(URL(string: UIApplication.openSettingsURLString)!)
     }
 
     private func save() async {
