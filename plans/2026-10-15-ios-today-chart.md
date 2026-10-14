@@ -13,17 +13,25 @@
 - `History.day(now:latest:)` builds a `DaySummary` from local midnight to now. It adds the current snapshot's reading as the live last point, so the chart is never 5 minutes behind while the app is open.
   - Line: readings more than 1 h apart get a dotted connector.
   - Bars: the mean power of the readings inside each hour; an hour with no reading has no bar.
-  - Charged and Used: the sum of rises and falls in charge %, times the rated capacity. Each 1 % step is 51 Wh. This counts energy even across gaps with no readings, so sparse widget readings still give a fair number.
-  - On battery: the time from a discharging reading (over 30 W, `QuickEstimate.idleW`) to the next reading, only when they are at most 1 h apart.
+  - Charged, Used and On battery integrate the stored power readings: each reading's power holds until the next reading, only when the two are at most 1 h apart. Charged sums charging power × time, Used sums discharging power × time, On battery sums the time while discharging over 30 W (`QuickEstimate.idleW`).
 - A new IP clears the history together with the snapshot.
 - App and widget processes both read-modify-write `history`. A rare collision loses one sample; nothing breaks.
 
 **Tech stack:** Swift 5 mode, Swift Testing, Swift Charts (iOS 17), xcodegen.
 
+## Gentle on the battery
+
+Each rule has a test that fails if it is broken.
+
+1. **History comes only from readings a refresh already fetched.** Opening or scrolling the chart sends no request, and nothing backfills a missing history. Tests: `aFailedFetchAddsNothing`, `aReusedSnapshotAddsNothing`, `anEmptyHistoryDoesNotTriggerAFetch` (Task 1), `historyAndTheChartSendNoExtraRequests` (Task 2).
+2. **No new polling, no faster poll, never `Bat.GetStatus`.** The 30 s app poll, the 15 min widget refresh and `MarstekClient` do not change. Energy totals integrate the stored power readings. Tests: the existing `ClientTests.aReadingAsksOnlyForEsStatus`, `energyIntegratesTheStoredPower` (Task 2).
+3. **Writing history does not change when `Refresher` fetches.** The reuse check reads only `store.snapshot` and its age, as today. Tests: the existing `aFreshSnapshotIsReused` and `anOldSnapshotIsFetchedAgain`, plus `theReuseCheckIgnoresHistory` (Task 1).
+4. **Adding history and building the chart send zero extra requests.** Test: `historyAndTheChartSendNoExtraRequests` (Task 2) counts fetches with a `ReadingCounter` actor in the `FetchCounter` pattern from `ios/Tests/StoreTests.swift`.
+
 ## Deviations from the design for the owner to decide
 
-1. **Charged and Used are battery-side kWh** from charge % steps. They read about 10 % off the AC meter (charging losses on the way in, inverter losses on the way out), and charge % flicker of ±1 % adds 51 Wh to both. Power-based kWh would match the meter better while the app is open, but miss most of the day when only widgets read (one reading per 15–30 min).
-2. **On battery is rough when only widgets read**: a discharge between two widget readings counts only if both readings show it. Drop the On battery cell if that is not good enough.
+1. **Charged, Used and On battery undercount when only widgets read.** Widgets read once per 15–30 min, and a gap over 1 h is not integrated, so energy in long gaps is missing. Power swings between two readings (a kettle) are missed too. With the app open (one sample per 5 min) the numbers are close. Drop the numbers row if widget-only days read too low.
+2. **The numbers are AC-side** (power at the battery's plug), so they match a plug meter, not the change in charge %.
 3. **The x-axis runs from midnight to now**, as in the design, but at least 3 h wide, so just after midnight the first readings are not stretched across the whole card. The hour labels before now are `00 06 12 18`; a label closer than 2 h to now is dropped so it does not collide with `now`.
 4. **The line starts at the first reading after midnight**, not at the left edge.
 5. **Empty state:** with fewer than 2 readings today, the card shows "No readings yet today." and the numbers row is hidden. The design has no empty state.
@@ -41,6 +49,7 @@
 2. A widget refresh that reuses a fresh snapshot adds no sample, so history never claims a reading that did not happen. (Task 1 test.)
 3. 49 h of 30 s polling leaves at most 577 samples, none older than 48 h, under 32 KB encoded. (Task 1 test.)
 4. A reading from before local midnight never shows on today's chart or in today's numbers. (Task 2 test.)
+5. Each rule in "Gentle on the battery" has its test, and none of `Refresher`'s reuse logic changed.
 
 ## Batches
 
@@ -123,6 +132,30 @@ struct HistoryTests {
         history.add(at(60))
         history.add(at(0))
         #expect(history.samples.map(\.time) == [start])
+    }
+
+    @Test func anEmptyHistoryDoesNotTriggerAFetch() async {
+        let store = store()
+        store.snapshot = Snapshot(reading: at(0), error: nil, checkedAt: start)
+        var fetched = false
+        _ = await Refresher.refresh(store, now: start.addingTimeInterval(60), maxAge: 10 * 60) { _ in
+            fetched = true
+            return at(1)
+        }
+        #expect(!fetched)
+        #expect(store.history.samples.isEmpty)
+    }
+
+    @Test func theReuseCheckIgnoresHistory() async {
+        let store = store()
+        store.snapshot = Snapshot(reading: at(0), error: nil, checkedAt: start)
+        store.history.add(at(14))
+        var fetched = false
+        _ = await Refresher.refresh(store, now: start.addingTimeInterval(15 * 60), maxAge: 10 * 60) { _ in
+            fetched = true
+            return at(15)
+        }
+        #expect(fetched)
     }
 
     @Test func anOldSnapshotStillDecodes() throws {
@@ -226,11 +259,11 @@ Run `make test`. Expected: all tests pass.
 
     @Test func theDayStartsAtMidnight() {
         let day = history(at(-30, soc: 50), at(10, soc: 70), at(20, soc: 90))
-            .day(now: start.addingTimeInterval(30 * 60), latest: at(20, soc: 90), calendar: utc)
+            .day(now: start.addingTimeInterval(30 * 60), latest: nil, calendar: utc)
         #expect(day.segments.flatMap(\.samples).map(\.socPct) == [70, 90])
         #expect(day.low == 70)
         #expect(day.high == 90)
-        #expect(abs(day.chargedWh - 1024) < 0.01)
+        #expect(abs(day.usedWh - 400.0 / 6) < 0.01)
     }
 
     @Test func aGapOverAnHourIsDottedAndTheLiveReadingIsLast() {
@@ -241,11 +274,23 @@ Run `make test`. Expected: all tests pass.
         #expect(day.segments.last?.samples.last?.socPct == 81)
     }
 
-    @Test func chargedAndUsedComeFromChargeSteps() {
-        let day = history(at(0, soc: 80), at(10, soc: 82), at(200, soc: 79))
-            .day(now: start.addingTimeInterval(200 * 60), latest: at(200, soc: 79), calendar: utc)
-        #expect(abs(day.chargedWh - 102.4) < 0.01)
-        #expect(abs(day.usedWh - 153.6) < 0.01)
+    @Test func energyIntegratesTheStoredPower() {
+        let day = history(at(0, acW: -1200), at(30, acW: 600), at(60, acW: 600), at(200, acW: 600))
+            .day(now: start.addingTimeInterval(200 * 60), latest: nil, calendar: utc)
+        #expect(abs(day.chargedWh - 600) < 0.01)
+        #expect(abs(day.usedWh - 300) < 0.01)
+    }
+
+    @Test func historyAndTheChartSendNoExtraRequests() async {
+        let store = store()
+        let counter = ReadingCounter()
+        _ = await Refresher.refresh(store, now: start) { _ in await counter.fetch(at(0)) }
+        _ = await Refresher.refresh(store, now: start.addingTimeInterval(10 * 60)) { _ in await counter.fetch(at(10)) }
+        for _ in 0..<3 {
+            _ = store.history.day(now: start.addingTimeInterval(11 * 60), latest: store.snapshot?.reading, calendar: utc)
+        }
+        #expect(store.history.samples.count == 2)
+        #expect(await counter.count == 2)
     }
 
     @Test func onBatteryCountsDischargeBetweenCloseReadings() {
@@ -266,6 +311,19 @@ Run `make test`. Expected: all tests pass.
     @Test func oneReadingIsEmpty() {
         #expect(history(at(0)).day(now: start.addingTimeInterval(60), latest: nil, calendar: utc).isEmpty)
     }
+```
+
+Below the struct:
+
+```swift
+actor ReadingCounter {
+    var count = 0
+
+    func fetch(_ reading: Reading) -> Reading {
+        count += 1
+        return reading
+    }
+}
 ```
 
 Run `make test`. Expected: the build fails because `History` has no `day`.
@@ -310,12 +368,12 @@ extension History {
         var day = DaySummary(start: start, now: now)
         day.low = today.map(\.socPct).min()
         day.high = today.map(\.socPct).max()
-        let ratedWh = latest?.ratedWh ?? 0
         for (a, b) in zip(today, today.dropFirst()) {
             let gap = b.time.timeIntervalSince(a.time)
-            let deltaWh = Double(b.socPct - a.socPct) / 100 * ratedWh
-            if deltaWh > 0 { day.chargedWh += deltaWh } else { day.usedWh -= deltaWh }
-            if gap <= History.gap, Double(a.acW) > QuickEstimate.idleW { day.onBattery += gap }
+            guard gap <= History.gap else { continue }
+            let wh = Double(a.acW) * gap / 3600
+            if wh < 0 { day.chargedWh -= wh } else { day.usedWh += wh }
+            if Double(a.acW) > QuickEstimate.idleW { day.onBattery += gap }
         }
         for s in today {
             if let prev = day.segments.last?.samples.last, s.time.timeIntervalSince(prev.time) > History.gap {
@@ -335,7 +393,7 @@ extension History {
 }
 ```
 
-Run `make test`. Expected: all tests pass. `chargedAndUsedComeFromChargeSteps` needs `latest` for the rated capacity; with no snapshot reading, Charged and Used are 0 and Task 3 hides the numbers row.
+Run `make test`. Expected: all tests pass.
 
 - [ ] **2.3 Commit.** `git add ios && git commit -m "feat: summarise today's battery readings on ios"`
 
@@ -508,7 +566,7 @@ If an API above does not exist in the iOS 17 SDK (`BarMark.cornerRadius`, `AxisG
                     Text("Built from readings the app and widgets already take. Dotted: no reading, the line joins the gap.")
                 }
 
-                if !day.isEmpty, snapshot?.reading != nil {
+                if !day.isEmpty {
                     Section("Today in numbers") { TodayNumbers(day: day) }
                 }
 ```
