@@ -142,7 +142,7 @@ struct MediumFace: View {
                 )
                 Group {
                     if let updated = face.updated {
-                        Text("Updated \(Text(updated, style: .relative)) ago")
+                        Text("Updated \(Text(updated, style: .time))")
                     } else {
                         Text("Open the app")
                     }
@@ -188,7 +188,7 @@ struct RectangularFace: View {
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
             Group {
                 if let problem = face.problem, let updated = face.updated {
-                    Text("\(problem) · \(Text(updated, style: .relative)) ago")
+                    Text("\(problem) · \(Text(updated, style: .time))")
                 } else {
                     Text(face.problem ?? face.power)
                 }
