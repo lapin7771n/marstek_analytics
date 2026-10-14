@@ -151,6 +151,26 @@ struct StoreTests {
         #expect(first == .reserve(socPct: 12, watts: 100))
         #expect(second == nil)
     }
+
+    @Test func aSearchSkipsTheFetch() async {
+        let store = store()
+        let now = Date(timeIntervalSince1970: 1000)
+        store.searchUntil = now + 30
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { _ in
+            Issue.record("fetched during a search")
+            return reading(acW: 400)
+        }
+        #expect(snapshot.reading == nil && snapshot.error == nil)
+        #expect(store.snapshot == nil)
+    }
+
+    @Test func anExpiredSearchFetches() async {
+        let store = store()
+        let good = reading(acW: 400)
+        store.searchUntil = good.time - 1
+        let snapshot = await Refresher.refresh(store, now: good.time) { _ in good }
+        #expect(snapshot.reading == good)
+    }
 }
 
 actor FetchCounter {

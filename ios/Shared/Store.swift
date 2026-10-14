@@ -86,6 +86,11 @@ final class Store {
         set { save(newValue, "log") }
     }
 
+    var searchUntil: Date? {
+        get { load("searchUntil") }
+        set { save(newValue, "searchUntil") }
+    }
+
     private func load<T: Decodable>(_ key: String) -> T? {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(T.self, from: $0) }
     }
@@ -104,6 +109,9 @@ enum Refresher {
         maxAge: TimeInterval = 0,
         fetch: (BatterySettings) async throws -> Reading = Refresher.live
     ) async -> Snapshot {
+        if let until = store.searchUntil, now < until {
+            return store.snapshot ?? Snapshot(reading: nil, error: nil, checkedAt: now)
+        }
         let settings = store.settings
         if settings.problem == nil, let last = store.snapshot, last.error != .settings,
            (0..<maxAge).contains(now.timeIntervalSince(last.checkedAt)) {
