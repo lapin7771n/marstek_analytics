@@ -13,6 +13,9 @@ struct BatStatus: Equatable {
 }
 
 enum MarstekProtocol {
+    // The firmware echoes only the low 16 bits of the id and ignores 65535; the retry sends id + 1.
+    static func newId() -> Int { Int.random(in: 1...32_766) }
+
     static func request(id: Int, method: String) -> Data {
         Data(#"{"id":\#(id),"method":"\#(method)","params":{"id":0}}"#.utf8)
     }
