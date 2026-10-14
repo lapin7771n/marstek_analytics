@@ -106,7 +106,7 @@ enum AppLinks {
 
 Run `make test`. Expected: exit 0.
 
-- [ ] **1.5 Commit, then check on the iPad.**
+- [x] **1.5 Commit, then check on the iPad.**
   1. Commit: `git add ios && git commit -m "feat: open settings from allow lan"`.
   2. Install the app on the iPad.
   3. Owner: Settings › Privacy & Security › Local Network › turn off Battery ETA.
