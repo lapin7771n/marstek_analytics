@@ -20,10 +20,7 @@ struct MarstekClient {
     var gap: Duration = .seconds(1)
 
     func reading(at time: Date = .now) async throws -> Reading {
-        let es = try MarstekProtocol.esStatus(await call("ES.GetStatus"))
-        try await Task.sleep(for: gap)
-        let bat = try MarstekProtocol.batStatus(await call("Bat.GetStatus"))
-        return Reading(time: time, es: es, bat: bat)
+        Reading(time: time, es: try MarstekProtocol.esStatus(await call("ES.GetStatus")))
     }
 
     func call(_ method: String) async throws -> Data {

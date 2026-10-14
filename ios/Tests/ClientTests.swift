@@ -31,15 +31,16 @@ struct ClientTests {
         await #expect(throws: DeviceError.timeout) { try await client(fake).call("ES.GetStatus") }
     }
 
-    @Test func readingCombinesBothMethods() async throws {
+    @Test func aReadingAsksOnlyForEsStatus() async throws {
+        var methods: [String] = []
         let fake = try await FakeBattery.start { request, _ in
-            request.method == "ES.GetStatus"
-                ? [#"{"id":\#(request.id),"result":{"bat_soc":80,"ongrid_power":-797,"offgrid_power":0}}"#]
-                : [#"{"id":\#(request.id),"result":{"bat_capacity":4121.0,"rated_capacity":5120.0,"bat_temp":24.0}}"#]
+            methods.append(request.method)
+            return [#"{"id":\#(request.id),"result":{"bat_soc":80,"bat_cap":5120,"ongrid_power":-797,"offgrid_power":0}}"#]
         }
         defer { fake.stop() }
         let time = Date(timeIntervalSince1970: 0)
         let reading = try await client(fake).reading(at: time)
-        #expect(reading == Reading(time: time, socPct: 80, acW: -797, offgridW: 0, capacityWh: 4121, ratedWh: 5120, tempC: 24))
+        #expect(reading == Reading(time: time, socPct: 80, acW: -797, offgridW: 0, capacityWh: 4096, ratedWh: 5120))
+        #expect(methods == ["ES.GetStatus"])
     }
 }

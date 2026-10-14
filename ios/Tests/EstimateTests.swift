@@ -3,7 +3,7 @@ import Testing
 @testable import BatteryETA
 
 func reading(soc: Int = 80, acW: Double, offgridW: Double = 0, capacityWh: Double = 4121) -> Reading {
-    Reading(time: Date(timeIntervalSince1970: 1_760_000_000), socPct: soc, acW: acW, offgridW: offgridW, capacityWh: capacityWh, ratedWh: 5120, tempC: 24)
+    Reading(time: Date(timeIntervalSince1970: 1_760_000_000), socPct: soc, acW: acW, offgridW: offgridW, capacityWh: capacityWh, ratedWh: 5120)
 }
 
 struct EstimateTests {

@@ -4,12 +4,7 @@ struct EsStatus: Equatable {
     let socPct: Int
     let ongridW: Double
     let offgridW: Double
-}
-
-struct BatStatus: Equatable {
-    let capacityWh: Double
     let ratedWh: Double
-    let tempC: Double
 }
 
 enum MarstekProtocol {
@@ -27,13 +22,8 @@ enum MarstekProtocol {
 
     static func esStatus(_ data: Data) throws -> EsStatus {
         let result = try decode(EsResult.self, data)
-        return EsStatus(socPct: Int(result.socPct.rounded()), ongridW: result.ongridW, offgridW: result.offgridW)
-    }
-
-    static func batStatus(_ data: Data) throws -> BatStatus {
-        let result = try decode(BatResult.self, data)
-        guard result.ratedWh > 0 else { throw DeviceError.badReply("Reply has rated_capacity \(result.ratedWh)") }
-        return BatStatus(capacityWh: result.capacityWh, ratedWh: result.ratedWh, tempC: result.tempC)
+        guard result.ratedWh > 0 else { throw DeviceError.badReply("Reply has bat_cap \(result.ratedWh)") }
+        return EsStatus(socPct: Int(result.socPct.rounded()), ongridW: result.ongridW, offgridW: result.offgridW, ratedWh: result.ratedWh)
     }
 
     private static func decode<R: Decodable>(_ type: R.Type, _ data: Data) throws -> R {
@@ -64,22 +54,12 @@ private struct EsResult: Decodable {
     let socPct: Double
     let ongridW: Double
     let offgridW: Double
+    let ratedWh: Double
 
     enum CodingKeys: String, CodingKey {
         case socPct = "bat_soc"
         case ongridW = "ongrid_power"
         case offgridW = "offgrid_power"
-    }
-}
-
-private struct BatResult: Decodable {
-    let capacityWh: Double
-    let ratedWh: Double
-    let tempC: Double
-
-    enum CodingKeys: String, CodingKey {
-        case capacityWh = "bat_capacity"
-        case ratedWh = "rated_capacity"
-        case tempC = "bat_temp"
+        case ratedWh = "bat_cap"
     }
 }

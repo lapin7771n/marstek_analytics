@@ -67,12 +67,19 @@ final class Store {
 }
 
 enum Refresher {
+    static let widgetMaxAge: TimeInterval = 10 * 60
+
     static func refresh(
         _ store: Store,
         now: Date = .now,
+        maxAge: TimeInterval = 0,
         fetch: (BatterySettings) async throws -> Reading = Refresher.live
     ) async -> Snapshot {
         let settings = store.settings
+        if settings.problem == nil, let last = store.snapshot, last.error != .settings,
+           (0..<maxAge).contains(now.timeIntervalSince(last.checkedAt)) {
+            return last
+        }
         var next = Snapshot(reading: store.snapshot?.reading, error: nil, checkedAt: now)
         if settings.problem != nil {
             next.error = .settings
@@ -85,5 +92,20 @@ enum Refresher {
 
     static func live(_ settings: BatterySettings) async throws -> Reading {
         try await MarstekClient(host: settings.host, port: UInt16(settings.port)).reading()
+    }
+}
+
+// The three widgets reload together; one fetch serves them all.
+actor SharedRefresh {
+    static let shared = SharedRefresh()
+    private var running: Task<Snapshot, Never>?
+
+    func run(_ work: @escaping @Sendable () async -> Snapshot) async -> Snapshot {
+        if let running { return await running.value }
+        let task = Task { await work() }
+        running = task
+        let snapshot = await task.value
+        running = nil
+        return snapshot
     }
 }
