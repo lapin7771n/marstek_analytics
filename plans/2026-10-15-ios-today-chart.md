@@ -70,7 +70,7 @@ Time: about 30 minutes for Task 1, 30 for Task 2, 45 for Task 3.
 **Interfaces**
 - Produces: `Sample(time:socPct:acW:)`, `Sample(_ reading:)`, `History` with `samples` and `add(_:)`, `History.gap`, `Store.history`.
 
-- [ ] **1.1 Tests first.** Create `ios/Tests/HistoryTests.swift`:
+- [x] **1.1 Tests first.** Create `ios/Tests/HistoryTests.swift`:
 
 ```swift
 import Foundation
@@ -171,7 +171,7 @@ struct HistoryTests {
 
 Run `make test`. Expected: the build fails because `History` does not exist.
 
-- [ ] **1.2 History.** Create `ios/Shared/History.swift`:
+- [x] **1.2 History.** Create `ios/Shared/History.swift`:
 
 ```swift
 import Foundation
@@ -205,7 +205,7 @@ struct History: Codable, Equatable {
 }
 ```
 
-- [ ] **1.3 Store and refresh.** In `ios/Shared/Store.swift`, add to `Store` below `snapshot`:
+- [x] **1.3 Store and refresh.** In `ios/Shared/Store.swift`, add to `Store` below `snapshot`:
 
 ```swift
     var history: History {
@@ -228,7 +228,7 @@ In `Refresher.refresh`, replace the `do` line:
 
 Run `make test`. Expected: all tests pass.
 
-- [ ] **1.4 Commit.** `git add ios && git commit -m "feat: keep 48 h of battery readings on ios"`
+- [x] **1.4 Commit.** `git add ios && git commit -m "feat: keep 48 h of battery readings on ios"`
 
 ---
 
