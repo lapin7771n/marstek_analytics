@@ -27,7 +27,7 @@ struct MarstekClient {
     }
 
     func call(_ method: String) async throws -> Data {
-        let id = Int.random(in: 1...999_999)
+        let id = MarstekProtocol.newId()
         do {
             return try await exchange(MarstekProtocol.request(id: id, method: method), id: id)
         } catch DeviceError.timeout {

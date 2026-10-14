@@ -6,6 +6,13 @@ let esReply = #"{"id":2,"src":"VenusE 3.0-bc2a3314ce8d","result":{"id":0,"bat_so
 let batReply = #"{"id":3,"src":"VenusE 3.0-bc2a3314ce8d","result":{"id":0,"soc":80,"charg_flag":true,"dischrg_flag":true,"bat_temp":24.0,"bat_capacity":4121.0,"rated_capacity":5120.0}}"#
 
 struct ProtocolTests {
+    @Test func requestIdsSurviveTheFirmwaresSixteenBits() {
+        for _ in 0..<1000 {
+            let id = MarstekProtocol.newId()
+            #expect((1...32_767).contains(id) && (1...32_767).contains(id + 1))
+        }
+    }
+
     @Test func requestAddressesInstanceZero() {
         let text = String(decoding: MarstekProtocol.request(id: 7, method: "ES.GetStatus"), as: UTF8.self)
         #expect(text == #"{"id":7,"method":"ES.GetStatus","params":{"id":0}}"#)
