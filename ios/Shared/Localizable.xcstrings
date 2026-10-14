@@ -1,12 +1,12 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "%@ · %@ ago": {
+    "%@ · %@": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ · %2$@ тому"
+            "value": "%1$@ · %2$@"
           }
         }
       }
@@ -341,12 +341,12 @@
         }
       }
     },
-    "Updated %@ ago": {
+    "Updated %@": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Оновлено %@ тому"
+            "value": "Оновлено о %@"
           }
         }
       }
