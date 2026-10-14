@@ -4,6 +4,8 @@ import Testing
 
 let esReply = #"{"id":2,"src":"VenusE 3.0-bc2a3314ce8d","result":{"id":0,"bat_soc":80,"bat_cap":5120,"pv_power":0,"ongrid_power":-797,"offgrid_power":0,"total_grid_input_energy":47029}}"#
 
+let deviceReply = "{\n\t\"id\":\t7,\n\t\"src\":\t\"VenusE 3.0-bc2a3314ce8d\",\n\t\"result\":\t{\n\t\t\"device\":\t\"VenusE 3.0\",\n\t\t\"ver\":\t150,\n\t\t\"ble_mac\":\t\"bc2a3314ce8d\",\n\t\t\"wifi_mac\":\t\"9a254a554cc6\",\n\t\t\"wifi_name\":\t\"Home\",\n\t\t\"ip\":\t\"192.168.68.50\"\n\t}\n}"
+
 struct ProtocolTests {
     @Test func requestIdsSurviveTheFirmwaresSixteenBits() {
         for _ in 0..<1000 {
@@ -73,5 +75,25 @@ struct ProtocolTests {
 
     @Test func garbageHasNoId() {
         #expect(throws: DeviceError.badReply("Reply has no id")) { try MarstekProtocol.replyId(Data("garbage".utf8)) }
+    }
+
+    @Test func deviceRequestAsksEveryDevice() {
+        let text = String(decoding: MarstekProtocol.deviceRequest(id: 7), as: UTF8.self)
+        #expect(text == #"{"id":7,"method":"Marstek.GetDevice","params":{"ble_mac":"0"}}"#)
+    }
+
+    @Test func parsesTheDeviceReply() throws {
+        #expect(try MarstekProtocol.device(Data(deviceReply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "9a254a554cc6"))
+    }
+
+    @Test func aDeviceReplyWithoutModelOrMacStillCounts() throws {
+        let reply = #"{"id":7,"result":{"ble_mac":"","ip":"192.168.68.50"}}"#
+        #expect(try MarstekProtocol.device(Data(reply.utf8)) == DeviceInfo(model: "Marstek", mac: nil))
+    }
+
+    @Test func aDeviceReplyWithoutAResultIsBad() {
+        #expect(throws: DeviceError.badReply("Reply has no result")) {
+            try MarstekProtocol.device(Data(#"{"id":7,"src":"x"}"#.utf8))
+        }
     }
 }

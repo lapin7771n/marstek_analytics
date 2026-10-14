@@ -7,6 +7,11 @@ struct EsStatus: Equatable {
     let ratedWh: Double
 }
 
+struct DeviceInfo: Equatable, Sendable {
+    let model: String
+    let mac: String?
+}
+
 enum MarstekProtocol {
     // The firmware echoes only the low 16 bits of the id and ignores 65535; the retry sends id + 1.
     static func newId() -> Int { Int.random(in: 1...32_766) }
@@ -24,6 +29,16 @@ enum MarstekProtocol {
         let result = try decode(EsResult.self, data)
         guard result.ratedWh > 0 else { throw DeviceError.badReply("Reply has bat_cap \(result.ratedWh)") }
         return EsStatus(socPct: Int(result.socPct.rounded()), ongridW: result.ongridW, offgridW: result.offgridW, ratedWh: result.ratedWh)
+    }
+
+    static func deviceRequest(id: Int) -> Data {
+        Data(#"{"id":\#(id),"method":"Marstek.GetDevice","params":{"ble_mac":"0"}}"#.utf8)
+    }
+
+    static func device(_ data: Data) throws -> DeviceInfo {
+        let result = try decode(DeviceResult.self, data)
+        let mac = [result.wifiMac, result.bleMac].compactMap { $0 }.first { !$0.isEmpty }
+        return DeviceInfo(model: result.device ?? "Marstek", mac: mac)
     }
 
     private static func decode<R: Decodable>(_ type: R.Type, _ data: Data) throws -> R {
@@ -61,5 +76,17 @@ private struct EsResult: Decodable {
         case ongridW = "ongrid_power"
         case offgridW = "offgrid_power"
         case ratedWh = "bat_cap"
+    }
+}
+
+private struct DeviceResult: Decodable {
+    let device: String?
+    let wifiMac: String?
+    let bleMac: String?
+
+    enum CodingKeys: String, CodingKey {
+        case device
+        case wifiMac = "wifi_mac"
+        case bleMac = "ble_mac"
     }
 }
