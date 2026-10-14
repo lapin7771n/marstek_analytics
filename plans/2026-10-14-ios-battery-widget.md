@@ -2037,7 +2037,7 @@ In `ios/project.yml`, add at the top level `options: { developmentLanguage: en }
 - Create: `ios/App/icon.svg`, `ios/App/Assets.xcassets/Contents.json`, `ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json`, `ios/ExportOptions.plist`
 - Modify: `ios/project.yml`, `ios/Makefile`, `README.md`, `CLAUDE.md`
 
-- [ ] **7.1 Icon.** `ios/App/icon.svg` (the charge ring at 75 % with clock hands, option C on the canvas):
+- [x] **7.1 Icon.** `ios/App/icon.svg` (the charge ring at 75 % with clock hands, option C on the canvas):
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 144 144">
@@ -2068,7 +2068,7 @@ In `ios/project.yml`, add at the top level `options: { developmentLanguage: en }
 
 In `ios/project.yml`, under `BatteryETA.settings.base`, add `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Change the `BatteryETA` sources to `sources: [{ path: App, excludes: [icon.svg] }, Shared]` so the SVG stays out of the app bundle.
 
-- [ ] **7.2 Make targets.** Replace `ios/Makefile`:
+- [x] **7.2 Make targets.** Replace `ios/Makefile`:
 
 ```make
 SIM ?= iPhone 18 Pro
@@ -2116,7 +2116,7 @@ upload: archive
 
 Run `make icon && make test`. Expected: `icon-1024.png` is 1024×1024 with no alpha (`magick identify -format '%w %h %[channels]' App/Assets.xcassets/AppIcon.appiconset/icon-1024.png` prints `1024 1024 srgb  3.0`; ImageMagick's own SVG renderer drops the ring, so the icon goes through `rsvg-convert`), and the tests pass.
 
-- [ ] **7.3 Docs.** Add to `README.md`, after "Check the connection":
+- [x] **7.3 Docs.** Add to `README.md`, after "Check the connection":
 
 ````markdown
 ## iPhone widgets
@@ -2147,7 +2147,7 @@ Tools for a Marstek Venus E 3.0 home battery. `streamdeck/` is a Stream Deck plu
 From `ios/`: `make test` · `make icon` · `make upload BUILD=<n>`
 ```
 
-- [ ] **7.4 Commit.** `git add ios README.md CLAUDE.md && git commit -m "feat: add ios icon and testflight upload"`
+- [x] **7.4 Commit.** `git add ios README.md CLAUDE.md && git commit -m "feat: add ios icon and testflight upload"`
 
 - [ ] **7.5 Owner: App Store Connect (about 15 minutes, plus 15–30 minutes of processing).**
   1. Xcode → Settings → Accounts: signed in with the Apple ID of team `WSCTL2V8W5`.
