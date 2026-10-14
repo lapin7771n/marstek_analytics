@@ -51,7 +51,7 @@ Time: about 1 hour per task. Then a day of normal use to see whether the cuts st
 - Produces: `EsStatus(socPct:ongridW:offgridW:ratedWh:)`, `Reading(time:es:)`, `Refresher.refresh(_:now:maxAge:fetch:)`, `Refresher.widgetMaxAge`, `SharedRefresh.shared.run(_:)`.
 - Removes: `BatStatus`, `MarstekProtocol.batStatus`, `Reading.tempC`, `Reading(time:es:bat:)`.
 
-- [ ] **1.1 Tests first.** In `ios/Tests/ProtocolTests.swift`:
+- [x] **1.1 Tests first.** In `ios/Tests/ProtocolTests.swift`:
   - Delete `batReply`, `parsesTheBatReplyFromTheDevice` and `aNonPositiveRatedCapacityIsBad`.
   - Change the expectation in `parsesTheEsReplyFromTheDevice` to `EsStatus(socPct: 80, ongridW: -797, offgridW: 0, ratedWh: 5120)`.
   - Replace `acPowerIsOngridPlusOffgrid` with the tests below:
@@ -174,7 +174,7 @@ actor FetchCounter {
 
 Run `make test`. Expected: the build fails because `EsStatus` has no `ratedWh`.
 
-- [ ] **1.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`:
+- [x] **1.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`:
   - Delete `BatStatus`, `batStatus(_:)` and `BatResult`.
   - Add `let ratedWh: Double` as the last field of `EsStatus`.
   - Add `case ratedWh = "bat_cap"` to `EsResult.CodingKeys`, with `let ratedWh: Double`.
@@ -188,7 +188,7 @@ Run `make test`. Expected: the build fails because `EsStatus` has no `ratedWh`.
     }
 ```
 
-- [ ] **1.3 Reading and client.** Replace `ios/Shared/Reading.swift`:
+- [x] **1.3 Reading and client.** Replace `ios/Shared/Reading.swift`:
 
 ```swift
 import Foundation
@@ -220,7 +220,7 @@ In `ios/Shared/MarstekClient.swift`, replace `reading(at:)`. `gap` stays, becaus
     }
 ```
 
-- [ ] **1.4 Shared refresh.** In `ios/Shared/Store.swift`, replace `Refresher.refresh` and add `widgetMaxAge` and `SharedRefresh`:
+- [x] **1.4 Shared refresh.** In `ios/Shared/Store.swift`, replace `Refresher.refresh` and add `widgetMaxAge` and `SharedRefresh`:
 
 ```swift
 enum Refresher {
@@ -268,7 +268,7 @@ actor SharedRefresh {
 }
 ```
 
-- [ ] **1.5 Widget and app.** In `ios/Widget/BatteryWidgets.swift`, replace `getTimeline`:
+- [x] **1.5 Widget and app.** In `ios/Widget/BatteryWidgets.swift`, replace `getTimeline`:
 
 ```swift
     func getTimeline(in context: Context, completion: @escaping (Timeline<BatteryEntry>) -> Void) {
@@ -284,7 +284,7 @@ In `ios/App/BatteryApp.swift` `poll()`, change `.seconds(15)` to `.seconds(30)`.
 
 Run `make test`. Expected: exit 0.
 
-- [ ] **1.6 Commit.** `git add ios && git commit -m "fix: read only es status on ios and share one widget fetch"`
+- [x] **1.6 Commit.** `git add ios && git commit -m "fix: read only es status on ios and share one widget fetch"`
 
 ---
 
