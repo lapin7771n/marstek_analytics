@@ -2,11 +2,14 @@
 
 Tools for a Marstek Venus E 3.0 home battery. `streamdeck/` is a Stream Deck plugin
 (SDK 3, Node 24, TypeScript) that polls the battery's Open API over UDP on the LAN.
+`ios/` is an iPhone app with widgets (SwiftUI, WidgetKit, xcodegen) that reads the same API.
 
 ## Commands (run from `streamdeck/`)
 
 `npm run build` · `npm run watch` · `npm run typecheck` · `npm test` ·
 `MARSTEK_HOST=192.168.68.50 npm run probe`
+
+From `ios/`: `make test` · `make icon` · `make upload BUILD=<n>`
 
 ## Constraints
 
