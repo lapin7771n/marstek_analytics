@@ -15,7 +15,7 @@
 - The app sends only `ES.GetStatus` and `Bat.GetStatus`. It never sends a method that writes.
 - One request in flight per fetch, 1 s between the two requests. The app polls every 15 s only while it is on screen.
 - Team `WSCTL2V8W5`, automatic signing. Bundle IDs `com.mlapin.marstek.battery` and `com.mlapin.marstek.battery.widget`. App Group `group.com.mlapin.marstek.battery`.
-- iPhone only (`TARGETED_DEVICE_FAMILY: 1`), deployment target iOS 17.0.
+- iPhone and iPad (`TARGETED_DEVICE_FAMILY: "1,2"`); iPhone portrait only, iPad all four orientations. Deployment target iOS 17.0.
 - Everything lives in `ios/`. All commands run from `ios/`. The generated `BatteryETA.xcodeproj` and `build/` are gitignored.
 - `make test` passes after every task. Simulator: `iPhone 18 Pro` (booted).
 - Conventional Commits, one subject line, no co-author trailer. Branch `feat/ios-battery-widget`, cut from `feat/streamdeck-battery-eta`.
