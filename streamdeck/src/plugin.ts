@@ -23,6 +23,7 @@ const poller = new Poller({
 		if (snapshot.error !== undefined) streamDeck.logger.warn(`poll failed: ${snapshot.error} ${snapshot.message ?? ""}`);
 		for (const key of keys) void key.repaint(snapshot);
 	},
+	warn: (message) => streamDeck.logger.warn(message),
 });
 
 for (const key of keys) {

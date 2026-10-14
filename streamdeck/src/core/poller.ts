@@ -6,8 +6,9 @@ import type { PollError, Snapshot } from "./views";
 
 const TICK_MS = 15_000;
 const BACKOFF_MS = 60_000;
-const BAT_EVERY = 2;
-const BAT_MAX_AGE_MS = BAT_EVERY * TICK_MS;
+const BAT_EVERY_MS = 300_000;
+const BAT_RETRY_MS = 60_000;
+const ES_GAP_MS = 120_000;
 const FAILS_BEFORE_ERROR = 3;
 
 export type PollerDeps = {
@@ -15,6 +16,7 @@ export type PollerDeps = {
 	now(): number;
 	publish(snapshot: Snapshot): void;
 	estimator: Estimator;
+	warn?(message: string): void;
 };
 
 export class Poller {
@@ -23,9 +25,10 @@ export class Poller {
 	#running?: Promise<void>;
 	#stopped = false;
 	#generation = 0;
-	#ticks = 0;
 	#fails = 0;
-	#batAt = Number.NEGATIVE_INFINITY;
+	#batTriedAt = Number.NEGATIVE_INFINITY;
+	#batFailed = false;
+	#esAt = Number.NEGATIVE_INFINITY;
 	#tempC?: number;
 	#last: Snapshot = {};
 
@@ -53,7 +56,8 @@ export class Poller {
 		this.#device?.close();
 		this.#device = undefined;
 		this.#fails = 0;
-		this.#ticks = 0;
+		this.#batTriedAt = Number.NEGATIVE_INFINITY;
+		this.#esAt = Number.NEGATIVE_INFINITY;
 		this.#stopped = false;
 		void this.kick();
 	}
@@ -89,25 +93,34 @@ export class Poller {
 			}
 			const device = this.#device;
 
-			if (this.#ticks % BAT_EVERY === 0 || this.deps.now() - this.#batAt > BAT_MAX_AGE_MS) {
-				const reply = await device.call("Bat.GetStatus");
-				if (stale()) return;
-				const bat = toBatStatus(reply, this.deps.now());
-				this.deps.estimator.battery(bat);
-				this.#tempC = bat.tempC;
-				this.#batAt = bat.t;
+			const now = this.deps.now();
+			const batWaitMs = this.#batFailed ? BAT_RETRY_MS : BAT_EVERY_MS;
+			const gap = now - this.#esAt > ES_GAP_MS && this.#batTriedAt <= this.#esAt;
+			if (now - this.#batTriedAt >= batWaitMs || gap) {
+				this.#batTriedAt = now;
+				try {
+					const reply = await device.call("Bat.GetStatus");
+					if (stale()) return;
+					const bat = toBatStatus(reply, this.deps.now());
+					this.deps.estimator.battery(bat);
+					this.#tempC = bat.tempC;
+					this.#batFailed = false;
+				} catch (err) {
+					if (stale()) return;
+					this.#batFailed = true;
+					this.deps.warn?.(`Bat.GetStatus failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+				}
 			}
 			const reply = await device.call("ES.GetStatus");
 			if (stale()) return;
 			const es = toEsStatus(reply, this.deps.now());
 
 			this.#fails = 0;
-			this.#ticks++;
+			this.#esAt = es.t;
 			this.#set({ estimate: this.deps.estimator.sample(es), tempC: this.#tempC });
 		} catch (err) {
 			if (stale()) return;
 			this.#fails++;
-			this.#ticks = 0;
 			const error: PollError =
 				err instanceof DeviceError ? err.kind : err instanceof SettingsError ? "settings" : "protocol";
 			const urgent = error === "settings" || error === "blocked";

@@ -2,6 +2,7 @@ import type { BatStatus, EsStatus, Estimate, Learned, Mode } from "./types";
 
 const IDLE_W = 30;
 const GAP_S = 120;
+const BAT_GAP_S = 600;
 const WARMUP_S = 40;
 const TAU_FAST_S = 60;
 const TAU_MID_S = 900;
@@ -48,6 +49,7 @@ export class Estimator {
 	#chargeW?: number;
 	#refChargeW?: number;
 	#cal?: { capacityWh: number; acWh: number };
+	#movedWh = 0;
 
 	constructor(learned: Learned = defaultLearned(), floorPct = 12) {
 		this.#learned = copy(learned);
@@ -65,7 +67,8 @@ export class Estimator {
 	battery(bat: BatStatus): void {
 		const previous = this.#bat;
 		this.#bat = bat;
-		if (previous !== undefined && (bat.t - previous.t) / 1000 > GAP_S) this.#cal = undefined;
+		this.#movedWh = 0;
+		if (previous !== undefined && (bat.t - previous.t) / 1000 > BAT_GAP_S) this.#cal = undefined;
 		if (this.#mode === "idle") return;
 		if (this.#cal === undefined) {
 			this.#cal = { capacityWh: bat.capacityWh, acWh: 0 };
@@ -91,6 +94,11 @@ export class Estimator {
 		const continuous = elapsed > 0 && elapsed <= GAP_S;
 		const dt = continuous ? elapsed : 0;
 		this.#lastT = es.t;
+		if (this.#bat !== undefined) {
+			const afterBatS = Math.max(0, Math.min(dt, (es.t - this.#bat.t) / 1000));
+			const ratio = acW < 0 ? this.#learned.chargeRatio : this.#learned.dischargeRatio;
+			this.#movedWh += (acW * ratio * afterBatS) / 3600;
+		}
 
 		const target: Mode = acW > IDLE_W ? "discharging" : acW < -IDLE_W ? "charging" : "idle";
 		if (!continuous) {
@@ -159,12 +167,12 @@ export class Estimator {
 		if (this.#mode !== "charging" || bat === undefined || chargeW === undefined || chargeW <= 0) return null;
 
 		const bucketWh = bat.ratedWh / 100;
-		const pctNow = Math.min(99, Math.floor(bat.capacityWh / bucketWh));
+		const pctNow = Math.min(99, Math.floor(this.#capacityWh(bat) / bucketWh));
 		const baseW = (chargeW / this.#taperAt(pctNow)) * this.#learned.chargeRatio;
 
 		let hours = 0;
 		for (let pct = pctNow; pct < 100; pct++) {
-			const from = Math.max(bat.capacityWh, pct * bucketWh);
+			const from = Math.max(this.#capacityWh(bat), pct * bucketWh);
 			hours += Math.max(0, (pct + 1) * bucketWh - from) / (baseW * this.#taperAt(pct));
 		}
 		return Math.min(hours, MAX_H);
@@ -175,7 +183,7 @@ export class Estimator {
 		const projected = this.#mode !== "discharging";
 		if (bat === undefined) return { toEmptyH: null, projected };
 
-		const acWh = Math.max(0, bat.capacityWh - (this.floorPct / 100) * bat.ratedWh) / this.#learned.dischargeRatio;
+		const acWh = Math.max(0, this.#capacityWh(bat) - (this.floorPct / 100) * bat.ratedWh) / this.#learned.dischargeRatio;
 		if (!projected) {
 			if (this.#fastW === undefined || this.#midW === undefined) return { toEmptyH: null, projected };
 			return { toEmptyH: solveRuntime(acWh, this.#fastW, this.#midW), projected };
@@ -185,6 +193,10 @@ export class Estimator {
 		const loadW = backupW > IDLE_W ? backupW : this.#learned.typicalLoadW;
 		if (loadW === null || loadW <= 0) return { toEmptyH: null, projected };
 		return { toEmptyH: Math.min(MAX_H, acWh / loadW), projected };
+	}
+
+	#capacityWh(bat: BatStatus): number {
+		return clamp(bat.capacityWh - this.#movedWh, 0, bat.ratedWh);
 	}
 
 	#taperAt(pct: number): number {
