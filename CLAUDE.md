@@ -13,7 +13,7 @@ From `ios/`: `make test` · `make icon` · `make upload BUILD=<n>`
 
 ## Constraints
 
-- The plugin only reads: `ES.GetStatus` and `Bat.GetStatus`. Never send a method that writes.
+- The plugin only reads: `ES.GetStatus` every 15 s, `Bat.GetStatus` at most every 5 min (it is suspected to reset some firmwares). The iOS app sends only `ES.GetStatus`. Never send a method that writes.
 - The firmware answers one UDP request at a time. Keep one request in flight and the 15 s poll.
 - `src/core/` must not import `@elgato/streamdeck`.
 - Device facts and the ETA design: `plans/2026-10-12-streamdeck-battery-eta.md`.

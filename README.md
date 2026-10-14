@@ -9,7 +9,7 @@ A Stream Deck plugin for the Marstek Venus E 3.0 home battery. It reads the batt
 
 Green means charging, amber discharging, red under 20 % or under 30 min. A red dot means the last poll failed and the key shows the last reading.
 
-The plugin only reads. It sends `ES.GetStatus` and `Bat.GetStatus` and never a command that changes the battery.
+The plugin only reads. It sends `ES.GetStatus` every 15 s and `Bat.GetStatus` every 5 minutes, and never a command that changes the battery.
 
 ## Requirements
 

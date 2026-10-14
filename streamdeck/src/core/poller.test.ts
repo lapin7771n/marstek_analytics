@@ -13,11 +13,12 @@ const BAT: JsonObject = { bat_capacity: 4244, rated_capacity: 5120, bat_temp: 24
 class FakeDevice implements Device {
 	calls: string[] = [];
 	fail?: Error;
+	failOnly?: string;
 	closed = false;
 	constructor(readonly es: JsonObject = ES) {}
 	call(method: string): Promise<JsonObject> {
 		this.calls.push(method);
-		if (this.fail !== undefined) return Promise.reject(this.fail);
+		if (this.fail !== undefined && (this.failOnly === undefined || this.failOnly === method)) return Promise.reject(this.fail);
 		return Promise.resolve(method === "ES.GetStatus" ? this.es : BAT);
 	}
 	close(): void {
@@ -77,12 +78,29 @@ test("the first poll reads the battery and publishes an estimate", async () => {
 	poller.stop();
 });
 
-test("polls every 15 s and reads the capacity every second poll", async () => {
+test("polls every 15 s and reads the capacity every 5 minutes", async () => {
 	const { device, poller } = rig();
 	await poller.kick();
+	await vi.advanceTimersByTimeAsync(285_000);
+	expect(device.calls).toEqual(["Bat.GetStatus", ...new Array<string>(20).fill("ES.GetStatus")]);
 	await vi.advanceTimersByTimeAsync(15_000);
+	expect(device.calls.slice(21)).toEqual(["Bat.GetStatus", "ES.GetStatus"]);
+	poller.stop();
+});
+
+test("a failed capacity read keeps polling and retries the capacity after 60 s", async () => {
+	const { device, published, poller } = rig();
+	device.fail = new DeviceError("timeout", "No reply");
+	device.failOnly = "Bat.GetStatus";
+	await poller.kick();
+	expect(device.calls).toEqual(["Bat.GetStatus", "ES.GetStatus"]);
+	expect(published.at(-1)?.error).toBeUndefined();
+	expect(published.at(-1)?.estimate?.socPct).toBe(82);
+
+	await vi.advanceTimersByTimeAsync(45_000);
+	expect(device.calls.slice(2)).toEqual(["ES.GetStatus", "ES.GetStatus", "ES.GetStatus"]);
 	await vi.advanceTimersByTimeAsync(15_000);
-	expect(device.calls).toEqual(["Bat.GetStatus", "ES.GetStatus", "ES.GetStatus", "Bat.GetStatus", "ES.GetStatus"]);
+	expect(device.calls.slice(5)).toEqual(["Bat.GetStatus", "ES.GetStatus"]);
 	poller.stop();
 });
 
@@ -236,19 +254,25 @@ test("a device that connects after stop is closed unused", async () => {
 	expect(published).toEqual([]);
 });
 
-test("the poll after a failed one reads the capacity again", async () => {
+test("after two minutes without a reading the next poll reads the capacity first", async () => {
 	const { device, poller } = rig();
 	await poller.kick();
-	await vi.advanceTimersByTimeAsync(15_000);
 	device.fail = new DeviceError("timeout", "No reply");
-	await vi.advanceTimersByTimeAsync(15_000);
-	expect(device.calls).toEqual(["Bat.GetStatus", "ES.GetStatus", "ES.GetStatus", "Bat.GetStatus"]);
-
+	await vi.advanceTimersByTimeAsync(105_000);
 	device.fail = undefined;
-	await vi.advanceTimersByTimeAsync(15_000);
-	expect(device.calls.slice(4)).toEqual(["Bat.GetStatus", "ES.GetStatus"]);
-	await vi.advanceTimersByTimeAsync(15_000);
-	expect(device.calls.slice(6)).toEqual(["ES.GetStatus"]);
+	const before = device.calls.length;
+	await vi.advanceTimersByTimeAsync(60_000);
+	expect(device.calls.slice(before)).toEqual(["Bat.GetStatus", "ES.GetStatus"]);
+	poller.stop();
+});
+
+test("while the battery is down the capacity is asked at most once a minute", async () => {
+	const { device, poller } = rig();
+	device.fail = new DeviceError("timeout", "No reply");
+	await poller.kick();
+	await poller.kick();
+	await poller.kick();
+	expect(device.calls).toEqual(["Bat.GetStatus", "ES.GetStatus", "ES.GetStatus", "ES.GetStatus"]);
 	poller.stop();
 });
 

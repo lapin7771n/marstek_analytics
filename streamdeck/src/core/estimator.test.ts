@@ -16,6 +16,7 @@ class Rig {
 		public capacityWh: number,
 		readonly storeRatio = 0.88,
 		readonly drainRatio = 1.09,
+		readonly batEveryS = 30,
 	) {}
 
 	run(...phases: Phase[]): Estimate {
@@ -25,7 +26,7 @@ class Rig {
 				const acW = phase.ongridW + offgridW;
 				const ratio = acW < 0 ? this.storeRatio : this.drainRatio;
 				if (this.t > 0) this.capacityWh = Math.min(RATED, this.capacityWh - (acW * ratio * STEP_S) / 3600);
-				if ((this.t / STEP_S) % 2 === 0) {
+				if (this.t % this.batEveryS === 0) {
 					this.est.battery({ t: this.t * 1000, capacityWh: this.capacityWh, ratedWh: RATED, tempC: 24 });
 				}
 				this.last = this.est.sample({
@@ -222,3 +223,16 @@ test("the floor is configurable", () => {
 function rigUsable(startWh: number, seconds: number, loadW: number): number {
 	return startWh - (loadW * 1.09 * (seconds - STEP_S)) / 3600;
 }
+
+test("between capacity reads the runtime follows the energy drawn", () => {
+	const phase = { seconds: 1500, ongridW: 0, offgridW: 2000 };
+	const every = new Rig(new Estimator(), 2500).run(phase).toEmptyH ?? 0;
+	const rare = new Rig(new Estimator(), 2500, 0.88, 1.09, 300).run(phase).toEmptyH ?? 0;
+	expect(Math.abs(rare - every)).toBeLessThan(0.02);
+});
+
+test("the discharge ratio is learned with a capacity read every 5 minutes", () => {
+	const est = new Estimator();
+	new Rig(est, 4500, 0.88, 1.2, 300).run({ seconds: 7200, ongridW: 0, offgridW: 800 });
+	expect(est.learned.dischargeRatio).toBeGreaterThan(1.13);
+});
