@@ -321,12 +321,12 @@
         }
       }
     },
-    "Settings › Privacy & Security › Local Network › turn on Battery ETA.": {
+    "Tap to open Settings and turn on Local Network. If it is not there: Privacy & Security › Local Network.": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Параметри › Приватність і безпека › Локальна мережа › увімкніть Battery ETA."
+            "value": "Торкніться, щоб відкрити Параметри, і ввімкніть «Локальна мережа». Якщо його там немає: Приватність і безпека › Локальна мережа."
           }
         }
       }

@@ -36,7 +36,7 @@ struct ProtocolTests {
 
     @Test func aMissingFieldIsBadNeverZero() {
         #expect(throws: DeviceError.badReply("Reply has a missing field")) {
-            try MarstekProtocol.esStatus(Data(#"{"id":2,"result":{"bat_soc":80,"ongrid_power":-797}}"#.utf8))
+            try MarstekProtocol.esStatus(Data(#"{"id":2,"result":{"bat_soc":80,"ongrid_power":-797,"bat_cap":5120}}"#.utf8))
         }
     }
 
@@ -65,9 +65,10 @@ struct ProtocolTests {
     }
 
     @Test func aSnapshotStoredWithTemperatureStillDecodes() throws {
-        let old = #"{"time":0,"socPct":80,"acW":400,"offgridW":0,"capacityWh":4121,"ratedWh":5120,"tempC":24}"#
-        let reading = try JSONDecoder().decode(Reading.self, from: Data(old.utf8))
-        #expect(reading.capacityWh == 4121)
+        let old = #"{"reading":{"time":0,"socPct":80,"acW":400,"offgridW":0,"capacityWh":4121,"ratedWh":5120,"tempC":24},"checkedAt":0}"#
+        let defaults = try #require(UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        defaults.set(Data(old.utf8), forKey: "snapshot")
+        #expect(Store(defaults: defaults).snapshot?.reading?.capacityWh == 4121)
     }
 
     @Test func garbageHasNoId() {

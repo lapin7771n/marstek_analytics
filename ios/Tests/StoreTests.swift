@@ -31,7 +31,7 @@ struct StoreTests {
         #expect(snapshot.error == .blocked)
     }
 
-    @Test(arguments: ["", "192.168.68.50; rm"])
+    @Test(arguments: ["", "192.168.68.50; rm", "192.168.68.500", "192.168.68"])
     func aBadHostSendsNothing(host: String) async {
         var fetched = false
         let snapshot = await Refresher.refresh(store(host: host)) { _ in
@@ -40,6 +40,19 @@ struct StoreTests {
         }
         #expect(snapshot.error == .settings)
         #expect(!fetched)
+    }
+
+    @Test func aBadReplyIsAnError() async {
+        let snapshot = await Refresher.refresh(store()) { _ in throw DeviceError.badReply("x") }
+        #expect(snapshot.error == .badReply)
+        #expect(Face(snapshot, floorPct: 12).problem == "ERROR")
+    }
+
+    @Test func anIpNeedsFourOctetsUpTo255() {
+        #expect(BatterySettings(host: "192.168.68.500").problem == "Enter the battery IP address")
+        #expect(BatterySettings(host: "192.168.68").problem == "Enter the battery IP address")
+        #expect(BatterySettings(host: "192.168.68.50").problem == nil)
+        #expect(BatterySettings(host: "battery.local").problem == nil)
     }
 
     @Test func aFreshStoreHasDefaults() {

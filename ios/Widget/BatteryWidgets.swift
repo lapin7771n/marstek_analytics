@@ -29,8 +29,16 @@ struct BatteryProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<BatteryEntry>) -> Void) {
         Task {
             let snapshot = await SharedRefresh.shared.run { await Refresher.refresh(Store(), maxAge: Refresher.widgetMaxAge) }
-            let entry = BatteryEntry(date: .now, face: Face(snapshot, floorPct: Store().settings.floorPct))
-            completion(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60))))
+            let now = Date.now
+            let floorPct = Store().settings.floorPct
+            var entries = [BatteryEntry(date: now, face: Face(snapshot, floorPct: floorPct, now: now))]
+            if let time = snapshot.reading?.time {
+                let staleAt = time.addingTimeInterval(Face.staleAfter)
+                if staleAt > now {
+                    entries.append(BatteryEntry(date: staleAt, face: Face(snapshot, floorPct: floorPct, now: staleAt)))
+                }
+            }
+            completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60))))
         }
     }
 }
@@ -38,7 +46,9 @@ struct BatteryProvider: TimelineProvider {
 struct RingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "ring", provider: BatteryProvider()) { entry in
-            SmallFace(face: entry.face).containerBackground(Palette.bg, for: .widget)
+            SmallFace(face: entry.face)
+                .containerBackground(Palette.bg, for: .widget)
+                .widgetURL(entry.face.blocked ? AppLinks.localNetwork : nil)
         }
         .configurationDisplayName("Battery")
         .description("Charge and power.")
@@ -50,7 +60,9 @@ struct RingWidget: Widget {
 struct EtaWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "eta", provider: BatteryProvider()) { entry in
-            MediumFace(face: entry.face).containerBackground(Palette.bg, for: .widget)
+            MediumFace(face: entry.face)
+                .containerBackground(Palette.bg, for: .widget)
+                .widgetURL(entry.face.blocked ? AppLinks.localNetwork : nil)
         }
         .configurationDisplayName("Battery and ETA")
         .description("Charge, power and time until full or empty.")
@@ -62,7 +74,9 @@ struct EtaWidget: Widget {
 struct LockWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "lock", provider: BatteryProvider()) { entry in
-            LockFace(face: entry.face).containerBackground(Color.clear, for: .widget)
+            LockFace(face: entry.face)
+                .containerBackground(Color.clear, for: .widget)
+                .widgetURL(entry.face.blocked ? AppLinks.localNetwork : nil)
         }
         .configurationDisplayName("Battery")
         .description("Charge on the Lock Screen.")
