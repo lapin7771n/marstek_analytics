@@ -2108,8 +2108,6 @@ upload: archive
 	<string>WSCTL2V8W5</string>
 	<key>signingStyle</key>
 	<string>automatic</string>
-	<key>testFlightInternalTestingOnly</key>
-	<true/>
 </dict>
 </plist>
 ```
