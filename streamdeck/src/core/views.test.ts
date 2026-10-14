@@ -66,8 +66,9 @@ test("eta while idle is a projection, or the full mark when there is none", () =
 
 test("rendered keys never contain NaN or Infinity and escape markup", () => {
 	const svg = renderKey(etaView({ estimate: idle }, 30));
-	expect(svg).toContain("&gt;24h");
+	expect(svg).toContain(">30h<");
 	expect(svg).not.toMatch(/NaN|Infinity/);
+	expect(renderKey({ ...etaView({ estimate: idle }, 30), value: "<a&b>" })).toContain("&lt;a&amp;b&gt;");
 });
 
 test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])("an estimate of %f hours shows the placeholder", (hours) => {

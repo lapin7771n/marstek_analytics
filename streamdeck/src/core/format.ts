@@ -1,6 +1,5 @@
 export function formatDuration(hours: number): string {
 	const minutes = hours * 60;
-	if (minutes >= 24 * 60) return ">24h";
 	if (minutes >= 600) return `${Math.round(minutes / 60)}h`;
 	if (minutes >= 60) {
 		const rounded = Math.round(minutes / 10) * 10;

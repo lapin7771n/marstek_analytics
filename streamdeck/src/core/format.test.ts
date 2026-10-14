@@ -3,7 +3,8 @@ import { expect, test } from "vitest";
 import { formatDuration, Stabiliser } from "./format";
 
 test.each([
-	[30, ">24h"],
+	[240, "240h"],
+	[30, "30h"],
 	[12.4, "12h"],
 	[3.66, "3h40"],
 	[1, "1h00"],
