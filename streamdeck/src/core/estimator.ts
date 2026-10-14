@@ -50,10 +50,15 @@ export class Estimator {
 	#refChargeW?: number;
 	#cal?: { capacityWh: number; acWh: number };
 	#movedWh = 0;
+	#batSinceSample = false;
 
 	constructor(learned: Learned = defaultLearned(), floorPct = 12) {
 		this.#learned = copy(learned);
 		this.floorPct = floorPct;
+	}
+
+	get hasCapacity(): boolean {
+		return this.#bat !== undefined;
 	}
 
 	get learned(): Learned {
@@ -68,7 +73,9 @@ export class Estimator {
 		const previous = this.#bat;
 		this.#bat = bat;
 		this.#movedWh = 0;
+		this.#batSinceSample = true;
 		if (previous !== undefined && (bat.t - previous.t) / 1000 > BAT_GAP_S) this.#cal = undefined;
+		if (this.#lastT !== undefined && (bat.t - this.#lastT) / 1000 > GAP_S) this.#cal = undefined;
 		if (this.#mode === "idle") return;
 		if (this.#cal === undefined) {
 			this.#cal = { capacityWh: bat.capacityWh, acWh: 0 };
@@ -94,6 +101,11 @@ export class Estimator {
 		const continuous = elapsed > 0 && elapsed <= GAP_S;
 		const dt = continuous ? elapsed : 0;
 		this.#lastT = es.t;
+		if (!continuous && !this.#batSinceSample) {
+			this.#bat = undefined;
+			this.#movedWh = 0;
+		}
+		this.#batSinceSample = false;
 		if (this.#bat !== undefined) {
 			const afterBatS = Math.max(0, Math.min(dt, (es.t - this.#bat.t) / 1000));
 			const ratio = acW < 0 ? this.#learned.chargeRatio : this.#learned.dischargeRatio;
