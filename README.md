@@ -2,8 +2,12 @@
 
 A Stream Deck plugin for the Marstek Venus E 3.0 home battery. It reads the battery over your LAN and shows two keys:
 
-- **Battery level:** charge percent and current power (`+` while charging).
-- **ETA:** time until full while charging, time until empty while discharging. While idle on the grid it shows `IF OUTAGE`: how long the battery would carry the backup-socket load.
+- **Battery level:** charge percent on a ring gauge and current power (`+` while charging).
+- **ETA:** time until full while charging, time until empty while discharging. While idle on the grid it shows `IF OUTAGE`: how long the battery would carry the backup-socket load, or your typical load when that socket is idle.
+
+![Battery level keys on the top row, ETA keys on the bottom row](docs/keys.png)
+
+Green means charging, amber discharging, red under 20 % or under 30 min. A red dot means the last poll failed and the key shows the last reading.
 
 The plugin only reads. It sends `ES.GetStatus` and `Bat.GetStatus` and never a command that changes the battery.
 
