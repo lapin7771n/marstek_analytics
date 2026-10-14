@@ -182,9 +182,9 @@ struct RectangularFace: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(face.updated == nil ? "Battery" : "Battery \(face.percent)")
+            Text(face.updated == nil ? String(localized: "Battery") : String(localized: "Battery \(face.percent)"))
                 .font(.system(size: 17, weight: .bold, design: .rounded))
-            Text(face.updated == nil ? "Open the app" : "\(face.etaLabel) \(face.eta)")
+            Text(face.updated == nil ? String(localized: "Open the app") : "\(face.etaLabel) \(face.eta)")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
             Group {
                 if let problem = face.problem, let updated = face.updated {

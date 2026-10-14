@@ -9,7 +9,7 @@ struct Face: Equatable {
     var fill = 0.0
     var charging = false
     var power = ""
-    var etaLabel = "BATTERY"
+    var etaLabel = String(localized: "BATTERY")
     var eta = "··"
     var tone = Tone.neutral
     var stale = true
@@ -36,19 +36,19 @@ extension Face {
 
         switch est.mode {
         case .charging:
-            power = "+\(watts) W"
+            power = String(localized: "+\(watts) W")
             tone = .good
-            etaLabel = "FULL IN"
-            eta = r.socPct >= 100 ? "FULL" : etaText
+            etaLabel = String(localized: "FULL IN")
+            eta = r.socPct >= 100 ? String(localized: "FULL") : etaText
         case .discharging:
-            power = "−\(watts) W"
+            power = String(localized: "−\(watts) W")
             tone = r.socPct < 20 || (est.hours ?? 0) < 0.5 ? .bad : .warn
-            etaLabel = "EMPTY IN"
+            etaLabel = String(localized: "EMPTY IN")
             eta = etaText
         case .idle:
-            power = "IDLE"
-            etaLabel = est.hours == nil ? "ETA" : "IF OUTAGE"
-            eta = est.hours == nil ? (r.socPct >= 100 ? "FULL" : "—") : etaText
+            power = String(localized: "IDLE")
+            etaLabel = est.hours == nil ? String(localized: "ETA") : String(localized: "IF OUTAGE")
+            eta = est.hours == nil ? (r.socPct >= 100 ? String(localized: "FULL") : "—") : etaText
         }
     }
 

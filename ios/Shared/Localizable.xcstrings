@@ -1,0 +1,388 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ · %@ ago": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ тому"
+          }
+        }
+      }
+    },
+    "+%lld W": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld Вт"
+          }
+        }
+      }
+    },
+    "ALLOW LAN": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ДОЗВОЛЬТЕ LAN"
+          }
+        }
+      }
+    },
+    "BATTERY": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "БАТАРЕЯ"
+          }
+        }
+      }
+    },
+    "Battery": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Батарея"
+          }
+        }
+      }
+    },
+    "Battery %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Батарея %@"
+          }
+        }
+      }
+    },
+    "Battery IP": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IP батареї"
+          }
+        }
+      }
+    },
+    "Battery IP address": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IP-адреса батареї"
+          }
+        }
+      }
+    },
+    "Battery and ETA": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Батарея і час"
+          }
+        }
+      }
+    },
+    "Charge and power.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заряд і потужність."
+          }
+        }
+      }
+    },
+    "Charge on the Lock Screen.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заряд на екрані блокування."
+          }
+        }
+      }
+    },
+    "Charge, power and time until full or empty.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заряд, потужність і час до повного заряду чи розряду."
+          }
+        }
+      }
+    },
+    "Checking…": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевірка…"
+          }
+        }
+      }
+    },
+    "EMPTY IN": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ДО РОЗРЯДУ"
+          }
+        }
+      }
+    },
+    "ERROR": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ПОМИЛКА"
+          }
+        }
+      }
+    },
+    "ETA": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ЧАС"
+          }
+        }
+      }
+    },
+    "Enter the battery IP address": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введіть IP-адресу батареї"
+          }
+        }
+      }
+    },
+    "FULL": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ЗАРЯДЖЕНО"
+          }
+        }
+      }
+    },
+    "FULL IN": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ДО ЗАРЯДУ"
+          }
+        }
+      }
+    },
+    "IDLE": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ПАУЗА"
+          }
+        }
+      }
+    },
+    "IF OUTAGE": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "БЕЗ СВІТЛА"
+          }
+        }
+      }
+    },
+    "If it fails": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Якщо не працює"
+          }
+        }
+      }
+    },
+    "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підключіться до Wi‑Fi батареї й увімкніть Open API для батареї в застосунку Marstek."
+          }
+        }
+      }
+    },
+    "NO LINK": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "НЕМАЄ ЗВʼЯЗКУ"
+          }
+        }
+      }
+    },
+    "Now": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зараз"
+          }
+        }
+      }
+    },
+    "Open the app": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрийте застосунок"
+          }
+        }
+      }
+    },
+    "Port": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Порт"
+          }
+        }
+      }
+    },
+    "Port must be 1 to 65535": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Порт має бути від 1 до 65535"
+          }
+        }
+      }
+    },
+    "Reserve ": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резерв "
+          }
+        }
+      }
+    },
+    "Reserve must be 0 to 50 %": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резерв має бути від 0 до 50 %"
+          }
+        }
+      }
+    },
+    "SET IP": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ВКАЖІТЬ IP"
+          }
+        }
+      }
+    },
+    "Save and check": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зберегти й перевірити"
+          }
+        }
+      }
+    },
+    "Settings › Privacy & Security › Local Network › turn on Battery ETA.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Параметри › Приватність і безпека › Локальна мережа › увімкніть Battery ETA."
+          }
+        }
+      }
+    },
+    "The reserve is the charge the battery keeps back. EMPTY IN counts down to it.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резерв — заряд, який батарея не віддає. ДО РОЗРЯДУ рахує час до нього."
+          }
+        }
+      }
+    },
+    "Updated %@ ago": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оновлено %@ тому"
+          }
+        }
+      }
+    },
+    "h": {
+      "comment": "Hours unit, as in 6h20 and 21h",
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "год"
+          }
+        }
+      }
+    },
+    "m": {
+      "comment": "Minutes unit, as in 25m",
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "хв"
+          }
+        }
+      }
+    },
+    "−%lld W": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−%lld Вт"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
