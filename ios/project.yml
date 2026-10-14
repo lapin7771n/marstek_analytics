@@ -1,5 +1,6 @@
 name: BatteryETA
 options:
+  developmentLanguage: en
   bundleIdPrefix: com.mlapin.marstek
   deploymentTarget:
     iOS: "17.0"
@@ -31,6 +32,7 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSLocalNetworkUsageDescription: Battery ETA reads your Marstek battery over your home Wi-Fi.
         ITSAppUsesNonExemptEncryption: false
+        CFBundleLocalizations: [en, uk]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mlapin.marstek.battery
@@ -50,6 +52,7 @@ targets:
         CFBundleDisplayName: Battery ETA
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        CFBundleLocalizations: [en, uk]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mlapin.marstek.battery.widget

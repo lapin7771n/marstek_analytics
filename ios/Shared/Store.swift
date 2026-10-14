@@ -6,9 +6,9 @@ struct BatterySettings: Codable, Equatable {
     var floorPct = 12
 
     var problem: String? {
-        if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil { return "Enter the battery IP address" }
-        if !(1...65535).contains(port) { return "Port must be 1 to 65535" }
-        if !(0...50).contains(floorPct) { return "Reserve must be 0 to 50 %" }
+        if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil { return String(localized: "Enter the battery IP address") }
+        if !(1...65535).contains(port) { return String(localized: "Port must be 1 to 65535") }
+        if !(0...50).contains(floorPct) { return String(localized: "Reserve must be 0 to 50 %") }
         return nil
     }
 }
@@ -26,10 +26,10 @@ enum FetchError: String, Codable {
 
     var text: String {
         switch self {
-        case .settings: "SET IP"
-        case .blocked: "ALLOW LAN"
-        case .noLink: "NO LINK"
-        case .badReply: "ERROR"
+        case .settings: String(localized: "SET IP")
+        case .blocked: String(localized: "ALLOW LAN")
+        case .noLink: String(localized: "NO LINK")
+        case .badReply: String(localized: "ERROR")
         }
     }
 }

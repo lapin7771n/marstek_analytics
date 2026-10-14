@@ -1,0 +1,16 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery ETA зчитує вашу батарею Marstek через домашню мережу Wi‑Fi."
+          }
+        }
+      }
+    }
+  }
+}

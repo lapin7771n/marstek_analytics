@@ -41,7 +41,7 @@ struct SettingsScreen: View {
                 } header: {
                     Text("Battery IP")
                 } footer: {
-                    Text(settings.problem ?? "The reserve is the charge the battery keeps back. EMPTY IN counts down to it.")
+                    Text(settings.problem ?? String(localized: "The reserve is the charge the battery keeps back. EMPTY IN counts down to it."))
                 }
 
                 Section {
@@ -82,7 +82,7 @@ struct SettingsScreen: View {
         checking || settings.problem != nil
     }
 
-    private func hint(_ code: String, _ text: String) -> some View {
+    private func hint(_ code: LocalizedStringKey, _ text: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(code).font(.system(size: 13, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(Palette.bad)
             Text(text).font(.subheadline)
