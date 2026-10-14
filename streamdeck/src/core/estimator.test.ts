@@ -236,3 +236,36 @@ test("the discharge ratio is learned with a capacity read every 5 minutes", () =
 	new Rig(est, 4500, 0.88, 1.2, 300).run({ seconds: 7200, ongridW: 0, offgridW: 800 });
 	expect(est.learned.dischargeRatio).toBeGreaterThan(1.13);
 });
+
+test("between capacity reads the time to full follows the energy stored, above 90 % too", () => {
+	const phase = { seconds: 1500, ongridW: -2000 };
+	const everyRig = new Rig(new Estimator(), 4000);
+	const every = everyRig.run(phase).toFullH ?? 0;
+	const rare = new Rig(new Estimator(), 4000, 0.88, 1.09, 300).run(phase).toFullH ?? 0;
+	expect(everyRig.capacityWh / RATED).toBeGreaterThan(0.9);
+	expect(Math.abs(rare - every)).toBeLessThan(0.005);
+});
+
+test("a hole in the readings is not learned as a discharge ratio", () => {
+	const est = new Estimator();
+	const sample = (s: number) => est.sample({ t: s * 1000, socPct: 80, ongridW: 0, offgridW: 1500 });
+	const battery = (s: number) =>
+		est.battery({ t: s * 1000, capacityWh: 4500 - (1500 * 1.09 * s) / 3600, ratedWh: RATED, tempC: 24 });
+	sample(0);
+	battery(15);
+	for (let s = 15; s <= 450; s += 15) sample(s);
+	battery(585);
+	sample(585);
+	expect(est.learned.dischargeRatio).toBe(1.09);
+});
+
+test("after a gap there is no runtime until a fresh capacity read", () => {
+	const est = new Estimator();
+	const sample = (s: number) => est.sample({ t: s * 1000, socPct: 80, ongridW: 0, offgridW: 300 });
+	sample(0);
+	est.battery({ t: 15_001, capacityWh: 4000, ratedWh: RATED, tempC: 24 });
+	expect(sample(15).toEmptyH).not.toBeNull();
+	expect(sample(15 + 8 * 3600).toEmptyH).toBeNull();
+	est.battery({ t: (30 + 8 * 3600) * 1000 + 1, capacityWh: 1000, ratedWh: RATED, tempC: 24 });
+	expect(sample(30 + 8 * 3600).toEmptyH).not.toBeNull();
+});
