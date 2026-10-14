@@ -41,6 +41,10 @@ struct SettingsScreen: View {
                         .autocorrectionDisabled()
                         .monospacedDigit()
                         .accessibilityLabel("Battery IP address")
+                    FindBatteryRow(port: settings.port) { host in
+                        settings.host = host
+                        Task { await save() }
+                    }
                     LabeledContent("Port") {
                         TextField("30000", value: $settings.port, format: .number.grouping(.never))
                             .keyboardType(.numberPad)
@@ -183,17 +187,23 @@ struct SettingsScreen: View {
         if settings.host != store.settings.host { store.snapshot = nil; store.history = History() }
         store.settings = settings
         store.log("Saved \(settings.host):\(settings.port)")
-        await refresh()
+        await refresh(waiting: true)
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    private func refresh() async {
+    private func refresh(waiting: Bool = false) async {
         guard !checking else { return }
+        if waiting {
+            await BatteryLine.shared.take()
+        } else if await !BatteryLine.shared.claim() {
+            return
+        }
         checking = true
         snapshot = await Refresher.refresh(store)
         history = store.history
         day = history.day(now: .now, latest: snapshot?.reading)
         checking = false
+        await BatteryLine.shared.release()
     }
 
     private func poll() async {

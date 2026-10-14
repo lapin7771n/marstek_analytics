@@ -13,7 +13,7 @@ From `ios/`: `make test` · `make icon` · `make upload BUILD=<n>`
 
 ## Constraints
 
-- The plugin only reads: `ES.GetStatus` every 15 s. `Bat.GetStatus` (suspected to reset some firmwares) goes out only right after `ES.GetStatus` answers: every 5 min, once after a gap of over 2 min in readings, and 1, 2 and 4 min after a failed read while no capacity is known. The iOS app sends only `ES.GetStatus`. Never send a method that writes.
+- The plugin only reads: `ES.GetStatus` every 15 s. `Bat.GetStatus` (suspected to reset some firmwares) goes out only right after `ES.GetStatus` answers: every 5 min, once after a gap of over 2 min in readings, and 1, 2 and 4 min after a failed read while no capacity is known. The iOS app sends only `ES.GetStatus`, plus one `Marstek.GetDevice` per subnet address when the user taps Find battery, at most once per 30 s; never on a timer, on launch or from a widget. Never send a method that writes.
 - The firmware answers one UDP request at a time. Keep one request in flight and the 15 s poll.
 - `src/core/` must not import `@elgato/streamdeck`.
 - Device facts and the ETA design: `plans/2026-10-12-streamdeck-battery-eta.md`.

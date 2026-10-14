@@ -78,7 +78,7 @@ Then, 10 s later, the same with `192.168.71.255`. Expected: a JSON reply with `r
 - Modify: `ios/Shared/MarstekProtocol.swift`
 - Test: `ios/Tests/ProtocolTests.swift`
 
-- [ ] **1.1 Tests first.** Next to `esReply` in `ios/Tests/ProtocolTests.swift`, add the reply from step 0.1, tabs and newlines kept, with the Wi‑Fi name replaced by `Home`:
+- [x] **1.1 Tests first.** Next to `esReply` in `ios/Tests/ProtocolTests.swift`, add the reply from step 0.1, tabs and newlines kept, with the Wi‑Fi name replaced by `Home`:
 
 ```swift
 let deviceReply = "{\n\t\"id\":\t7,\n\t\"src\":\t\"VenusE 3.0-bc2a3314ce8d\",\n\t\"result\":\t{\n\t\t\"device\":\t\"VenusE 3.0\",\n\t\t\"ver\":\t150,\n\t\t\"ble_mac\":\t\"bc2a3314ce8d\",\n\t\t\"wifi_mac\":\t\"9a254a554cc6\",\n\t\t\"wifi_name\":\t\"Home\",\n\t\t\"ip\":\t\"192.168.68.50\"\n\t}\n}"
@@ -110,7 +110,7 @@ Append to `ProtocolTests`:
 
 Run `make test`. Expected: the build fails because `deviceRequest`, `device` and `DeviceInfo` do not exist.
 
-- [ ] **1.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`, add after `EsStatus`:
+- [x] **1.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`, add after `EsStatus`:
 
 ```swift
 struct DeviceInfo: Equatable, Sendable {
@@ -151,7 +151,7 @@ private struct DeviceResult: Decodable {
 
 Run `make test`. Expected: pass.
 
-- [ ] **1.3 Commit.** `git add ios && git commit -m "feat: parse marstek getdevice replies"`
+- [x] **1.3 Commit.** `git add ios && git commit -m "feat: parse marstek getdevice replies"`
 
 ## Task 2: Subnet, sweep, line and finder
 
@@ -160,7 +160,7 @@ Run `make test`. Expected: pass.
 - Modify: `ios/Shared/MarstekClient.swift`
 - Test: create `ios/Tests/SubnetTests.swift`, `ios/Tests/DiscoveryTests.swift`
 
-- [ ] **2.1 Subnet tests.** Create `ios/Tests/SubnetTests.swift`:
+- [x] **2.1 Subnet tests.** Create `ios/Tests/SubnetTests.swift`:
 
 ```swift
 import Testing
@@ -199,7 +199,7 @@ struct SubnetTests {
 }
 ```
 
-- [ ] **2.2 Discovery tests.** Create `ios/Tests/DiscoveryTests.swift`:
+- [x] **2.2 Discovery tests.** Create `ios/Tests/DiscoveryTests.swift`:
 
 ```swift
 import Foundation
@@ -378,7 +378,7 @@ struct DiscoveryTests {
 
 Run `make test`. Expected: the build fails because `Subnet`, `FoundBattery`, `Probe`, `Discovery`, `BatteryLine`, `BatteryFinder` and `MarstekClient.device()` do not exist.
 
-- [ ] **2.3 Client.** In `ios/Shared/MarstekClient.swift`, add after `reading(at:)`. It calls `exchange` once, so a silent address costs one datagram:
+- [x] **2.3 Client.** In `ios/Shared/MarstekClient.swift`, add after `reading(at:)`. It calls `exchange` once, so a silent address costs one datagram:
 
 ```swift
     func device() async throws -> DeviceInfo {
@@ -387,7 +387,7 @@ Run `make test`. Expected: the build fails because `Subnet`, `FoundBattery`, `Pr
     }
 ```
 
-- [ ] **2.4 Discovery.** Create `ios/App/Discovery.swift`:
+- [x] **2.4 Discovery.** Create `ios/App/Discovery.swift`:
 
 ```swift
 import Darwin
@@ -573,7 +573,7 @@ final class BatteryFinder {
 
 Run `make test`. Expected: pass.
 
-- [ ] **2.5 Widget pause.** Append to `ios/Tests/StoreTests.swift`:
+- [x] **2.5 Widget pause.** Append to `ios/Tests/StoreTests.swift`:
 
 ```swift
     @Test func aSearchSkipsTheFetch() async {
@@ -616,7 +616,7 @@ and make this the first statement of `Refresher.refresh`:
 
 Run `make test`. Expected: pass.
 
-- [ ] **2.6 Commit.** `git add ios && git commit -m "feat: sweep the wi-fi subnet for marstek batteries"`
+- [x] **2.6 Commit.** `git add ios && git commit -m "feat: sweep the wi-fi subnet for marstek batteries"`
 
 ## Task 3: Find battery row and sheet
 
@@ -625,7 +625,7 @@ Run `make test`. Expected: pass.
 - Modify: `ios/App/BatteryApp.swift`, `ios/Shared/Localizable.xcstrings`, `CLAUDE.md`
 - Test: `ios/Tests/LocalizationTests.swift`
 
-- [ ] **3.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
+- [x] **3.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
 
 ```swift
         #expect(uk.localizedString(forKey: "Find battery", value: nil, table: nil) == "Знайти батарею")
@@ -633,7 +633,7 @@ Run `make test`. Expected: pass.
 
 and raise `strings.count >= 38` to `>= 48`. Run `make test`. Expected: fail.
 
-- [ ] **3.2 Views.** Create `ios/App/FindBattery.swift`:
+- [x] **3.2 Views.** Create `ios/App/FindBattery.swift`:
 
 ```swift
 import SwiftUI
@@ -749,7 +749,7 @@ struct FindBatterySheet: View {
 }
 ```
 
-- [ ] **3.3 Settings screen.** In `ios/App/BatteryApp.swift`:
+- [x] **3.3 Settings screen.** In `ios/App/BatteryApp.swift`:
   - After the IP `TextField` block (after `.accessibilityLabel("Battery IP address")`), add:
 
 ```swift
@@ -778,7 +778,7 @@ struct FindBatterySheet: View {
 
   - In `save()`, change `await refresh()` to `await refresh(waiting: true)`.
 
-- [ ] **3.4 Strings.** Add to `ios/Shared/Localizable.xcstrings` with `"state": "translated"`. Check the Ukrainian with the `ukrainian-translation-review` skill before committing:
+- [x] **3.4 Strings.** Add to `ios/Shared/Localizable.xcstrings` with `"state": "translated"`. Check the Ukrainian with the `ukrainian-translation-review` skill before committing:
 
 | en | uk |
 |---|---|
@@ -793,11 +793,11 @@ struct FindBatterySheet: View {
 | `Allow Local Network for Battery ETA, then tap Find battery again.` | `Дозвольте Battery ETA доступ до локальної мережі й знову натисніть «Знайти батарею».` |
 | `No battery found.` | `Батарею не знайдено.` |
 
-- [ ] **3.5 Constraint line.** In `CLAUDE.md`, replace "The iOS app sends only `ES.GetStatus`." with "The iOS app sends only `ES.GetStatus`, plus one `Marstek.GetDevice` per subnet address when the user taps Find battery, at most once per 30 s; never on a timer, on launch or from a widget."
+- [x] **3.5 Constraint line.** In `CLAUDE.md`, replace "The iOS app sends only `ES.GetStatus`." with "The iOS app sends only `ES.GetStatus`, plus one `Marstek.GetDevice` per subnet address when the user taps Find battery, at most once per 30 s; never on a timer, on launch or from a widget."
 
-- [ ] **3.6 Gate.** `make test`. Expected: pass. Then build to the `iPhone 18 Pro` simulator and tap Find battery. The simulator shares the Mac's network, so on the home Wi‑Fi the sheet lists the battery at `192.168.68.50`.
+- [x] **3.6 Gate.** `make test`. Expected: pass. Then build to the `iPhone 18 Pro` simulator and tap Find battery. The simulator shares the Mac's network, so on the home Wi‑Fi the sheet lists the battery at `192.168.68.50`.
 
-- [ ] **3.7 Commit.** `git add ios CLAUDE.md && git commit -m "feat: find the battery on the wi-fi from settings"`
+- [x] **3.7 Commit.** `git add ios CLAUDE.md && git commit -m "feat: find the battery on the wi-fi from settings"`
 
 ## Task 4: Owner check on the iPhone (10 minutes)
 
