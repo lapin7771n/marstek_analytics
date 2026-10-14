@@ -15,9 +15,9 @@
 - **Do not assume `en0`.** TN3179 says the Wi‑Fi interface name is not API. The app sweeps every IPv4 interface that is up, broadcast-capable and not loopback.
 - **Before the user answers the Local Network alert,** iOS may deny the operation at once. `NWConnection` then waits with `localNetworkDenied`, which `MarstekClient` already maps to `DeviceError.blocked`.
 - **Request.** `{"id":N,"method":"Marstek.GetDevice","params":{"ble_mac":"0"}}`; `"0"` asks every device ([taurgis query_device.py](https://github.com/taurgis/has-marstek-local-api/blob/main/tools/query_device.py), [API notes](https://github.com/taurgis/has-marstek-local-api/blob/main/docs/marstek_device_openapi.MD) §3.1.1). The Home Assistant integration sends it by unicast to a stored IP during setup, so firmwares it supports answer unicast.
-- **Reply.** `{"id":N,"src":"…","result":{"device":…,"ver":…,"ble_mac":…,"wifi_mac":…,"wifi_name":…,"ip":…}}`. `device` may be `VenusE`, `VenusC` or a SKU like `VNSE3-0`; some firmware omits the MAC fields. The vendor PDF's JSON samples are malformed, so no verbatim reply from a Venus E 3.0 exists yet. The app reads `device` and `wifi_mac` (else `ble_mac`), and uses the address that answered as the IP.
+- **Reply from this battery** (V150, unicast, 2026-10-15), pretty-printed with tabs: `{"id":7,"src":"VenusE 3.0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":150,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"…","ip":"192.168.68.50"}}`. Other firmware sends `device` as `VenusE`, `VenusC` or a SKU like `VNSE3-0`, and some omits the MAC fields. The app reads `device` and `wifi_mac` (else `ble_mac`), and uses the address that answered as the IP.
 - **What is known about `Marstek.GetDevice` safety: little.** No report ties it to a reset or a power cut. The Home Assistant integration repeats it in a background scanner, and its reset reports point at `Bat.GetStatus` and at firmware 144–148, without proof ([issue #14](https://github.com/taurgis/has-marstek-local-api/issues/14)). Its maintainer writes that the API "does not handle high request volumes well". On Venus E 3.0 the Local API has switched itself off on Control 147, and one owner reports a reboot loop on 150.9 with no named cause ([issue #15](https://github.com/taurgis/has-marstek-local-api/issues/15)). No one has measured `GetDevice` under load, so the app sends it as rarely as the rules below allow.
-- **Open risk.** `plans/2026-10-12-streamdeck-battery-eta.md` records that `Marstek.GetDevice` got no reply from this battery (firmware V150) and does not say whether it went out by broadcast or unicast. Task 0 settles it before any code.
+- **This battery answers unicast only.** A unicast `Marstek.GetDevice` to `192.168.68.50` got the reply above; the same request to the broadcast address `192.168.71.255` got none within 3 s. That explains the "no reply" in `plans/2026-10-12-streamdeck-battery-eta.md`, and broadcast would fail even with the entitlement.
 - **The home network is `192.168.68.0/22`** (this Mac: `192.168.68.56`, mask `255.255.252.0`, TP-Link Deco default). A /24 sweep would miss `192.168.69.x`–`192.168.71.x`.
 
 ## Rules for gentle discovery
@@ -27,7 +27,7 @@ Each rule has a test in `ios/Tests/DiscoveryTests.swift` that fails if the rule 
 | # | Rule | Test |
 |---|---|---|
 | 1 | Each address gets at most one `Marstek.GetDevice` per search, including addresses that already answered. No retry, no second pass. | `oneSearchProbesEachAddressOnce`, `theProbeSendsOneGetDeviceAndNeverRetries` |
-| 2 | A search holds `BatteryLine`, the app's one-request-to-the-battery lock. The 30 s `ES.GetStatus` poll skips while a search holds it; a search waits for a poll already in flight. | `theLineRefusesASecondClaim`, `aSearchHoldsTheLineUntilItEnds`, `aSearchWaitsForAPollInFlight` |
+| 2 | A search holds `BatteryLine`, the app's one-request-to-the-battery lock. The 30 s `ES.GetStatus` poll skips while a search holds it; a search waits for a poll already in flight. Widgets skip their fetch while `searchUntil` is set. | `theLineRefusesASecondClaim`, `aSearchHoldsTheLineUntilItEnds`, `aSearchWaitsForAPollInFlight`, `aSearchPausesTheWidgets`, `StoreTests.aSearchSkipsTheFetch`, `StoreTests.anExpiredSearchFetches` |
 | 3 | 32 addresses in flight at most, 1 s timeout each. Closing the sheet, picking a battery or leaving the app stops the search: no new address is probed after that. | `probesStayWithinTheWidth`, `stopProbesNoNewAddress` |
 | 4 | A tap while a search runs does nothing. A new search starts at most once per 30 s; an earlier tap reopens the sheet with the last results. | `aSecondTapDuringASearchSendsNothing`, `oneSearchPer30Seconds` |
 | 5 | Only a tap starts a search: never on launch, on a timer, from a widget or in the background. | No runtime test can prove an absence. `BatteryFinder` gets its probe only in `start(_:)`, the button action is its one caller, and the code lives in `ios/App/`, which the widget target does not compile. Review checks all three. |
@@ -38,7 +38,8 @@ Each rule has a test in `ios/Tests/DiscoveryTests.swift` that fails if the rule 
 - **Subnet cap /22.** A mask wider than /22 is narrowed to the /22 around the phone's address. A full /22 takes up to 32 s, a /24 up to 8 s.
 - **Sheet.** The tap opens "Batteries on this Wi‑Fi". Batteries appear as they answer, as `model`, then `IP · …:A4:1C`. The first one is checked; a tap checks another. "Use this battery" stops the search, fills the IP and runs "Save and check".
 - **Permission.** A probe that fails with `localNetworkDenied` stops the search, and the sheet says to allow Local Network and tap again.
-- **Merge footprint.** New files: `App/Discovery.swift`, `App/FindBattery.swift`. `BatteryApp.swift` gains the row and routes `refresh()` through `BatteryLine`. `Store.swift` and `project.yml` do not change.
+- **Widget pause.** A search writes `searchUntil = now + 60 s` to the App Group and clears it when it ends. While it is set and in the future, `Refresher.refresh` returns the stored snapshot without a fetch, so a widget refresh never meets the sweep at the battery. The 60 s expiry frees the widgets if the app dies mid-search.
+- **Merge footprint.** New files: `App/Discovery.swift`, `App/FindBattery.swift`. `BatteryApp.swift` gains the row and routes `refresh()` through `BatteryLine`. `Store.swift` gains `searchUntil` and one line in `Refresher.refresh`. `project.yml` does not change.
 
 ## Global constraints
 
@@ -48,30 +49,28 @@ Each rule has a test in `ios/Tests/DiscoveryTests.swift` that fails if the rule 
 
 ## Owner decisions
 
-1. **May I send `Marstek.GetDevice` from this Mac in step 0.1?** One unicast datagram to `192.168.68.50:30000`, then one to the subnet broadcast `192.168.71.255`. It settles the open risk and gives the real reply fixture.
-2. **If the battery stays silent on both,** should the sweep probe with `ES.GetStatus` instead? It is already allowed, the battery answers it, and its `src` (`VenusE 3.0-bc2a3314ce8d`) names the model. Only the request and parser change.
-3. **Widgets still poll during a search.** `BatteryLine` covers the app process only. A widget refresh during the search could reach the battery at the same time. Blocking it needs a flag in `Store.swift` that the widget reads. Add it?
-4. **Deviations from the artboard:**
-   - The artboard footer goes inside the "Find battery" row as a second line, because the section footer already shows the reserve hint and validation errors.
-   - The sheet adds a "Searching…" row while the search runs, "No battery found." when it ends empty, and the Wi‑Fi or Local Network message when it cannot run. The artboard has none of these states.
-   - The model reads as the firmware sends it (`VenusE 3.0`, `VNSE3-0`), not `Venus E 3.0`.
-   - The MAC tail is omitted when the reply has no MAC.
-   - The close button is the SF Symbol `xmark.circle.fill`; the row icon is `magnifyingglass`.
+Decided 15.10: step 0.1 sent; `ES.GetStatus` fallback not needed because the battery answers `GetDevice` by unicast; widgets pause during a search; the artboard deviations below are accepted.
+
+- The artboard footer goes inside the "Find battery" row as a second line, because the section footer already shows the reserve hint and validation errors.
+- The sheet adds a "Searching…" row while the search runs, "No battery found." when it ends empty, and the Wi‑Fi or Local Network message when it cannot run.
+- The model reads as the firmware sends it (`VenusE 3.0`), not `Venus E 3.0`.
+- The MAC tail is omitted when the reply has no MAC.
+- The close button is the SF Symbol `xmark.circle.fill`; the row icon is `magnifyingglass`.
 
 Time: about 3 hours to build, plus 10 minutes on the iPhone.
 
 ---
 
-## Task 0: Check GetDevice on the real battery (5 minutes, needs decision 1)
+## Task 0: Check GetDevice on the real battery
 
-- [ ] **0.1** From this Mac on the home Wi‑Fi, send one request and wait 3 s for a reply:
+- [x] **0.1** From this Mac on the home Wi‑Fi, send one request and wait 3 s for a reply:
 
 ```bash
 python3 -I -c 'import socket,sys;s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM);s.setsockopt(socket.SOL_SOCKET,socket.SO_BROADCAST,1);s.settimeout(3);s.sendto(b"{\"id\":7,\"method\":\"Marstek.GetDevice\",\"params\":{\"ble_mac\":\"0\"}}",(sys.argv[1],30000));print(s.recvfrom(2048))' 192.168.68.50
 ```
 
 Then, 10 s later, the same with `192.168.71.255`. Expected: a JSON reply with `result.device`. Record both outcomes and the verbatim reply in Facts.
-- [ ] **0.2** If neither address answers, stop and ask the owner about decision 2.
+- [x] **0.2** If neither address answers, stop and ask the owner. (Unicast answered.)
 
 ## Task 1: GetDevice request and reply
 
@@ -79,10 +78,10 @@ Then, 10 s later, the same with `192.168.71.255`. Expected: a JSON reply with `r
 - Modify: `ios/Shared/MarstekProtocol.swift`
 - Test: `ios/Tests/ProtocolTests.swift`
 
-- [ ] **1.1 Tests first.** Next to `esReply` in `ios/Tests/ProtocolTests.swift`, add the fixture. Replace it with the verbatim reply from step 0.1, keeping `"id":7`, and adjust the expectation in `parsesTheDeviceReply`:
+- [ ] **1.1 Tests first.** Next to `esReply` in `ios/Tests/ProtocolTests.swift`, add the reply from step 0.1, tabs and newlines kept, with the Wi‑Fi name replaced by `Home`:
 
 ```swift
-let deviceReply = #"{"id":7,"src":"VenusE 3.0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":150,"ble_mac":"bc2a3314ce8d","wifi_mac":"bc2a3314ce8e","wifi_name":"Deco","ip":"192.168.68.50"}}"#
+let deviceReply = "{\n\t\"id\":\t7,\n\t\"src\":\t\"VenusE 3.0-bc2a3314ce8d\",\n\t\"result\":\t{\n\t\t\"device\":\t\"VenusE 3.0\",\n\t\t\"ver\":\t150,\n\t\t\"ble_mac\":\t\"bc2a3314ce8d\",\n\t\t\"wifi_mac\":\t\"9a254a554cc6\",\n\t\t\"wifi_name\":\t\"Home\",\n\t\t\"ip\":\t\"192.168.68.50\"\n\t}\n}"
 ```
 
 Append to `ProtocolTests`:
@@ -94,7 +93,7 @@ Append to `ProtocolTests`:
     }
 
     @Test func parsesTheDeviceReply() throws {
-        #expect(try MarstekProtocol.device(Data(deviceReply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "bc2a3314ce8e"))
+        #expect(try MarstekProtocol.device(Data(deviceReply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "9a254a554cc6"))
     }
 
     @Test func aDeviceReplyWithoutModelOrMacStillCounts() throws {
@@ -220,6 +219,10 @@ private final class Clock: @unchecked Sendable {
     var now = Date(timeIntervalSince1970: 0)
 }
 
+private func testStore() -> Store {
+    Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+}
+
 @MainActor
 struct DiscoveryTests {
     private let hosts = (1...200).map { "10.0.0.\($0)" }
@@ -235,8 +238,8 @@ struct DiscoveryTests {
         }
     }
 
-    private func finder(_ clock: Clock = Clock(), line: BatteryLine = BatteryLine()) -> BatteryFinder {
-        BatteryFinder(line: line, hosts: { hosts }, now: { clock.now })
+    private func finder(_ clock: Clock = Clock(), line: BatteryLine = BatteryLine(), store: Store = testStore()) -> BatteryFinder {
+        BatteryFinder(store: store, line: line, hosts: { hosts }, now: { clock.now })
     }
 
     @Test func oneSearchProbesEachAddressOnce() async {
@@ -336,6 +339,19 @@ struct DiscoveryTests {
         #expect(await probes.hosts.count == hosts.count)
     }
 
+    @Test func aSearchPausesTheWidgets() async {
+        let store = testStore()
+        let finder = finder(store: store)
+        let paused = Probes()
+        finder.start { host in
+            if let until = await MainActor.run(body: { store.searchUntil }), until > .now { await paused.start(host) }
+            return nil
+        }
+        await finder.wait()
+        #expect(await paused.hosts.count == hosts.count)
+        #expect(store.searchUntil == nil)
+    }
+
     @Test func theProbeSendsOneGetDeviceAndNeverRetries() async throws {
         var methods: [String] = []
         let fake = try await FakeBattery.start { request, _ in
@@ -351,7 +367,7 @@ struct DiscoveryTests {
 
     @Test func theProbeReadsTheModel() async throws {
         let fake = try await FakeBattery.start { request, _ in
-            [deviceReply.replacingOccurrences(of: #""id":7"#, with: #""id":\#(request.id)"#)]
+            [deviceReply.replacingOccurrences(of: "\"id\":\t7", with: "\"id\":\(request.id)")]
         }
         defer { fake.stop() }
         let info = try await MarstekClient(host: "127.0.0.1", port: fake.port, timeout: 0.3).device()
@@ -500,11 +516,18 @@ final class BatteryFinder {
     private(set) var outcome: Outcome?
     private var startedAt: Date?
     private var task: Task<Void, Never>?
+    private let store: Store
     private let line: BatteryLine
     private let hosts: () -> [String]
     private let now: () -> Date
 
-    init(line: BatteryLine = .shared, hosts: @escaping () -> [String] = Subnet.localHosts, now: @escaping () -> Date = { .now }) {
+    init(
+        store: Store = Store(),
+        line: BatteryLine = .shared,
+        hosts: @escaping () -> [String] = Subnet.localHosts,
+        now: @escaping () -> Date = { .now }
+    ) {
+        self.store = store
         self.line = line
         self.hosts = hosts
         self.now = now
@@ -520,12 +543,14 @@ final class BatteryFinder {
         startedAt = now()
         searching = true
         task = Task {
+            store.searchUntil = Date.now + 60
             await line.take()
             do {
                 try await Discovery.sweep(hosts, probe: probe) { battery in await self.add(battery) }
             } catch {
                 outcome = .blocked
             }
+            store.searchUntil = nil
             await line.release()
             searching = false
         }
@@ -548,7 +573,50 @@ final class BatteryFinder {
 
 Run `make test`. Expected: pass.
 
-- [ ] **2.5 Commit.** `git add ios && git commit -m "feat: sweep the wi-fi subnet for marstek batteries"`
+- [ ] **2.5 Widget pause.** Append to `ios/Tests/StoreTests.swift`:
+
+```swift
+    @Test func aSearchSkipsTheFetch() async {
+        let store = store()
+        let now = Date(timeIntervalSince1970: 1000)
+        store.searchUntil = now + 30
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { _ in
+            Issue.record("fetched during a search")
+            return reading(acW: 400)
+        }
+        #expect(snapshot.reading == nil && snapshot.error == nil)
+        #expect(store.snapshot == nil)
+    }
+
+    @Test func anExpiredSearchFetches() async {
+        let store = store()
+        let good = reading(acW: 400)
+        store.searchUntil = good.time - 1
+        let snapshot = await Refresher.refresh(store, now: good.time) { _ in good }
+        #expect(snapshot.reading == good)
+    }
+```
+
+In `ios/Shared/Store.swift`, add to `Store` after `snapshot`:
+
+```swift
+    var searchUntil: Date? {
+        get { load("searchUntil") }
+        set { save(newValue, "searchUntil") }
+    }
+```
+
+and make this the first statement of `Refresher.refresh`:
+
+```swift
+        if let until = store.searchUntil, now < until {
+            return store.snapshot ?? Snapshot(reading: nil, error: nil, checkedAt: now)
+        }
+```
+
+Run `make test`. Expected: pass.
+
+- [ ] **2.6 Commit.** `git add ios && git commit -m "feat: sweep the wi-fi subnet for marstek batteries"`
 
 ## Task 3: Find battery row and sheet
 
