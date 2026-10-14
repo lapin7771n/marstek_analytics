@@ -2149,7 +2149,7 @@ From `ios/`: `make test` · `make icon` · `make upload BUILD=<n>`
 
 - [x] **7.4 Commit.** `git add ios README.md CLAUDE.md && git commit -m "feat: add ios icon and testflight upload"`
 
-- [ ] **7.5 Owner: App Store Connect (about 15 minutes, plus 15–30 minutes of processing).**
+- [x] **7.5 Owner: App Store Connect (about 15 minutes, plus 15–30 minutes of processing).**
   1. Xcode → Settings → Accounts: signed in with the Apple ID of team `WSCTL2V8W5`.
   2. appstoreconnect.apple.com → Apps → **+** → New App: iOS, name `Battery ETA` (if taken, any unique name; the Home Screen keeps `Battery ETA`), bundle ID `com.mlapin.marstek.battery`, SKU `battery-eta`.
   3. From `ios/`: `make upload BUILD=1`.
