@@ -7,14 +7,13 @@ struct Reading: Codable, Equatable {
     var offgridW: Double
     var capacityWh: Double
     var ratedWh: Double
-    var tempC: Double
 }
 
 extension Reading {
-    init(time: Date, es: EsStatus, bat: BatStatus) {
+    init(time: Date, es: EsStatus) {
         self.init(
             time: time, socPct: es.socPct, acW: es.ongridW + es.offgridW, offgridW: es.offgridW,
-            capacityWh: bat.capacityWh, ratedWh: bat.ratedWh, tempC: bat.tempC
+            capacityWh: Double(es.socPct) / 100 * es.ratedWh, ratedWh: es.ratedWh
         )
     }
 }

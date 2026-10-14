@@ -47,4 +47,61 @@ struct StoreTests {
         #expect(store.settings == BatterySettings())
         #expect(store.snapshot == nil)
     }
+
+    @Test func aFreshSnapshotIsReused() async {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        var fetched = false
+        let snapshot = await Refresher.refresh(store, now: good.time.addingTimeInterval(5 * 60), maxAge: 10 * 60) { _ in
+            fetched = true
+            return good
+        }
+        #expect(!fetched)
+        #expect(snapshot.checkedAt == good.time)
+    }
+
+    @Test func anOldSnapshotIsFetchedAgain() async {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        var fetched = false
+        _ = await Refresher.refresh(store, now: good.time.addingTimeInterval(11 * 60), maxAge: 10 * 60) { _ in
+            fetched = true
+            return good
+        }
+        #expect(fetched)
+    }
+
+    @Test func aSettingsSnapshotIsNotReused() async {
+        let store = store(host: "")
+        let now = Date(timeIntervalSince1970: 1_760_000_000)
+        _ = await Refresher.refresh(store, now: now) { _ in reading(acW: 400) }
+        store.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
+        let snapshot = await Refresher.refresh(store, now: now.addingTimeInterval(60), maxAge: 10 * 60) { _ in reading(acW: 400) }
+        #expect(snapshot.error == nil)
+        #expect(snapshot.reading != nil)
+    }
+
+    @Test func concurrentRefreshesShareOneFetch() async {
+        let gate = SharedRefresh()
+        let counter = FetchCounter()
+        async let a = gate.run { await counter.fetch() }
+        async let b = gate.run { await counter.fetch() }
+        async let c = gate.run { await counter.fetch() }
+        _ = await (a, b, c)
+        #expect(await counter.count == 1)
+        _ = await gate.run { await counter.fetch() }
+        #expect(await counter.count == 2)
+    }
+}
+
+actor FetchCounter {
+    var count = 0
+
+    func fetch() async -> Snapshot {
+        count += 1
+        try? await Task.sleep(for: .milliseconds(200))
+        return Snapshot(reading: nil, error: .noLink, checkedAt: .now)
+    }
 }
