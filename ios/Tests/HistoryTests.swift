@@ -91,4 +91,80 @@ struct HistoryTests {
         #expect(store.snapshot?.reading?.socPct == 80)
         #expect(store.history.samples.isEmpty)
     }
+
+    private var utc: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+
+    private func history(_ readings: Reading...) -> History {
+        var history = History()
+        readings.forEach { history.add($0) }
+        return history
+    }
+
+    @Test func theDayStartsAtMidnight() {
+        let day = history(at(-30, soc: 50), at(10, soc: 70), at(20, soc: 90))
+            .day(now: start.addingTimeInterval(30 * 60), latest: nil, calendar: utc)
+        #expect(day.segments.flatMap(\.samples).map(\.socPct) == [70, 90])
+        #expect(day.low == 70)
+        #expect(day.high == 90)
+        #expect(abs(day.usedWh - 400.0 / 6) < 0.01)
+    }
+
+    @Test func aGapOverAnHourIsDottedAndTheLiveReadingIsLast() {
+        let day = history(at(0), at(10), at(90))
+            .day(now: start.addingTimeInterval(92 * 60), latest: at(92, soc: 81), calendar: utc)
+        #expect(day.segments.map(\.dotted) == [false, true, false])
+        #expect(day.segments.map(\.samples.count) == [2, 2, 2])
+        #expect(day.segments.last?.samples.last?.socPct == 81)
+    }
+
+    @Test func energyIntegratesTheStoredPower() {
+        let day = history(at(0, acW: -1200), at(30, acW: 600), at(60, acW: 600), at(200, acW: 600))
+            .day(now: start.addingTimeInterval(200 * 60), latest: nil, calendar: utc)
+        #expect(abs(day.chargedWh - 600) < 0.01)
+        #expect(abs(day.usedWh - 300) < 0.01)
+    }
+
+    @Test func historyAndTheChartSendNoExtraRequests() async {
+        let store = store()
+        let counter = ReadingCounter()
+        _ = await Refresher.refresh(store, now: start) { _ in await counter.fetch(at(0)) }
+        _ = await Refresher.refresh(store, now: start.addingTimeInterval(10 * 60)) { _ in await counter.fetch(at(10)) }
+        for _ in 0..<3 {
+            _ = store.history.day(now: start.addingTimeInterval(11 * 60), latest: store.snapshot?.reading, calendar: utc)
+        }
+        #expect(store.history.samples.count == 2)
+        #expect(await counter.count == 2)
+    }
+
+    @Test func onBatteryCountsDischargeBetweenCloseReadings() {
+        let day = history(at(0, acW: 400), at(10, acW: -800), at(20, acW: 400), at(100, acW: 400))
+            .day(now: start.addingTimeInterval(100 * 60), latest: nil, calendar: utc)
+        #expect(day.onBattery == 10 * 60)
+    }
+
+    @Test func eachHourBarIsTheMeanPowerWithChargingUp() {
+        let day = history(at(0, acW: 400), at(30, acW: 200), at(60, acW: -800))
+            .day(now: start.addingTimeInterval(70 * 60), latest: nil, calendar: utc)
+        #expect(day.hours == [
+            DaySummary.HourBar(hour: start, watts: -300),
+            DaySummary.HourBar(hour: start.addingTimeInterval(3600), watts: 800),
+        ])
+    }
+
+    @Test func oneReadingIsEmpty() {
+        #expect(history(at(0)).day(now: start.addingTimeInterval(60), latest: nil, calendar: utc).isEmpty)
+    }
+}
+
+actor ReadingCounter {
+    var count = 0
+
+    func fetch(_ reading: Reading) -> Reading {
+        count += 1
+        return reading
+    }
 }

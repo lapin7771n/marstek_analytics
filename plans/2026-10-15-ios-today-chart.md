@@ -242,7 +242,7 @@ Run `make test`. Expected: all tests pass.
 - Consumes: `History`, `Sample`, `History.gap`, `QuickEstimate.idleW`.
 - Produces: `DaySummary` (`start`, `now`, `segments`, `hours`, `low`, `high`, `chargedWh`, `usedWh`, `onBattery`, `isEmpty`), `DaySummary.Segment(samples:dotted:)`, `DaySummary.HourBar(hour:watts:)`, `History.day(now:latest:calendar:)`.
 
-- [ ] **2.1 Tests first.** Append to `HistoryTests` (inside the struct):
+- [x] **2.1 Tests first.** Append to `HistoryTests` (inside the struct):
 
 ```swift
     private var utc: Calendar {
@@ -328,7 +328,7 @@ actor ReadingCounter {
 
 Run `make test`. Expected: the build fails because `History` has no `day`.
 
-- [ ] **2.2 Summary.** Create `ios/Shared/DaySummary.swift`:
+- [x] **2.2 Summary.** Create `ios/Shared/DaySummary.swift`:
 
 ```swift
 import Foundation
@@ -395,7 +395,7 @@ extension History {
 
 Run `make test`. Expected: all tests pass.
 
-- [ ] **2.3 Commit.** `git add ios && git commit -m "feat: summarise today's battery readings on ios"`
+- [x] **2.3 Commit.** `git add ios && git commit -m "feat: summarise today's battery readings on ios"`
 
 ---
 
