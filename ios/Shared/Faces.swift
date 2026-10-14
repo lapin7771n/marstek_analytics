@@ -117,6 +117,7 @@ struct SmallFace: View {
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(face.problem == nil ? Palette.accent(face) : Palette.bad)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .padding(.top, 4)
             .padding(.horizontal, 26)
@@ -197,6 +198,7 @@ struct RectangularFace: View {
             .opacity(0.85)
         }
         .lineLimit(1)
+        .minimumScaleFactor(0.75)
         .frame(maxWidth: .infinity, alignment: .leading)
         .opacity(face.stale ? 0.7 : 1)
     }
