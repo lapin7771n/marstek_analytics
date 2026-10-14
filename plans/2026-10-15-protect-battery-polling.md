@@ -297,7 +297,7 @@ Run `make test`. Expected: exit 0.
 **Interfaces**
 - Produces: optional `PollerDeps.warn?(message: string): void`.
 
-- [ ] **2.1 Tests first.** In `streamdeck/src/core/estimator.test.ts`:
+- [x] **2.1 Tests first.** In `streamdeck/src/core/estimator.test.ts`:
   - Give `Rig` a fifth constructor parameter, `readonly batEveryS = 30`.
   - Replace `if ((this.t / STEP_S) % 2 === 0)` with `if (this.t % this.batEveryS === 0)`.
   - Append:
@@ -373,7 +373,7 @@ test("while the battery is down the capacity is asked at most once a minute", as
 
 Run `npm test` from `streamdeck/`. Expected: the new tests fail.
 
-- [ ] **2.2 Estimator.** In `streamdeck/src/core/estimator.ts`:
+- [x] **2.2 Estimator.** In `streamdeck/src/core/estimator.ts`:
   - Add `const BAT_GAP_S = 600;` under `GAP_S`, and in `battery()` use `BAT_GAP_S` in place of `GAP_S`.
   - Add the field `#movedWh = 0;`. Set `this.#movedWh = 0;` in `battery()` right after `this.#bat = bat;`.
   - In `sample()`, after `this.#lastT = es.t;`, add:
@@ -394,7 +394,7 @@ Run `npm test` from `streamdeck/`. Expected: the new tests fail.
 	}
 ```
 
-- [ ] **2.3 Poller.** In `streamdeck/src/core/poller.ts`:
+- [x] **2.3 Poller.** In `streamdeck/src/core/poller.ts`:
   - Replace `BAT_EVERY` and `BAT_MAX_AGE_MS` with `BAT_EVERY_MS = 300_000`, `BAT_RETRY_MS = 60_000` and `ES_GAP_MS = 120_000`.
   - Replace the fields `#ticks` and `#batAt` with `#batTriedAt = Number.NEGATIVE_INFINITY;`, `#batFailed = false;` and `#esAt = Number.NEGATIVE_INFINITY;`.
   - In `reconfigure()`, replace `this.#ticks = 0;` with `this.#batTriedAt = Number.NEGATIVE_INFINITY;` and `this.#esAt = Number.NEGATIVE_INFINITY;`.
@@ -434,11 +434,11 @@ In `streamdeck/src/plugin.ts`, add `warn: (message) => streamDeck.logger.warn(me
 
 Run `npm run typecheck && npm test`. Expected: exit 0. The older tests keep their call lists, because a fresh poller, a reconfigure and an 8-hour sleep all read the capacity first.
 
-- [ ] **2.4 Docs.**
+- [x] **2.4 Docs.**
   - `README.md` line 12 becomes: `The plugin only reads. It sends \`ES.GetStatus\` every 15 s and \`Bat.GetStatus\` every 5 minutes, and never a command that changes the battery.`
   - In `CLAUDE.md`, the first constraint becomes: `- The plugin only reads: \`ES.GetStatus\` every 15 s, \`Bat.GetStatus\` at most every 5 min (it is suspected to reset some firmwares). The iOS app sends only \`ES.GetStatus\`. Never send a method that writes.`
 
-- [ ] **2.5 Commit.** `git add streamdeck/src README.md CLAUDE.md && git commit -m "fix: read battery capacity every 5 minutes on the stream deck"`
+- [x] **2.5 Commit.** `git add streamdeck/src README.md CLAUDE.md && git commit -m "fix: read battery capacity every 5 minutes on the stream deck"`
 
 - [ ] **2.6 Owner: deploy and watch (10 minutes, then a day).**
   1. From `streamdeck/`: `npm run build && streamdeck restart com.mlapin.marstek`.
