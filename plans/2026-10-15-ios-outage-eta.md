@@ -10,11 +10,12 @@
 - The answer uses the ETA the app already shows: `QuickEstimate.estimate` in `ios/Shared/Estimate.swift`, called from `Face.init` in `ios/Shared/Face.swift`. The battery runs out at `reading.time + hours`. The app compares that moment with the power-back time.
 - The power-back time is one absolute `Date` in the App Group (`Store.powerBack`), so the widget reads it too.
 - Settings screen, new section "POWER BACK AT" after "Now": a "Grid returns" row with a day chip and a time chip, then a verdict row (tinted icon, `LASTS` or `RUNS OUT 01:57`, one sentence), then the footer "Uses the current load. The answer changes as the load changes."
-- Picking a time later than now gives today; an earlier or equal time gives tomorrow. The day chip is a menu: Today (only while that time is still ahead today), Tomorrow, Clear.
+- Picking a time keeps the chosen day while that moment is still ahead (`Outage.retimed`); otherwise a time later than now gives today and an earlier or equal one gives tomorrow. The day chip is a menu: Today (only while that time is still ahead today), Tomorrow, Clear. Days move by calendar day, so the 25-hour DST night still lands on the next day.
+- A runs-out moment under a minute before power-back counts as lasting, so the app never says "0 min short".
 - No verdict while charging (the grid is on), once the power-back time has passed, or before the first reading. Idle with no backup load says "Lasts until 01:20." with no spare figure.
 - Medium widget: the third line becomes the verdict in green or red. The "Now" card in the app keeps "Updated …", as on the artboard.
 - The widget timeline gets one entry at the power-back time, so the line goes back to "Updated …" on time.
-- A change reloads only the `eta` widget. The app's 30 s poll keeps the snapshot under the widget's 10 min reuse age, so that reload reuses it.
+- A change reloads only the `eta` widget. The app's 30 s poll keeps the snapshot under the widget's 10 min reuse age, so that reload reuses it. While the app's own refresh is in flight, the reload waits until it ends, so the widget never sends a second `ES.GetStatus` beside it.
 
 **Deviations from the artboard, for the owner to decide:**
 1. The artboard has no empty state. Plan: with no time set, or after it passes, the "Grid returns" row shows one "Set" chip (next whole hour after now + 1 h) and no verdict row. Clearing is the day menu's "Clear".
@@ -225,7 +226,7 @@ enum Outage: Equatable {
 
     static func moved(_ back: Date, tomorrow: Bool, now: Date, calendar: Calendar = .current) -> Date {
         let time = calendar.dateComponents([.hour, .minute], from: back)
-        let day = calendar.startOfDay(for: now).addingTimeInterval(tomorrow ? 86_400 : 0)
+        let day = calendar.date(byAdding: .day, value: tomorrow ? 1 : 0, to: calendar.startOfDay(for: now)) ?? now
         let moved = calendar.date(bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: day) ?? back
         return moved > now ? moved : back
     }
@@ -237,8 +238,6 @@ func formatSpan(_ hours: Double) -> String {
     return String(localized: "\(minutes / 60) h \(String(format: "%02d", minutes % 60)) min")
 }
 ```
-
-`startOfDay + 86_400` is off by an hour on a DST night; `date(bySettingHour:of:)` works on the calendar day, so the result still lands on the right day.
 
 - [x] **1.3 Store.** In `ios/Shared/Store.swift`, add below `var snapshot`:
 
@@ -445,7 +444,7 @@ struct OutageLine: View {
 | `Power back %@` | `Світло о %@` |
 | `%lld min` | `%lld хв` |
 | `%lld h %@ min` | `%lld год %@ хв` |
-| `Uses the current load. The answer changes as the load changes.` | `Рахує за поточним навантаженням. Відповідь змінюється разом із ним.` |
+| `Uses the current load. The answer changes as the load changes.` | `Розраховано за поточним навантаженням. Якщо воно зміниться, зміниться й відповідь.` |
 
 - [x] **2.7 Gate.** Run `make test`. Expected: exit 0.
 
