@@ -502,7 +502,7 @@ Time: about 4 hours, plus 20 minutes in the simulator. A day of live use on a ph
 - Create: `ios/Shared/Schedule.swift`, `ios/Tests/ScheduleTests.swift`
 - Modify: `ios/Shared/Store.swift` (added lines only)
 
-- [ ] **3.1 Tests first.** Create `ios/Tests/ScheduleTests.swift`:
+- [x] **3.1 Tests first.** Create `ios/Tests/ScheduleTests.swift`:
 
 ```swift
 import Foundation
@@ -614,7 +614,7 @@ Append to `StoreTests`:
 
 Run `make test`. Expected: the build fails because `Schedule`, `OutageGroup` and the new `Store` properties do not exist.
 
-- [ ] **3.2 Model.** Create `ios/Shared/Schedule.swift`:
+- [x] **3.2 Model.** Create `ios/Shared/Schedule.swift`:
 
 ```swift
 import Foundation
@@ -708,7 +708,7 @@ enum Schedule {
 }
 ```
 
-- [ ] **3.3 Store.** In `ios/Shared/Store.swift`, add below `var powerBack`:
+- [x] **3.3 Store.** In `ios/Shared/Store.swift`, add below `var powerBack`:
 
 ```swift
     var powerBackFromSchedule: Bool {
@@ -727,9 +727,9 @@ enum Schedule {
     }
 ```
 
-- [ ] **3.4 Gate.** Run `make test`. Expected: exit 0. Then delete the `!current.fromSchedule` check in `Schedule.fill`, check that `aManualTimeAheadWins` still passes but `aScheduleTimeGoesWithItsSlot` fails, and restore it.
+- [x] **3.4 Gate.** Run `make test`. Expected: exit 0. Then delete the `!current.fromSchedule` check in `Schedule.fill`, check that `aManualTimeAheadWins` still passes but `aScheduleTimeGoesWithItsSlot` fails, and restore it.
 
-- [ ] **3.5 Commit.** `feat: compute the power-back time from a yasno schedule`
+- [x] **3.5 Commit.** `feat: compute the power-back time from a yasno schedule`
 
 ---
 

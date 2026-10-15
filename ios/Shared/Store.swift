@@ -91,6 +91,21 @@ final class Store {
         set { save(newValue, "powerBack") }
     }
 
+    var powerBackFromSchedule: Bool {
+        get { load("powerBackFromSchedule") ?? false }
+        set { save(newValue, "powerBackFromSchedule") }
+    }
+
+    var outageGroup: OutageGroup? {
+        get { load("outageGroup") }
+        set { save(newValue, "outageGroup") }
+    }
+
+    var schedule: ScheduleState? {
+        get { load("schedule") }
+        set { save(newValue, "schedule") }
+    }
+
     private func load<T: Decodable>(_ key: String) -> T? {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(T.self, from: $0) }
     }

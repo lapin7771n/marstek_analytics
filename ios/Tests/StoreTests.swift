@@ -174,6 +174,15 @@ struct StoreTests {
         #expect(await counter.count == 0)
     }
 
+    @Test func theOutageGroupAndScheduleAreStored() {
+        let store = store()
+        #expect(store.outageGroup == nil && store.schedule == nil && !store.powerBackFromSchedule)
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        store.schedule = ScheduleState(key: "19.1", checkedAt: .now, days: nil)
+        store.powerBackFromSchedule = true
+        #expect(store.outageGroup?.key == "19.1" && store.schedule?.key == "19.1" && store.powerBackFromSchedule)
+    }
+
     @Test func pollingStaysAsItIs() {
         #expect(Refresher.appPollInterval == .seconds(30))
         #expect(Refresher.widgetMaxAge == 10 * 60)
