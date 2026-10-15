@@ -9,6 +9,9 @@ let device151Reply = #"{"id":7,"src":"VNSE3-0-bc2a3314ce8d","result":{"device":"
 let device1476Reply = #"{"id":7,"src":"VenusE 3.0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":1476,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"Home","ip":"192.168.68.50"}}"#
 let device148Reply = #"{"id":7,"src":"VenusE 3.0-a8dd9fd8d15c","result":{"device":"VenusE 3.0","ver":148,"ble_mac":"a8dd9fd8d15c","wifi_mac":"","wifi_name":"","ip":"192.168.1.251"}}"#
 let deviceE2Reply = #"{"id":7,"src":"VenusE-bc2a3314ce8d","result":{"device":"VenusE","ver":145,"ip":"192.168.68.50"}}"#
+let deviceV135Reply = #"{"id":7,"src":"VenusE 3.0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":135,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"Home","ip":"192.168.68.50"}}"#
+let deviceE2V135Reply = #"{"id":7,"src":"VenusE-bc2a3314ce8d","result":{"device":"VenusE","ver":135,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"Home","ip":"192.168.68.50"}}"#
+let esV135Reply = #"{"id":2,"src":"VenusE-24215edb178f","result":{"id":0,"bat_soc":98,"bat_cap":5120,"pv_power":0,"ongrid_power":100,"offgrid_power":0,"total_pv_energy":0,"total_grid_output_energy":2548,"total_grid_input_energy":3273,"total_load_energy":0}}"#
 let esLegacyReply = #"{"id":2,"src":"VenusE 3.0-bc2a3314ce8d","result":{"id":0,"bat_soc":98,"bat_cap":5120,"ongrid_power":100,"offgrid_power":0,"total_grid_output_energy":2548,"total_grid_input_energy":3273,"total_load_energy":0}}"#
 let esE2Reply = #"{"id":2,"src":"VenusE-bc2a3314ce8d","result":{"id":0,"bat_soc":98,"bat_cap":5120,"bat_power":-80,"ongrid_power":100,"offgrid_power":0}}"#
 
@@ -75,6 +78,12 @@ struct ProtocolTests {
     func aVerInAnyFormStillFindsTheBattery(field: String, firmware: Int?) throws {
         let reply = #"{"id":7,"result":{\#(field)"device":"VenusE 3.0"}}"#
         #expect(try MarstekProtocol.device(Data(reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: nil, firmware: firmware))
+    }
+
+    @Test func v135RepliesParse() throws {
+        #expect(try MarstekProtocol.device(Data(deviceV135Reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "9a254a554cc6", firmware: 135))
+        #expect(try MarstekProtocol.device(Data(deviceE2V135Reply.utf8)) == DeviceInfo(model: "VenusE", mac: "9a254a554cc6", firmware: 135))
+        #expect(try MarstekProtocol.esStatus(Data(esV135Reply.utf8)) == EsStatus(socPct: 98, ongridW: 100, offgridW: 0, ratedWh: 5120))
     }
 
     @Test func olderFirmwareStatusParses() throws {

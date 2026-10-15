@@ -857,7 +857,8 @@ struct FindBatterySheet: View {
 
 | `ver` | Battery | `Marstek.GetDevice` | `ES.GetStatus` | Behaviour |
 |---|---|---|---|---|
-| 135, 136, 140–142 | No source found. | UNVERIFIED | UNVERIFIED | UNVERIFIED |
+| 135 (must have) | UNVERIFIED which battery. The [firmware archive](https://github.com/rweijnen/marstek-firmware-archive) holds VNSE3-0 Control 144, 1476, 148, 150 and HMG-50 (Venus E 2.0) Control 146–156, so 135 is a Venus E 3.0 Control older than any archived image, a Venus E 2.0 Control older than 146, or a BMS or communication-module number that never appears in `ver`. | Assumed spec shape, `ver` 135, `device` `"VenusE 3.0"` or `"VenusE"`. UNVERIFIED | Assumed spec example (the Rev 3.1 reply with `pv_power` and `total_pv_energy`). Its neighbours 137 and 139 are reported unresponsive. UNVERIFIED | Below 150, so Task 6 polls it gently. |
+| 136, 140–142 | No source found. | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | 137, 139 | Venus E 3.0 | UNVERIFIED | jaapp README: "can be unresponsive" on Venus E v3 137 and 139. A Homey user got no values after updating to 139 (search snippet, UNVERIFIED). | UNVERIFIED |
 | 138 | Venus E 3.0 | Found, per the [Homey thread](https://community.homey.app/t/venus-e-3-0-v138-detected-correctly-but-remains-inactive/158003) title "detected correctly but remains inactive". | No values (search snippet; the page returned 404). UNVERIFIED | UNVERIFIED |
 | 143 | Only a Venus D report ([Homey p.9](https://community.homey.app/t/app-pro-marstek-venus-connector-monitor-control-and-automate-your-marstek-home-battery/143139?page=9)). | UNVERIFIED | UNVERIFIED | UNVERIFIED |
@@ -888,6 +889,8 @@ On any firmware:
 |---|---|---|
 | `deviceReply` (exists) | V150, captured | firmware 150 |
 | `device151Reply` | `src` `"VNSE3-0-…"`, `ver` 151 | model `VenusE 3.0`, firmware 151 |
+| `deviceV135Reply`, `deviceE2V135Reply` | V150 shape with `ver` 135, `device` `"VenusE 3.0"` and `"VenusE"` | firmware 135 |
+| `esV135Reply` | Rev 3.1 spec example verbatim | soc 98, ongrid 100, offgrid 0, rated 5120 |
 | `device1476Reply` | `ver` 1476 | firmware 147 |
 | `device148Reply` | `"wifi_mac":""`, `"wifi_name":""`, `ver` 148 | mac from `ble_mac`, firmware 148 |
 | `deviceE2Reply` | `device` `"VenusE"`, `src` `"VenusE-…"`, no MAC fields, `ver` 145 | model `VenusE`, mac nil, firmware 145 |
@@ -899,7 +902,7 @@ On any firmware:
 | capacity gone | `bat_cap` null, missing, 0 or -5120 with `bat_soc` 80 | rated 5120 |
 | off-grid null | `offgrid_power` null | offgrid 0 |
 
-- [ ] **5.0 Real replies (when a battery on another firmware is reachable).** From a Mac on its Wi‑Fi, send the step 0.1 command to its IP, then 10 s later the same with `ES.GetStatus` and `"params":{"id":0}`. Paste both replies into the fixtures, mark them captured, and fix the table above.
+- [ ] **5.0 Real replies (when a battery on another firmware is reachable; V135 first).** From a Mac on its Wi‑Fi, send the step 0.1 command to its IP, then 10 s later the same with `ES.GetStatus` and `"params":{"id":0}`. Paste both replies into the fixtures, mark them captured, and fix the table above.
 
 - [x] **5.1 Tests first.** In `ios/Tests/ProtocolTests.swift`, add after `deviceReply`:
 
