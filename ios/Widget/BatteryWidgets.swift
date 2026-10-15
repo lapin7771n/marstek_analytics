@@ -28,7 +28,11 @@ struct BatteryProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BatteryEntry>) -> Void) {
         Task {
-            let snapshot = await SharedRefresh.shared.run { await Refresher.refresh(Store(), maxAge: Refresher.widgetMaxAge) }
+            let snapshot = await SharedRefresh.shared.run {
+                let store = Store()
+                store.log("Widget timeline reload")
+                return await Refresher.refresh(store, maxAge: Refresher.widgetMaxAge)
+            }
             let now = Date.now
             let floorPct = Store().settings.floorPct
             var entries = [BatteryEntry(date: now, face: Face(snapshot, floorPct: floorPct, now: now))]
