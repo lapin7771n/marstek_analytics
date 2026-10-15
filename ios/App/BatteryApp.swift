@@ -26,6 +26,9 @@ struct SettingsScreen: View {
     @State private var history = Store().history
     @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
     @State private var powerBack = Store().powerBack
+    @State private var fromSchedule = Store().powerBackFromSchedule
+    @State private var outageGroup = Store().outageGroup
+    @State private var schedule = Store().schedule
     @State private var checking = false
     @State private var alertOn = Store().alert.on
     @State private var alertDenied = false
@@ -84,6 +87,11 @@ struct SettingsScreen: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        AddressScreen(group: outageGroup, onSave: saveGroup)
+                    } label: {
+                        LabeledContent("Address", value: outageGroup?.address ?? String(localized: "Not set"))
+                    }
                     LabeledContent("Grid returns") {
                         if let back = powerBack, back > .now {
                             HStack(spacing: 6) {
@@ -92,7 +100,10 @@ struct SettingsScreen: View {
                                         Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
                                     }
                                     Button("Tomorrow") { setPowerBack(Outage.moved(back, tomorrow: true, now: .now)) }
-                                    Button("Clear", role: .destructive) { setPowerBack(nil) }
+                                    if !fromSchedule {
+                                        if offersSchedule { Button("Use YASNO") { useSchedule() } }
+                                        Button("Clear", role: .destructive) { setPowerBack(nil) }
+                                    }
                                 } label: {
                                     Text(Calendar.current.isDateInToday(back) ? "Today" : "Tomorrow")
                                         .padding(.horizontal, 11).frame(height: 34)
@@ -104,6 +115,9 @@ struct SettingsScreen: View {
                         } else {
                             Button("Set") { setPowerBack(Calendar.current.nextDate(after: .now.addingTimeInterval(3600), matching: DateComponents(minute: 0), matchingPolicy: .nextTime)) }
                         }
+                    }
+                    if let outageGroup {
+                        ScheduleNote(group: outageGroup, state: schedule, now: .now)
                     }
                     if let outage = face.outage {
                         OutageRow(outage: outage, stale: face.stale)
@@ -163,6 +177,7 @@ struct SettingsScreen: View {
         }
         // A background alert run wakes the app; the poll must not wake with it.
         .task(id: phase) { if phase == .active { await poll() } }
+        .task(id: phase == .active ? outageGroup?.key : nil) { if phase == .active { await pollSchedule() } }
         .onOpenURL { url in if url == AppLinks.localNetwork { openSettings() } }
     }
 
@@ -176,7 +191,46 @@ struct SettingsScreen: View {
 
     private func setPowerBack(_ date: Date?) {
         powerBack = date
+        fromSchedule = false
         store.powerBack = date
+        store.powerBackFromSchedule = false
+        reloadEta()
+    }
+
+    private var offersSchedule: Bool {
+        guard let days = schedule?.days, schedule?.key == outageGroup?.key else { return false }
+        if case .off = Schedule.answer(days, now: .now) { return true }
+        return false
+    }
+
+    private func saveGroup(_ group: OutageGroup?) {
+        outageGroup = group
+        store.outageGroup = group
+    }
+
+    private func useSchedule() {
+        store.powerBack = nil
+        store.powerBackFromSchedule = false
+        Task { await tickSchedule() }
+    }
+
+    private func tickSchedule() async {
+        let changed = await ScheduleFeed.tick(store)
+        schedule = store.schedule
+        guard changed else { return }
+        powerBack = store.powerBack
+        fromSchedule = store.powerBackFromSchedule
+        reloadEta()
+    }
+
+    private func pollSchedule() async {
+        while !Task.isCancelled {
+            await tickSchedule()
+            try? await Task.sleep(for: Refresher.appPollInterval)
+        }
+    }
+
+    private func reloadEta() {
         if checking { reloadAfterCheck = true } else { WidgetCenter.shared.reloadTimelines(ofKind: "eta") }
     }
 

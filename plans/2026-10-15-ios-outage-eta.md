@@ -983,7 +983,7 @@ enum Address {
 - Modify: `ios/App/BatteryApp.swift`, `ios/Shared/Localizable.xcstrings`
 - Test: `ios/Tests/LocalizationTests.swift`
 
-- [ ] **6.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
+- [x] **6.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
 
 ```swift
         #expect(uk.localizedString(forKey: "YASNO, group %@: off %@–%@.", value: nil, table: nil) == "YASNO, група %1$@: без світла %2$@–%3$@.")
@@ -991,14 +991,14 @@ enum Address {
 
 Run `make test`. Expected: the expectation fails.
 
-- [ ] **6.2 Note view.** Create `ios/App/ScheduleViews.swift` with `ScheduleNote(group: OutageGroup, state: ScheduleState?, now: Date)`, one secondary `.subheadline` line:
+- [x] **6.2 Note view.** Create `ios/App/ScheduleViews.swift` with `ScheduleNote(group: OutageGroup, state: ScheduleState?, now: Date)`, one secondary `.subheadline` line:
   - `.off(from, until)`: "YASNO, group 19.1: off 14:00–17:30." (times with `Text(_, style: .time)`).
   - `.emergency`: "YASNO, group %@: emergency outages, no end time."
   - `.clear`: "YASNO, group %@: no outage ahead."
   - No days and `failed`: "YASNO did not answer."
   - No state yet: nothing.
 
-- [ ] **6.3 Section.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
+- [x] **6.3 Section.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
   - Add `@State private var fromSchedule = Store().powerBackFromSchedule`, `@State private var outageGroup = Store().outageGroup`, `@State private var schedule = Store().schedule`.
   - First row of "Power back at": `NavigationLink { AddressScreen(group: outageGroup, onSave: saveGroup) } label: { LabeledContent("Address", value: outageGroup?.address ?? String(localized: "Not set")) }`.
   - Under "Grid returns", when `outageGroup` is set: `ScheduleNote(group:state:now:)`.
@@ -1041,7 +1041,7 @@ Run `make test`. Expected: the expectation fails.
 
   - Add `.task(id: outageGroup?.key) { await pollSchedule() }` next to `.task { await poll() }`, so a new group reads at once.
 
-- [ ] **6.4 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings`, each with `"state": "translated"`. Run the `ukrainian-translation-review` skill on the values before committing.
+- [x] **6.4 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings`, each with `"state": "translated"`. Run the `ukrainian-translation-review` skill on the values before committing.
 
 | Key | uk |
 |-----|----|
@@ -1060,8 +1060,8 @@ Run `make test`. Expected: the expectation fails.
 | `YASNO, group %@: emergency outages, no end time.` | `YASNO, група %@: аварійні відключення, час невідомий.` |
 | `YASNO, group %@: no outage ahead.` | `YASNO, група %@: відключень попереду немає.` |
 
-- [ ] **6.5 Gate.** Run `make test`. Expected: exit 0.
+- [x] **6.5 Gate.** Run `make test`. Expected: exit 0.
 
 - [ ] **6.6 Look.** In the `iPhone 18 Pro` simulator, run `xcrun simctl location booted set 50.4475,30.5219` (Khreshchatyk), open Address, tap "Use my location", and pick the house. Screenshot the "Power back at" section in English and Ukrainian with the YASNO line. Then set a manual time, check that it stays, and use "Use YASNO".
 
-- [ ] **6.7 Commit.** `feat: fill the power-back time from yasno`
+- [x] **6.7 Commit.** `feat: fill the power-back time from yasno`

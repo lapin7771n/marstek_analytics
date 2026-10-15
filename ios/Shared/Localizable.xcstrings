@@ -91,6 +91,16 @@
         }
       }
     },
+    "Address": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Адреса"
+          }
+        }
+      }
+    },
     "Alerts": {
       "localizations": {
         "uk": {
@@ -411,6 +421,16 @@
         }
       }
     },
+    "House": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Будинок"
+          }
+        }
+      }
+    },
     "IDLE": {
       "localizations": {
         "uk": {
@@ -511,6 +531,16 @@
         }
       }
     },
+    "Location is off. Type the street.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Геолокацію вимкнено. Введіть вулицю."
+          }
+        }
+      }
+    },
     "Log": {
       "localizations": {
         "uk": {
@@ -551,6 +581,16 @@
         }
       }
     },
+    "No match. YASNO covers Kyiv city only.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нічого не знайдено. YASNO обслуговує лише Київ."
+          }
+        }
+      }
+    },
     "No problems": {
       "localizations": {
         "uk": {
@@ -567,6 +607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сьогодні ще немає даних."
+          }
+        }
+      }
+    },
+    "Not set": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вказано"
           }
         }
       }
@@ -731,6 +781,16 @@
         }
       }
     },
+    "Remove address": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видалити адресу"
+          }
+        }
+      }
+    },
     "Reserve": {
       "localizations": {
         "uk": {
@@ -821,6 +881,16 @@
         }
       }
     },
+    "Street": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вулиця"
+          }
+        }
+      }
+    },
     "Support": {
       "localizations": {
         "uk": {
@@ -837,6 +907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Торкніться, щоб відкрити Параметри, і ввімкніть «Локальна мережа». Якщо його там немає: Приватність і безпека › Локальна мережа."
+          }
+        }
+      }
+    },
+    "The app keeps only the group and the address text, not your location.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок зберігає лише групу й текст адреси, а не вашу геолокацію."
           }
         }
       }
@@ -911,6 +991,26 @@
         }
       }
     },
+    "Use YASNO": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Брати з YASNO"
+          }
+        }
+      }
+    },
+    "Use my location": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Визначити за геолокацією"
+          }
+        }
+      }
+    },
     "Used": {
       "localizations": {
         "uk": {
@@ -927,6 +1027,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Розраховано за поточним навантаженням. Якщо воно зміниться, зміниться й відповідь."
+          }
+        }
+      }
+    },
+    "YASNO did not answer.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO не відповідає."
+          }
+        }
+      }
+    },
+    "YASNO, group %@: emergency outages, no end time.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO, група %@: аварійні відключення, час завершення невідомий."
+          }
+        }
+      }
+    },
+    "YASNO, group %@: no outage ahead.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO, група %@: найближчим часом відключень немає."
+          }
+        }
+      }
+    },
+    "YASNO, group %@: off %@–%@.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO, група %1$@: без світла %2$@–%3$@."
           }
         }
       }
