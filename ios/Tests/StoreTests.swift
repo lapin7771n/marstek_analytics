@@ -107,6 +107,50 @@ struct StoreTests {
         _ = await gate.run { await counter.fetch() }
         #expect(await counter.count == 2)
     }
+
+    @Test func anAlertRunAndAWidgetRefreshShareOneRequest() async {
+        let store = store()
+        let counter = FetchCounter()
+        let now = reading(acW: 400).time
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now) { _ in await counter.fetchReading() }
+        _ = await Refresher.refresh(store, now: now.addingTimeInterval(5 * 60), maxAge: Refresher.widgetMaxAge) { _ in
+            await counter.fetchReading()
+        }
+        #expect(await counter.count == 1)
+    }
+
+    @Test func anAlertRunReusesAFreshSnapshot() async {
+        let store = store()
+        let counter = FetchCounter()
+        let now = reading(acW: 400).time
+        store.snapshot = Snapshot(reading: reading(acW: 400), error: nil, checkedAt: now)
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now.addingTimeInterval(9 * 60)) { _ in
+            await counter.fetchReading()
+        }
+        #expect(await counter.count == 0)
+    }
+
+    @Test func anAlertRunFetchesAnOldSnapshotOnce() async {
+        let store = store()
+        let counter = FetchCounter()
+        let now = reading(acW: 400).time
+        store.snapshot = Snapshot(reading: reading(acW: 400), error: nil, checkedAt: now)
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now.addingTimeInterval(11 * 60)) { _ in
+            await counter.fetchReading()
+        }
+        #expect(await counter.count == 1)
+    }
+
+    @Test func anAlertRunRemembersItNotified() async {
+        let store = store()
+        store.alert = AlertState(on: true)
+        let now = reading(acW: 400).time
+        store.snapshot = Snapshot(reading: reading(soc: 12, acW: 100, capacityWh: 614.4), error: nil, checkedAt: now)
+        let first = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now) { _ in reading(acW: 400) }
+        let second = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now) { _ in reading(acW: 400) }
+        #expect(first == .reserve(socPct: 12, watts: 100))
+        #expect(second == nil)
+    }
 }
 
 actor FetchCounter {
@@ -116,5 +160,10 @@ actor FetchCounter {
         count += 1
         try? await Task.sleep(for: .milliseconds(200))
         return Snapshot(reading: nil, error: .noLink, checkedAt: .now)
+    }
+
+    func fetchReading() -> Reading {
+        count += 1
+        return reading(acW: 400)
     }
 }

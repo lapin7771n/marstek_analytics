@@ -11,6 +11,26 @@
         }
       }
     },
+    "%@ left, %@. The battery stops at the reserve.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лишилося %1$@, %2$@. Батарея зупиняється на резерві."
+          }
+        }
+      }
+    },
+    "%@ left. The battery stops at the reserve.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лишилося %@. Батарея зупиняється на резерві."
+          }
+        }
+      }
+    },
     "%@ · %@": {
       "localizations": {
         "uk": {
@@ -47,6 +67,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Про застосунок"
+          }
+        }
+      }
+    },
+    "Alerts": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сповіщення"
+          }
+        }
+      }
+    },
+    "Alerts once when the charge reaches the %@ reserve, and once when less than 30 min is left. iOS checks about every 15–30 min, so an alert can come late.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сповіщає один раз, коли заряд дійде до резерву %@, і ще раз, коли лишиться менше 30 хв. iOS перевіряє приблизно кожні 15–30 хв, тож сповіщення може запізнитися."
           }
         }
       }
@@ -107,6 +147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Батарея і час"
+          }
+        }
+      }
+    },
+    "Battery at reserve": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Батарея на резерві"
           }
         }
       }
@@ -221,6 +271,16 @@
         }
       }
     },
+    "Empty in %lld min at %@. Turn off heavy loads.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розрядиться через %1$lld хв (%2$@). Вимкніть потужні прилади."
+          }
+        }
+      }
+    },
     "Enter the battery IP address": {
       "localizations": {
         "uk": {
@@ -301,6 +361,16 @@
         }
       }
     },
+    "Low-battery alert": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сповіщення про низький заряд"
+          }
+        }
+      }
+    },
     "NO LINK": {
       "localizations": {
         "uk": {
@@ -317,6 +387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сьогодні ще немає даних."
+          }
+        }
+      }
+    },
+    "Notifications are off. Turn them on for Battery ETA in Settings.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сповіщення вимкнено. Увімкніть їх для Battery ETA у Параметрах."
           }
         }
       }
@@ -507,6 +587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сьогодні в цифрах"
+          }
+        }
+      }
+    },
+    "Under 30 min left": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лишилося менше 30 хв"
           }
         }
       }

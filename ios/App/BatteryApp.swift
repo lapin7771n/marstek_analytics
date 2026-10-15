@@ -3,6 +3,8 @@ import WidgetKit
 
 @main
 struct BatteryApp: App {
+    @Environment(\.scenePhase) private var phase
+
     var body: some Scene {
         WindowGroup {
             SettingsScreen()
@@ -10,6 +12,10 @@ struct BatteryApp: App {
                 .fontDesign(.rounded)
                 .tint(Palette.good)
         }
+        .onChange(of: phase) { _, phase in
+            if phase == .background, Store().alert.on { AlertTask.schedule() }
+        }
+        .backgroundTask(.appRefresh(AlertTask.id)) { await AlertTask.run() }
     }
 }
 
@@ -20,7 +26,10 @@ struct SettingsScreen: View {
     @State private var history = Store().history
     @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
     @State private var checking = false
+    @State private var alertOn = Store().alert.on
+    @State private var alertDenied = false
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var phase
 
     var body: some View {
         NavigationStack {
@@ -86,6 +95,14 @@ struct SettingsScreen: View {
                     Section("Today in numbers") { TodayNumbers(day: day) }
                 }
 
+                Section {
+                    Toggle("Low-battery alert", isOn: Binding(get: { alertOn }, set: { on in Task { await setAlert(on) } }))
+                } header: {
+                    Text("Alerts")
+                } footer: {
+                    Text(alertFooter)
+                }
+
                 Section("If it fails") {
                     Button(action: openSettings) {
                         HStack {
@@ -106,12 +123,31 @@ struct SettingsScreen: View {
             }
             .navigationTitle("Battery ETA")
         }
-        .task { await poll() }
+        // A background alert run wakes the app; the poll must not wake with it.
+        .task(id: phase) { if phase == .active { await poll() } }
         .onOpenURL { url in if url == AppLinks.localNetwork { openSettings() } }
     }
 
     private var saveDisabled: Bool {
         checking || settings.problem != nil
+    }
+
+    private var alertFooter: String {
+        alertDenied
+            ? String(localized: "Notifications are off. Turn them on for Battery ETA in Settings.")
+            : String(localized: "Alerts once when the charge reaches the \(LowBattery.percent(settings.floorPct)) reserve, and once when less than 30 min is left. iOS checks about every 15–30 min, so an alert can come late.")
+    }
+
+    private func setAlert(_ on: Bool) async {
+        alertOn = on
+        if on {
+            alertOn = await AlertTask.turnOn()
+            alertDenied = !alertOn
+        } else {
+            store.alert = AlertState()
+            AlertTask.cancel()
+            alertDenied = false
+        }
     }
 
     private func hint(_ code: LocalizedStringKey, _ text: LocalizedStringKey) -> some View {

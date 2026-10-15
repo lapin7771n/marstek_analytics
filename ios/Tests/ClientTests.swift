@@ -43,4 +43,28 @@ struct ClientTests {
         #expect(reading == Reading(time: time, socPct: 80, acW: -797, offgridW: 0, capacityWh: 4096, ratedWh: 5120))
         #expect(methods == ["ES.GetStatus"])
     }
+
+    @Test func aBackgroundFetchAsksOnlyForEsStatus() async throws {
+        var methods: [String] = []
+        let fake = try await FakeBattery.start { request, _ in
+            methods.append(request.method)
+            return [#"{"id":\#(request.id),"result":{"bat_soc":80,"bat_cap":5120,"ongrid_power":-797,"offgrid_power":0}}"#]
+        }
+        defer { fake.stop() }
+        _ = try await AlertTask.fetchOnce(BatterySettings(host: "127.0.0.1", port: Int(fake.port)))
+        #expect(methods == ["ES.GetStatus"])
+    }
+
+    @Test func aBackgroundFetchDoesNotRetry() async throws {
+        var requests = 0
+        let fake = try await FakeBattery.start { _, _ in
+            requests += 1
+            return []
+        }
+        defer { fake.stop() }
+        await #expect(throws: DeviceError.timeout) {
+            try await AlertTask.fetchOnce(BatterySettings(host: "127.0.0.1", port: Int(fake.port)))
+        }
+        #expect(requests == 1)
+    }
 }
