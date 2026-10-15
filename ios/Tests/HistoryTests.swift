@@ -26,6 +26,7 @@ struct HistoryTests {
 
     @Test func aFailedFetchAddsNothing() async {
         let store = store()
+        store.snapshot = Snapshot(reading: at(-10), error: nil, checkedAt: start.addingTimeInterval(-600))
         _ = await Refresher.refresh(store, now: start) { _ in throw DeviceError.timeout }
         #expect(store.history.samples.isEmpty)
     }
@@ -133,17 +134,19 @@ struct HistoryTests {
         let counter = ReadingCounter()
         _ = await Refresher.refresh(store, now: start) { _ in await counter.fetch(at(0)) }
         _ = await Refresher.refresh(store, now: start.addingTimeInterval(10 * 60)) { _ in await counter.fetch(at(10)) }
+        var day: DaySummary?
         for _ in 0..<3 {
-            _ = store.history.day(now: start.addingTimeInterval(11 * 60), latest: store.snapshot?.reading, calendar: utc)
+            day = store.history.day(now: start.addingTimeInterval(11 * 60), latest: store.snapshot?.reading, calendar: utc)
         }
+        #expect(day?.segments.flatMap(\.samples).count == 2)
         #expect(store.history.samples.count == 2)
         #expect(await counter.count == 2)
     }
 
     @Test func onBatteryCountsDischargeBetweenCloseReadings() {
-        let day = history(at(0, acW: 400), at(10, acW: -800), at(20, acW: 400), at(100, acW: 400))
-            .day(now: start.addingTimeInterval(100 * 60), latest: nil, calendar: utc)
-        #expect(day.onBattery == 10 * 60)
+        let day = history(at(0, acW: 20), at(10, acW: 400), at(30, acW: -800), at(35, acW: 400), at(135, acW: 400))
+            .day(now: start.addingTimeInterval(135 * 60), latest: nil, calendar: utc)
+        #expect(day.onBattery == 20 * 60)
     }
 
     @Test func eachHourBarIsTheMeanPowerWithChargingUp() {

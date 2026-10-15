@@ -18,6 +18,7 @@ struct SettingsScreen: View {
     @State private var settings = Store().settings
     @State private var snapshot = Store().snapshot
     @State private var history = Store().history
+    @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
     @State private var checking = false
     @Environment(\.openURL) private var openURL
 
@@ -108,10 +109,6 @@ struct SettingsScreen: View {
         checking || settings.problem != nil
     }
 
-    private var day: DaySummary {
-        history.day(now: .now, latest: snapshot?.reading)
-    }
-
     private func hint(_ code: LocalizedStringKey, _ text: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(code).font(.system(size: 13, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(Palette.bad)
@@ -136,6 +133,7 @@ struct SettingsScreen: View {
         checking = true
         snapshot = await Refresher.refresh(store)
         history = store.history
+        day = history.day(now: .now, latest: snapshot?.reading)
         checking = false
     }
 

@@ -7,8 +7,8 @@ struct TodayCard: View {
     private var domain: ClosedRange<Date> { day.start...max(day.now, day.start.addingTimeInterval(3 * 3600)) }
 
     private var ticks: [Date] {
-        let hours = stride(from: 0.0, through: 18, by: 6)
-            .map { day.start.addingTimeInterval($0 * 3600) }
+        let hours = [0, 6, 12, 18]
+            .compactMap { Calendar.current.date(bySettingHour: $0, minute: 0, second: 0, of: day.start) }
             .filter { day.now.timeIntervalSince($0) >= 2 * 3600 }
         return hours + [day.now]
     }
@@ -79,6 +79,7 @@ struct TodayCard: View {
         }
         .chartXScale(domain: domain)
         .chartYScale(domain: -peak...peak)
+        .chartPlotStyle { $0.clipped() }
         .chartYAxis(.hidden)
         .chartXAxis {
             AxisMarks(values: ticks) { v in
@@ -86,7 +87,7 @@ struct TodayCard: View {
                     if v.as(Date.self) == day.now {
                         Text("now")
                     } else if let date = v.as(Date.self) {
-                        Text(date, format: .dateTime.hour(.twoDigits(amPM: .omitted)))
+                        Text(verbatim: String(format: "%02d", Calendar.current.component(.hour, from: date)))
                     }
                 }
             }
