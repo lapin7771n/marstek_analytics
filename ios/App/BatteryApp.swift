@@ -41,6 +41,11 @@ struct SettingsScreen: View {
                         .autocorrectionDisabled()
                         .monospacedDigit()
                         .accessibilityLabel("Battery IP address")
+                    FindBatteryRow(port: settings.port) { battery in
+                        settings.host = battery.host
+                        settings.gentleHost = battery.resetsUnderLoad ? battery.host : nil
+                        Task { await save() }
+                    }
                     LabeledContent("Port") {
                         TextField("30000", value: $settings.port, format: .number.grouping(.never))
                             .keyboardType(.numberPad)
@@ -183,23 +188,38 @@ struct SettingsScreen: View {
         if settings.host != store.settings.host { store.snapshot = nil; store.history = History() }
         store.settings = settings
         store.log("Saved \(settings.host):\(settings.port)")
-        await refresh()
+        await refresh(waiting: true)
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    private func refresh() async {
+    private func refresh(waiting: Bool = false) async {
         guard !checking else { return }
         checking = true
+        defer { checking = false }
+        if waiting {
+            do { try await BatteryLine.shared.take() } catch { return }
+        } else if await !BatteryLine.shared.claim() {
+            return
+        }
         snapshot = await Refresher.refresh(store)
         history = store.history
         day = history.day(now: .now, latest: snapshot?.reading)
-        checking = false
+        await BatteryLine.shared.release()
     }
 
+    // Due a fixed interval after the last request, so a newly gentle host waits its 60 s at once.
     private func poll() async {
+        var tried = Date.distantPast
         while !Task.isCancelled {
-            if store.settings.problem == nil { await refresh() }
-            try? await Task.sleep(for: .seconds(30))
+            let now = Date.now
+            let checked = store.snapshot.map(\.checkedAt).flatMap { $0 <= now ? $0 : nil } ?? .distantPast
+            let due = max(tried, checked) + TimeInterval(store.settings.pollInterval.components.seconds)
+            if now >= due {
+                tried = now
+                if store.settings.problem == nil { await refresh() }
+            } else {
+                try? await Task.sleep(for: .seconds(min(due.timeIntervalSince(now), 5)))
+            }
         }
     }
 }

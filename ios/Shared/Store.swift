@@ -4,6 +4,10 @@ struct BatterySettings: Codable, Equatable {
     var host = ""
     var port = 30000
     var floorPct = 12
+    var gentleHost: String?
+
+    var pollInterval: Duration { gentleHost == host ? .seconds(60) : .seconds(30) }
+    var retries: Bool { gentleHost != host }
 
     var problem: String? {
         if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil || !isIPv4OrName {
@@ -86,6 +90,11 @@ final class Store {
         set { save(newValue, "log") }
     }
 
+    var searchUntil: Date? {
+        get { load("searchUntil") }
+        set { save(newValue, "searchUntil") }
+    }
+
     private func load<T: Decodable>(_ key: String) -> T? {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(T.self, from: $0) }
     }
@@ -104,6 +113,9 @@ enum Refresher {
         maxAge: TimeInterval = 0,
         fetch: (BatterySettings) async throws -> Reading = Refresher.live
     ) async -> Snapshot {
+        if let until = store.searchUntil, now < until {
+            return store.snapshot ?? Snapshot(reading: nil, error: nil, checkedAt: now)
+        }
         let settings = store.settings
         if settings.problem == nil, let last = store.snapshot, last.error != .settings,
            (0..<maxAge).contains(now.timeIntervalSince(last.checkedAt)) {
@@ -131,6 +143,7 @@ enum Refresher {
 
     static func live(_ settings: BatterySettings) async throws -> Reading {
         var client = MarstekClient(host: settings.host, port: UInt16(settings.port))
+        client.retry = settings.retries
         client.trace = { Store().log($1, at: $0) }
         return try await client.reading()
     }

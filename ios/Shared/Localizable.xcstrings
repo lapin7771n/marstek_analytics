@@ -91,6 +91,16 @@
         }
       }
     },
+    "Allow Local Network for Battery ETA, then tap Find battery again.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозвольте Battery ETA доступ до локальної мережі й знову натисніть «Знайти батарею»."
+          }
+        }
+      }
+    },
     "App": {
       "localizations": {
         "uk": {
@@ -107,6 +117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "БАТАРЕЯ"
+          }
+        }
+      }
+    },
+    "Batteries on this Wi‑Fi": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Батареї в цій мережі Wi‑Fi"
           }
         }
       }
@@ -261,6 +281,16 @@
         }
       }
     },
+    "Close": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрити"
+          }
+        }
+      }
+    },
     "Copied": {
       "localizations": {
         "uk": {
@@ -371,6 +401,26 @@
         }
       }
     },
+    "Find battery": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знайти батарею"
+          }
+        }
+      }
+    },
+    "Firmware V%lld can switch off Open API under frequent requests. Update it in the Marstek app.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прошивка V%lld може вимикати Open API за частих запитів. Оновіть її в застосунку Marstek."
+          }
+        }
+      }
+    },
     "Hour": {
       "localizations": {
         "uk": {
@@ -421,6 +471,16 @@
         }
       }
     },
+    "Join the same Wi‑Fi as the battery, then tap Find battery.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підключіться до тієї ж мережі Wi‑Fi, що й батарея, і натисніть «Знайти батарею»."
+          }
+        }
+      }
+    },
     "LOGS": {
       "localizations": {
         "uk": {
@@ -461,6 +521,16 @@
         }
       }
     },
+    "Looks for Marstek batteries on this Wi‑Fi. It asks each battery once, only when you tap.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шукає батареї Marstek у цій мережі Wi‑Fi. Звертається до кожної один раз і лише після натискання."
+          }
+        }
+      }
+    },
     "Low-battery alert": {
       "localizations": {
         "uk": {
@@ -477,6 +547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "НЕМАЄ ЗВʼЯЗКУ"
+          }
+        }
+      }
+    },
+    "No battery found.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Батарею не знайдено."
           }
         }
       }
@@ -507,6 +587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сьогодні ще немає даних."
+          }
+        }
+      }
+    },
+    "Not listed? Turn on Open API for the battery in the Marstek app, then search again.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Немає в списку? Увімкніть Open API для батареї в застосунку Marstek і пошукайте ще раз."
           }
         }
       }
@@ -671,6 +761,16 @@
         }
       }
     },
+    "Searching…": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шукаю…"
+          }
+        }
+      }
+    },
     "Segment": {
       "localizations": {
         "uk": {
@@ -767,6 +867,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Оновлено о %@"
+          }
+        }
+      }
+    },
+    "Use this battery": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вибрати цю батарею"
           }
         }
       }
