@@ -81,6 +81,11 @@ final class Store {
         set { save(newValue, "history") }
     }
 
+    var log: DebugLog {
+        get { load("log") ?? DebugLog() }
+        set { save(newValue, "log") }
+    }
+
     private func load<T: Decodable>(_ key: String) -> T? {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(T.self, from: $0) }
     }
@@ -102,18 +107,22 @@ enum Refresher {
         let settings = store.settings
         if settings.problem == nil, let last = store.snapshot, last.error != .settings,
            (0..<maxAge).contains(now.timeIntervalSince(last.checkedAt)) {
+            store.log("Reused the reading from \(DebugLog.stamp(last.checkedAt))")
             return last
         }
         var next = Snapshot(reading: store.snapshot?.reading, error: nil, checkedAt: now)
-        if settings.problem != nil {
+        if let problem = settings.problem {
             next.error = .settings
+            store.log("Skipped: \(problem)")
         } else {
             do {
                 let reading = try await fetch(settings)
                 next.reading = reading
                 store.history.add(reading)
+                store.log("OK: \(reading.socPct) %, \(Int(reading.acW.rounded())) W")
             } catch {
                 next.error = FetchError(error)
+                store.log("\(next.error?.rawValue ?? "error"): \(error)")
             }
         }
         store.snapshot = next
@@ -121,7 +130,9 @@ enum Refresher {
     }
 
     static func live(_ settings: BatterySettings) async throws -> Reading {
-        try await MarstekClient(host: settings.host, port: UInt16(settings.port)).reading()
+        var client = MarstekClient(host: settings.host, port: UInt16(settings.port))
+        client.trace = { Store().log($1, at: $0) }
+        return try await client.reading()
     }
 }
 
