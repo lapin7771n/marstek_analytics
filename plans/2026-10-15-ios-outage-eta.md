@@ -448,7 +448,7 @@ struct OutageLine: View {
 
 - [x] **2.7 Gate.** Run `make test`. Expected: exit 0.
 
-- [ ] **2.8 Look.** Run the app in the `iPhone 18 Pro` simulator, tap "Set", and screenshot the section in English and Ukrainian. Compare with the artboard. With no battery on the LAN there is no reading and no verdict row, so the owner checks the verdict on a real phone.
+- [x] **2.8 Look.** Run the app in the `iPhone 18 Pro` simulator, tap "Set", and screenshot the section in English and Ukrainian. Compare with the artboard. With no battery on the LAN there is no reading and no verdict row, so the owner checks the verdict on a real phone.
 
 - [x] **2.9 Commit.** `feat: show whether the battery lasts until power returns`
 
