@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"${CLAUDE_PROJECT_DIR}/.claude/hooks/land-pr-arm.sh\"; [ -f \"$f\" ] || exit 0; exec \"$f\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
