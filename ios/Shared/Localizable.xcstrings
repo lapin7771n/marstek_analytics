@@ -31,6 +31,16 @@
         }
       }
     },
+    "About": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Про застосунок"
+          }
+        }
+      }
+    },
     "BATTERY": {
       "localizations": {
         "uk": {
@@ -281,6 +291,16 @@
         }
       }
     },
+    "Privacy policy": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Політика конфіденційності"
+          }
+        }
+      }
+    },
     "Reserve ": {
       "localizations": {
         "uk": {
@@ -317,6 +337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Зберегти й перевірити"
+          }
+        }
+      }
+    },
+    "Support": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підтримка"
           }
         }
       }
