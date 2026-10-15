@@ -848,60 +848,105 @@ struct FindBatterySheet: View {
 - [ ] **4.1** `make upload BUILD=<next>`, install from TestFlight, clear the IP field, tap Find battery. Expected: the battery appears within 15 s; "Use this battery" fills `192.168.68.50` and "Now" shows a reading.
 - [ ] **4.2** Watch the battery output for 10 minutes after the search. Expected: no cut.
 
-## Task 5: Firmware V135
 
-**Goal:** a battery on V135 is found, shows its firmware in the sheet, and gives a reading if its `ES.GetStatus` reply differs from V150 in the ways sources report. The requests do not change: `ES.GetStatus`, plus `Marstek.GetDevice` on a tap.
+## Task 5: Firmware V135–V151
 
-**V135 facts.** No source mentions firmware 135 for any Venus model, so every V135 claim below is UNVERIFIED.
+**Goal:** every Venus E firmware from V135 to V151 is found, shows its firmware in the sheet, and gives a reading or a clear error. The requests stay `ES.GetStatus`, plus `Marstek.GetDevice` on a tap.
 
-- The spec ([MarstekDeviceOpenApi.pdf](https://static-eu.marstekcloud.com/ems/resource/agreement/MarstekDeviceOpenApi.pdf), Rev 3.1) gives the `GetDevice` reply as `device`, `ver` (integer), `ble_mac`, `wifi_mac`, `wifi_name`, `ip`. Its example is a Venus C on `ver` 111, so firmware below 150 sends the same shape. Whether V135 answers unicast is UNVERIFIED.
-- The spec's `ES.GetStatus` example carries `bat_soc` (%), `bat_cap` (Wh), `ongrid_power` and `offgrid_power` (W), the fields the app reads, and lists every field as "number or null". A V135 that follows the spec needs no change.
-- The spec says Venus C/E support ES, and "SYS FW>=150 available". Which component that gate covers is UNVERIFIED.
-- The [jaapp integration](https://github.com/jaapp/ha-marstek-local-api) warns that some firmware sends capacity and energy 1000× off, and that `ES.GetStatus` goes unresponsive on Venus E v3 firmware 137 and 139. Firmware 135 is not named. UNVERIFIED.
-- The [taurgis integration](https://github.com/taurgis/has-marstek-local-api) tests Venus E 3.0 on 144–151 only. A newer Venus V3 firmware stopped sending `bat_power` ([Homey thread](https://community.homey.app/t/app-pro-marstek-venus-connector-monitor-control-and-automate-your-marstek-home-battery/143139?page=22)), so fields do vanish between versions.
-- If V135 does not answer `ES.GetStatus` by unicast at all, the app cannot read it within the safety rules; the reading shows the timeout error, and the fix is a firmware update in the Marstek app.
+**What each firmware sends.** No source has a captured reply below 148, and nothing at all exists for 135, 136 and 140–142, so every claim about 135–143 is UNVERIFIED. The Home Assistant integrations' code is the main source: taurgis [`firmware_profile.py`](https://github.com/taurgis/has-marstek-local-api/blob/main/custom_components/marstek/firmware_profile.py), [`data_parser.py`](https://github.com/taurgis/has-marstek-local-api/blob/main/custom_components/marstek/pymarstek/data_parser.py), [`test_firmware_quirks.py`](https://github.com/taurgis/has-marstek-local-api/blob/main/tests/test_mock_device/device/test_firmware_quirks.py), [`tools/firmware/ANALYSIS.md`](https://github.com/taurgis/has-marstek-local-api/blob/main/tools/firmware/ANALYSIS.md) (decompiled VNSE3-0 images 144, 1476, 148, 149, 150, 151); jaapp [`compatibility.py`](https://github.com/jaapp/ha-marstek-local-api/blob/main/custom_components/marstek_local_api/compatibility.py) and [README](https://github.com/jaapp/ha-marstek-local-api).
+
+| `ver` | Battery | `Marstek.GetDevice` | `ES.GetStatus` | Behaviour |
+|---|---|---|---|---|
+| 135, 136, 140–142 | No source found. | UNVERIFIED | UNVERIFIED | UNVERIFIED |
+| 137, 139 | Venus E 3.0 | UNVERIFIED | jaapp README: "can be unresponsive" on Venus E v3 137 and 139. A Homey user got no values after updating to 139 (search snippet, UNVERIFIED). | UNVERIFIED |
+| 138 | Venus E 3.0 | Found, per the [Homey thread](https://community.homey.app/t/venus-e-3-0-v138-detected-correctly-but-remains-inactive/158003) title "detected correctly but remains inactive". | No values (search snippet; the page returned 404). UNVERIFIED | UNVERIFIED |
+| 143 | Only a Venus D report ([Homey p.9](https://community.homey.app/t/app-pro-marstek-venus-connector-monitor-control-and-automate-your-marstek-home-battery/143139?page=9)). | UNVERIFIED | UNVERIFIED | UNVERIFIED |
+| 144–149 | Venus E 3.0 (VNSE3-0) | `device` `"VenusE 3.0"`, `src` `"VenusE 3.0-<ble_mac>"`, `ver` an integer. App 147.6 sends `ver` 1476. A 148 reply on [openHAB](https://community.openhab.org/t/marstek-energy-battery-binding-5-0-0-0-6-0-0-0/167938?page=2) has `"wifi_mac":""` and `"wifi_name":""`. | Spec fields, integers: `bat_soc` %, `bat_cap` Wh, `ongrid_power`/`offgrid_power` W, grid energies Wh. No `bat_power` from 146 at the latest ([Homey p.13](https://community.homey.app/t/app-pro-marstek-venus-connector-monitor-control-and-automate-your-marstek-home-battery/143139?page=13)). | Under sustained UDP traffic the Local API switches itself off and the settings reset ([#14](https://github.com/taurgis/has-marstek-local-api/issues/14), [#15](https://github.com/taurgis/has-marstek-local-api/issues/15)). Every reply goes out twice. A 0-byte datagram stops all later replies. |
+| 150 | Venus E 3.0, this battery | Verified reply in Facts; unicast only. | Verified: as 144–149. | One reply per request. The Local API reset is fixed (#15). |
+| 151 | Venus E 3.0 | `src` becomes `"VNSE3-0-<ble_mac>"`; `device` stays `"VenusE 3.0"`. | As 150. | As 150. |
+| any up to 155 | Venus E 2.0 (HMG-50) | `device` bare `"VenusE"`, `src` `"VenusE-<ble_mac>"`; the MAC fields may be missing. | jaapp: `bat_soc`, `bat_cap`, `ongrid_power`, `offgrid_power` as spec; `bat_power` in 10 W units below 154. | taurgis: Local API traffic shares the radio channel with the CT meter, so polling can make the battery lose the meter and stop charging ([#82](https://github.com/taurgis/has-marstek-local-api/issues/82)); fixed at 156. Marstek lists E 2.0 as not compatible. |
+
+On any firmware:
+
+- `ver` may arrive as a float (`150.9`) or a dotted string (`"148.3"`); the integer part is the firmware. Four-digit `ver` 1000–1999 is the dotted encoding (1476 = 147.6). Source: taurgis `_normalize_version`, `_control_generation`.
+- When the battery management system goes silent, the firmware keeps answering with `bat_cap` 0 and then `bat_soc` 0. A zero `bat_cap` is never a real pack. Source: taurgis `_is_zero`.
+- The spec lists every `ES.GetStatus` field as "number or null".
+- Neither integration rescales `bat_soc`, `bat_cap`, `ongrid_power` or `offgrid_power` on any Venus E firmware. jaapp's "1000× off" warning is about its own kWh display, so the app does no unit scaling.
+- The app opens a new UDP socket per request and keeps only a reply with its own id, so the duplicate replies before 150 are dropped (`ClientTests.ignoresADatagramWithAnotherId`).
+- taurgis's mock replies to port 30000 instead of the sender's port on LAN. This battery replied to the sender's port in Task 0. If another firmware replies to port 30000 only, the app cannot hear it. UNVERIFIED.
 
 **Design.**
 
-- `DeviceInfo` and `FoundBattery` gain `firmware: Int?` from `ver`. A `ver` that is not an integer reads as `nil`, so it never hides a battery. The sheet row reads `192.168.68.50 · …:4C:C6 · V150`.
-- A missing, null, zero or negative `bat_cap` falls back to 5120 Wh, the rated capacity of a Venus E (`Bat.GetStatus` `rated_capacity` on this battery). The 5120 fallback is right for a Venus E, which this app targets, and would halve the ETA for a 2560 Wh Venus C. This replaces the `badReply` that `aNonPositiveRatedCapacityIsBad` checks.
-- A `bat_cap` below 100 is kWh and is multiplied by 1000. No Venus is rated under 100 Wh.
-- A missing or null `offgrid_power` counts as 0 W. A missing or null `bat_soc` or `ongrid_power` still fails as "Reply has a missing field", because the ETA cannot be computed without them.
+- `DeviceInfo` and `FoundBattery` gain `firmware: Int?`, read from `ver` by the rules above. A `ver` that is none of these reads as `nil` and never hides a battery. The sheet row reads `192.168.68.50 · …:4C:C6 · V150`.
+- `bat_cap` missing, null or not positive while `bat_soc` is above 0: the rated capacity falls back to 5120 Wh, the Venus E rating (`Bat.GetStatus` `rated_capacity` on this battery). Both at 0: the reply stays bad with "Reply has bat_cap 0", so a silent battery management system never shows as an empty battery.
+- `offgrid_power` missing or null counts as 0 W. `bat_soc` or `ongrid_power` missing or null stays "Reply has a missing field".
 - Footprint: `Shared/MarstekProtocol.swift`, `App/Discovery.swift`, `App/FindBattery.swift`, tests. No new strings.
 
-- [ ] **5.0 Real reply (when a V135 battery is reachable).** From a Mac on its Wi‑Fi, send the step 0.1 command to its IP, then 10 s later the same with `ES.GetStatus` and `"params":{"id":0}`. Paste both replies over the assumed fixtures in 5.1, mark them verified, and drop any design bullet the reply does not need.
+**Fixtures.** One per distinct reply shape. `deviceReply` and `esReply` are captured; `device148Reply` is a forum excerpt; the rest are built from the sources above and are assumed.
 
-- [ ] **5.1 Tests first.** In `ios/Tests/ProtocolTests.swift`, add after `deviceReply`. Both fixtures are the spec's examples with `ver` set to 135; they are assumed V135 shapes:
+| Fixture | Shape | Expected |
+|---|---|---|
+| `deviceReply` (exists) | V150, captured | firmware 150 |
+| `device151Reply` | `src` `"VNSE3-0-…"`, `ver` 151 | model `VenusE 3.0`, firmware 151 |
+| `device1476Reply` | `ver` 1476 | firmware 147 |
+| `device148Reply` | `"wifi_mac":""`, `"wifi_name":""`, `ver` 148 | mac from `ble_mac`, firmware 148 |
+| `deviceE2Reply` | `device` `"VenusE"`, `src` `"VenusE-…"`, no MAC fields, `ver` 145 | model `VenusE`, mac nil, firmware 145 |
+| `ver` variants | `150.9`, `"148.3"`, `"135"`, `"V1.35"`, `null`, missing | 150, 148, 135, nil, nil, nil |
+| `esReply` (exists) | V150, captured | as today |
+| `esLegacyReply` | 144–149: spec example, `src` `"VenusE 3.0-…"`, no `pv_power`, no `bat_power` | soc 98, ongrid 100, offgrid 0, rated 5120 |
+| `esE2Reply` | Venus E 2.0: spec fields plus `"bat_power":-80` | `bat_power` ignored; ongrid 100 |
+| BMS silent | `bat_cap` 0, `bat_soc` 0 | `badReply("Reply has bat_cap 0.0")` |
+| capacity gone | `bat_cap` null, missing, 0 or -5120 with `bat_soc` 80 | rated 5120 |
+| off-grid null | `offgrid_power` null | offgrid 0 |
+
+- [ ] **5.0 Real replies (when a battery on another firmware is reachable).** From a Mac on its Wi‑Fi, send the step 0.1 command to its IP, then 10 s later the same with `ES.GetStatus` and `"params":{"id":0}`. Paste both replies into the fixtures, mark them captured, and fix the table above.
+
+- [ ] **5.1 Tests first.** In `ios/Tests/ProtocolTests.swift`, add after `deviceReply`:
 
 ```swift
-let v135DeviceReply = #"{"id":0,"src":"VenusE-123456789012","result":{"device":"VenusE","ver":135,"ble_mac":"123456789012","wifi_mac":"123456789012","wifi_name":"MY_HOME","ip":"192.168.1.11"}}"#
-let v135EsReply = #"{"id":1,"src":"VenusE-24215edb178f","result":{"id":0,"bat_soc":98,"bat_cap":5120,"pv_power":0,"ongrid_power":100,"offgrid_power":0,"total_pv_energy":0,"total_grid_output_energy":2548,"total_grid_input_energy":3273,"total_load_energy":0}}"#
+let device151Reply = #"{"id":7,"src":"VNSE3-0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":151,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"Home","ip":"192.168.68.50"}}"#
+let device1476Reply = #"{"id":7,"src":"VenusE 3.0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":1476,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"Home","ip":"192.168.68.50"}}"#
+let device148Reply = #"{"id":7,"src":"VenusE 3.0-a8dd9fd8d15c","result":{"device":"VenusE 3.0","ver":148,"ble_mac":"a8dd9fd8d15c","wifi_mac":"","wifi_name":"","ip":"192.168.1.251"}}"#
+let deviceE2Reply = #"{"id":7,"src":"VenusE-bc2a3314ce8d","result":{"device":"VenusE","ver":145,"ip":"192.168.68.50"}}"#
+let esLegacyReply = #"{"id":2,"src":"VenusE 3.0-bc2a3314ce8d","result":{"id":0,"bat_soc":98,"bat_cap":5120,"ongrid_power":100,"offgrid_power":0,"total_grid_output_energy":2548,"total_grid_input_energy":3273,"total_load_energy":0}}"#
+let esE2Reply = #"{"id":2,"src":"VenusE-bc2a3314ce8d","result":{"id":0,"bat_soc":98,"bat_cap":5120,"bat_power":-80,"ongrid_power":100,"offgrid_power":0}}"#
 ```
 
 Replace `aMissingRatedCapacityIsBad` and `aNonPositiveRatedCapacityIsBad` with:
 
 ```swift
-    @Test func aV135DeviceReplyGivesTheFirmware() throws {
-        #expect(try MarstekProtocol.device(Data(v135DeviceReply.utf8)) == DeviceInfo(model: "VenusE", mac: "123456789012", firmware: 135))
+    @Test func eachFirmwareReportsItsVersion() throws {
+        #expect(try MarstekProtocol.device(Data(deviceReply.utf8)).firmware == 150)
+        #expect(try MarstekProtocol.device(Data(device151Reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "9a254a554cc6", firmware: 151))
+        #expect(try MarstekProtocol.device(Data(device1476Reply.utf8)).firmware == 147)
+        #expect(try MarstekProtocol.device(Data(device148Reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "a8dd9fd8d15c", firmware: 148))
+        #expect(try MarstekProtocol.device(Data(deviceE2Reply.utf8)) == DeviceInfo(model: "VenusE", mac: nil, firmware: 145))
     }
 
-    @Test func aVerThatIsNotANumberStillFindsTheBattery() throws {
-        let reply = #"{"id":7,"result":{"device":"VenusE","ver":"V1.35"}}"#
-        #expect(try MarstekProtocol.device(Data(reply.utf8)) == DeviceInfo(model: "VenusE", mac: nil, firmware: nil))
+    @Test(arguments: [
+        (#""ver":150.9,"#, 150), (#""ver":"148.3","#, 148), (#""ver":"135","#, 135),
+        (#""ver":"V1.35","#, nil), (#""ver":null,"#, nil), ("", nil),
+    ] as [(String, Int?)])
+    func aVerInAnyFormStillFindsTheBattery(field: String, firmware: Int?) throws {
+        let reply = #"{"id":7,"result":{\#(field)"device":"VenusE 3.0"}}"#
+        #expect(try MarstekProtocol.device(Data(reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: nil, firmware: firmware))
     }
 
-    @Test func aV135StatusReplyParses() throws {
-        #expect(try MarstekProtocol.esStatus(Data(v135EsReply.utf8)) == EsStatus(socPct: 98, ongridW: 100, offgridW: 0, ratedWh: 5120))
+    @Test func olderFirmwareStatusParses() throws {
+        let expected = EsStatus(socPct: 98, ongridW: 100, offgridW: 0, ratedWh: 5120)
+        #expect(try MarstekProtocol.esStatus(Data(esLegacyReply.utf8)) == expected)
+        #expect(try MarstekProtocol.esStatus(Data(esE2Reply.utf8)) == expected)
+    }
+
+    @Test func aSilentBatteryManagementSystemIsBad() {
+        #expect(throws: DeviceError.badReply("Reply has bat_cap 0.0")) {
+            try MarstekProtocol.esStatus(Data(#"{"id":2,"result":{"bat_soc":0,"bat_cap":0,"ongrid_power":0,"offgrid_power":0}}"#.utf8))
+        }
     }
 
     @Test(arguments: [#""bat_cap":null,"#, "", #""bat_cap":0,"#, #""bat_cap":-5120,"#])
     func aMissingRatedCapacityUsesTheVenusRating(field: String) throws {
-        let reply = #"{"id":2,"result":{"bat_soc":50,\#(field)"ongrid_power":0,"offgrid_power":0}}"#
-        #expect(try MarstekProtocol.esStatus(Data(reply.utf8)).ratedWh == 5120)
-    }
-
-    @Test func aRatedCapacityInKWhIsReadAsWh() throws {
-        let reply = #"{"id":2,"result":{"bat_soc":50,"bat_cap":5.12,"ongrid_power":0,"offgrid_power":0}}"#
+        let reply = #"{"id":2,"result":{"bat_soc":80,\#(field)"ongrid_power":0,"offgrid_power":0}}"#
         #expect(try MarstekProtocol.esStatus(Data(reply.utf8)).ratedWh == 5120)
     }
 
@@ -920,11 +965,11 @@ Replace `aMissingRatedCapacityIsBad` and `aNonPositiveRatedCapacityIsBad` with:
 In `ios/Tests/SubnetTests.swift`, next to the `macTail` checks:
 
 ```swift
-        #expect(FoundBattery(host: "h", model: "m", mac: "bc2a3314a41c", firmware: 135).detail == "h · …:A4:1C · V135")
+        #expect(FoundBattery(host: "h", model: "m", mac: "bc2a3314a41c", firmware: 147).detail == "h · …:A4:1C · V147")
         #expect(FoundBattery(host: "h", model: "m", mac: nil).detail == "h")
 ```
 
-Run `make test`. Expected: compile errors on `firmware` and `detail`; once stubbed, `aV135DeviceReplyGivesTheFirmware`, `aMissingRatedCapacityUsesTheVenusRating`, `aRatedCapacityInKWhIsReadAsWh` and `aNullOffgridPowerCountsAsZero` fail. `aV135StatusReplyParses` and `aNullOngridPowerIsBad` pass already and guard the spec shape.
+Run `make test`. Expected: compile errors on `firmware` and `detail`; once stubbed, `eachFirmwareReportsItsVersion`, `aVerInAnyFormStillFindsTheBattery`, `aMissingRatedCapacityUsesTheVenusRating` and `aNullOffgridPowerCountsAsZero` fail. `olderFirmwareStatusParses`, `aSilentBatteryManagementSystemIsBad` and `aNullOngridPowerIsBad` pass already and guard those shapes.
 
 - [ ] **5.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`:
 
@@ -941,20 +986,24 @@ struct DeviceInfo: Equatable, Sendable {
 
     static func esStatus(_ data: Data) throws -> EsStatus {
         let result = try decode(EsResult.self, data)
+        let rated = result.ratedWh ?? 0
+        // A silent battery management system reports bat_cap 0, then bat_soc 0.
+        guard rated > 0 || result.socPct > 0 else { throw DeviceError.badReply("Reply has bat_cap \(rated)") }
         return EsStatus(
             socPct: Int(result.socPct.rounded()), ongridW: result.ongridW, offgridW: result.offgridW ?? 0,
-            ratedWh: ratedWh(result.ratedWh)
+            ratedWh: rated > 0 ? rated : venusRatedWh
         )
     }
 
-    // The spec gives bat_cap in Wh; some firmware is reported to send kWh or nothing.
-    private static func ratedWh(_ batCap: Double?) -> Double {
-        guard let batCap, batCap > 0 else { return venusRatedWh }
-        return batCap < 100 ? batCap * 1000 : batCap
+    // ver is an integer, a float like 150.9, a string like "148.3", or 1476 for 147.6.
+    static func firmware(_ ver: Double?) -> Int? {
+        guard let ver, ver >= 0, ver < 10_000 else { return nil }
+        let whole = Int(ver)
+        return (1000...1999).contains(whole) ? whole / 10 : whole
     }
 ```
 
-In `device(_:)`, pass `firmware: result.ver`. `EsResult` gets `let offgridW: Double?` and `let ratedWh: Double?`. `DeviceResult` gets `let ver: Int?` and an `init(from:)` that reads it with `try? container.decodeIfPresent(Int.self, forKey: .ver)`, so a string `ver` reads as `nil`.
+`EsResult` gets `let offgridW: Double?` and `let ratedWh: Double?`. `DeviceResult` gets `let ver: Double?` and an `init(from:)` that reads `ver` as a `Double`, else as a `String` whose leading digits before an optional `.` parse as a `Double`, else `nil`, never throwing. `device(_:)` passes `firmware: firmware(result.ver)`.
 
 - [ ] **5.3 Sheet.** In `ios/App/Discovery.swift`, `FoundBattery` gets `var firmware: Int? = nil` and:
 
@@ -966,6 +1015,17 @@ In `device(_:)`, pass `firmware: result.ver`. `EsResult` gets `let offgridW: Dou
 
 The sweep builds `FoundBattery(host: host, model: $0.model, mac: $0.mac, firmware: $0.firmware)`. In `ios/App/FindBattery.swift`, the row's second line becomes `Text(verbatim: battery.detail)`.
 
-- [ ] **5.4 Gate and commit.** `make test`. Expected: pass. Revert `ratedWh(_:)` to return `batCap ?? 0` and check that `aMissingRatedCapacityUsesTheVenusRating` and `aRatedCapacityInKWhIsReadAsWh` fail; restore. `git add ios && git commit -m "feat: read firmware v135 replies"`
+- [ ] **5.4 Gate and commit.** `make test`. Expected: pass. Revert the `rated > 0 ? rated : venusRatedWh` fallback to `rated` and check that `aMissingRatedCapacityUsesTheVenusRating` fails; restore. `git add ios && git commit -m "feat: read venus e replies from firmware 135 to 151"`
 
-Time: about 45 minutes, plus 5 minutes for 5.0 when a V135 battery is on hand.
+## Task 6: Gentler polling on firmware that resets (needs owner yes)
+
+**Why:** below 150 a Venus E 3.0 switches its Local API off and resets its settings under sustained UDP traffic, and a Venus E 2.0 below 156 can lose its CT meter. taurgis sends one datagram with no retry to these batteries and holds them to one request at a time. jaapp polls every 60 s and warns that faster polling makes the battery unresponsive. The app polls every 30 s and retries once.
+
+**Design.** When the user picks a battery in the sheet, `BatterySettings.gentleHost` remembers its address if its firmware is below 150, or below 156 with model `VenusE`. While `host` equals `gentleHost`, the app polls every 60 s and `MarstekClient` sends no retry. A typed IP or a battery on 150 or later clears it. The sheet shows one line under such a battery: "Firmware V147 can switch off Open API under frequent requests. Update it in the Marstek app." Unknown firmware keeps today's 30 s poll, so the owner's battery is unchanged.
+
+- [ ] **6.1 Tests first.** `StoreTests`: `aBatteryOnOldFirmwareIsPolledGently` (gentleHost == host gives `pollInterval == .seconds(60)` and `retries == false`), `aTypedHostIsPolledAsUsual`, `settingsStoredBeforeThisStillDecode`. `ClientTests`: `aGentleReadSendsOneDatagram`. `SubnetTests`: `FoundBattery.resetsUnderLoad` is true for 147, 1476 → 147, and `VenusE` 153; false for 150, 151 and nil.
+- [ ] **6.2 Code.** `Shared/Store.swift`: `var gentleHost: String?`, `pollInterval`, `retries`. `Shared/MarstekClient.swift`: `var retries = true`, checked in `call(_:)`. `Refresher.live` passes it. `App/BatteryApp.swift`: the poll sleeps `settings.pollInterval`; the Find battery `use` closure sets `gentleHost`. `App/FindBattery.swift`: the warning line. One string with Ukrainian, checked with the `ukrainian-translation-review` skill.
+- [ ] **6.3 Constraint line.** In `CLAUDE.md`, add to the iOS sentence: "A battery found on firmware below 150 (`VenusE` below 156) is polled every 60 s with no retry."
+- [ ] **6.4 Gate and commit.** `make test`; revert `retries` to `true` and check `aGentleReadSendsOneDatagram` fails; restore. `git add ios CLAUDE.md && git commit -m "feat: poll old venus e firmware gently"`
+
+Time: Task 5 about 1 hour, Task 6 about 1.5 hours, plus 5 minutes for 5.0 per battery on hand.
