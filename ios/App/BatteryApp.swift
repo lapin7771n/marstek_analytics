@@ -82,6 +82,11 @@ struct SettingsScreen: View {
                     .buttonStyle(.plain)
                     hint("NO LINK", "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.")
                 }
+
+                Section("About") {
+                    link("Support", AppLinks.support)
+                    link("Privacy policy", AppLinks.privacy)
+                }
             }
             .navigationTitle("Battery ETA")
         }
@@ -99,6 +104,18 @@ struct SettingsScreen: View {
             Text(text).font(.subheadline)
         }
         .padding(.vertical, 2)
+    }
+
+    private func link(_ title: LocalizedStringKey, _ url: URL) -> some View {
+        Link(destination: url) {
+            HStack {
+                Text(title)
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .foregroundStyle(.primary)
     }
 
     private func openSettings() {
