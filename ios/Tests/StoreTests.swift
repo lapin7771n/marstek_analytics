@@ -9,6 +9,27 @@ struct StoreTests {
         return store
     }
 
+    @Test func aBatteryOnOldFirmwareIsPolledGently() {
+        let settings = BatterySettings(host: "192.168.68.50", gentleHost: "192.168.68.50")
+        #expect(settings.pollInterval == .seconds(60))
+        #expect(!settings.retries)
+    }
+
+    @Test func aTypedHostIsPolledAsUsual() {
+        #expect(BatterySettings(host: "192.168.68.50").pollInterval == .seconds(30))
+        #expect(BatterySettings(host: "192.168.68.50").retries)
+        let other = BatterySettings(host: "192.168.68.51", gentleHost: "192.168.68.50")
+        #expect(other.pollInterval == .seconds(30))
+        #expect(other.retries)
+    }
+
+    @Test func settingsStoredBeforeThisStillDecode() throws {
+        let old = Data(#"{"host":"192.168.68.50","port":30000,"floorPct":15}"#.utf8)
+        let settings = try JSONDecoder().decode(BatterySettings.self, from: old)
+        #expect(settings == BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 15))
+        #expect(settings.gentleHost == nil)
+    }
+
     @Test func aGoodFetchIsStored() async {
         let store = store()
         let good = reading(acW: 400)

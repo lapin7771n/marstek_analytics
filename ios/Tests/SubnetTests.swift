@@ -33,4 +33,18 @@ struct SubnetTests {
         #expect(FoundBattery(host: "h", model: "m", mac: "bc2a3314a41c", firmware: 147).detail == "h · …:A4:1C · V147")
         #expect(FoundBattery(host: "h", model: "m", mac: nil).detail == "h")
     }
+
+    @Test(arguments: [(135, "VenusE 3.0"), (147, "VenusE 3.0"), (153, "VenusE")])
+    func oldFirmwareResetsUnderLoad(firmware: Int, model: String) {
+        #expect(FoundBattery(host: "h", model: model, mac: nil, firmware: firmware).resetsUnderLoad)
+    }
+
+    @Test(arguments: [(150, "VenusE 3.0"), (151, "VenusE 3.0"), (153, "VenusE 3.0"), (156, "VenusE")])
+    func newerFirmwareDoesNot(firmware: Int, model: String) {
+        #expect(!FoundBattery(host: "h", model: model, mac: nil, firmware: firmware).resetsUnderLoad)
+    }
+
+    @Test func unknownFirmwareIsPolledAsUsual() {
+        #expect(!FoundBattery(host: "h", model: "VenusE", mac: nil).resetsUnderLoad)
+    }
 }

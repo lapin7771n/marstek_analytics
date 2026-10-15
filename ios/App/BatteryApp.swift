@@ -41,8 +41,9 @@ struct SettingsScreen: View {
                         .autocorrectionDisabled()
                         .monospacedDigit()
                         .accessibilityLabel("Battery IP address")
-                    FindBatteryRow(port: settings.port) { host in
-                        settings.host = host
+                    FindBatteryRow(port: settings.port) { battery in
+                        settings.host = battery.host
+                        settings.gentleHost = battery.resetsUnderLoad ? battery.host : nil
                         Task { await save() }
                     }
                     LabeledContent("Port") {
@@ -209,7 +210,7 @@ struct SettingsScreen: View {
     private func poll() async {
         while !Task.isCancelled {
             if store.settings.problem == nil { await refresh() }
-            try? await Task.sleep(for: .seconds(30))
+            try? await Task.sleep(for: store.settings.pollInterval)
         }
     }
 }

@@ -4,6 +4,10 @@ struct BatterySettings: Codable, Equatable {
     var host = ""
     var port = 30000
     var floorPct = 12
+    var gentleHost: String?
+
+    var pollInterval: Duration { gentleHost == host ? .seconds(60) : .seconds(30) }
+    var retries: Bool { gentleHost != host }
 
     var problem: String? {
         if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil || !isIPv4OrName {
@@ -139,6 +143,7 @@ enum Refresher {
 
     static func live(_ settings: BatterySettings) async throws -> Reading {
         var client = MarstekClient(host: settings.host, port: UInt16(settings.port))
+        client.retry = settings.retries
         client.trace = { Store().log($1, at: $0) }
         return try await client.reading()
     }

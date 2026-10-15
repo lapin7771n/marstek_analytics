@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FindBatteryRow: View {
     let port: Int
-    let use: (String) -> Void
+    let use: (FoundBattery) -> Void
     @State private var finder = BatteryFinder()
     @State private var showing = false
     @Environment(\.scenePhase) private var scenePhase
@@ -20,9 +20,9 @@ struct FindBatteryRow: View {
             }
         }
         .sheet(isPresented: $showing, onDismiss: finder.stop) {
-            FindBatterySheet(finder: finder) { host in
+            FindBatterySheet(finder: finder) { battery in
                 showing = false
-                use(host)
+                use(battery)
             }
             .presentationDetents([.medium, .large])
         }
@@ -34,7 +34,7 @@ struct FindBatteryRow: View {
 
 struct FindBatterySheet: View {
     let finder: BatteryFinder
-    let use: (String) -> Void
+    let use: (FoundBattery) -> Void
     @State private var picked: String?
     @Environment(\.dismiss) private var dismiss
 
@@ -76,8 +76,8 @@ struct FindBatterySheet: View {
         .padding(16)
     }
 
-    private var chosen: String? {
-        picked ?? finder.found.first?.host
+    private var chosen: FoundBattery? {
+        finder.found.first { $0.host == picked } ?? finder.found.first
     }
 
     private func row(_ battery: FoundBattery) -> some View {
@@ -88,9 +88,14 @@ struct FindBatterySheet: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                if battery.resetsUnderLoad, let firmware = battery.firmware {
+                    Text("Firmware V\(firmware) can switch off Open API under frequent requests. Update it in the Marstek app.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
-            if battery.host == chosen { Image(systemName: "checkmark").foregroundStyle(Palette.good) }
+            if battery.host == chosen?.host { Image(systemName: "checkmark").foregroundStyle(Palette.good) }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

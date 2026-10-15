@@ -411,6 +411,16 @@
         }
       }
     },
+    "Firmware V%lld can switch off Open API under frequent requests. Update it in the Marstek app.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прошивка V%lld може вимикати Open API за частих запитів. Оновіть її в застосунку Marstek."
+          }
+        }
+      }
+    },
     "Hour": {
       "localizations": {
         "uk": {

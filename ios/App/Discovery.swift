@@ -62,6 +62,11 @@ struct FoundBattery: Equatable, Identifiable, Sendable {
         return "…:\(hex.suffix(4).prefix(2)):\(hex.suffix(2))"
     }
 
+    var resetsUnderLoad: Bool {
+        guard let firmware else { return false }
+        return firmware < 150 || (model == "VenusE" && firmware < 156)
+    }
+
     var detail: String {
         [host, macTail, firmware.map { "V\($0)" }].compactMap { $0 }.joined(separator: " · ")
     }
