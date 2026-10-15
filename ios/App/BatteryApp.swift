@@ -29,6 +29,7 @@ struct SettingsScreen: View {
     @State private var checking = false
     @State private var alertOn = Store().alert.on
     @State private var alertDenied = false
+    @State private var reloadAfterCheck = false
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var phase
 
@@ -87,7 +88,9 @@ struct SettingsScreen: View {
                         if let back = powerBack, back > .now {
                             HStack(spacing: 6) {
                                 Menu {
-                                    Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
+                                    if Calendar.current.isDateInToday(back) || Outage.moved(back, tomorrow: false, now: .now) != back {
+                                        Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
+                                    }
                                     Button("Tomorrow") { setPowerBack(Outage.moved(back, tomorrow: true, now: .now)) }
                                     Button("Clear", role: .destructive) { setPowerBack(nil) }
                                 } label: {
@@ -168,13 +171,13 @@ struct SettingsScreen: View {
     }
 
     private var backTime: Binding<Date> {
-        Binding(get: { powerBack ?? .now }, set: { setPowerBack(Outage.nextTime($0, after: .now)) })
+        Binding(get: { powerBack ?? .now }, set: { setPowerBack(Outage.retimed(powerBack, to: $0, now: .now)) })
     }
 
     private func setPowerBack(_ date: Date?) {
         powerBack = date
         store.powerBack = date
-        WidgetCenter.shared.reloadTimelines(ofKind: "eta")
+        if checking { reloadAfterCheck = true } else { WidgetCenter.shared.reloadTimelines(ofKind: "eta") }
     }
 
     private var saveDisabled: Bool {
@@ -238,6 +241,10 @@ struct SettingsScreen: View {
         history = store.history
         day = history.day(now: .now, latest: snapshot?.reading)
         checking = false
+        if reloadAfterCheck {
+            reloadAfterCheck = false
+            WidgetCenter.shared.reloadTimelines(ofKind: "eta")
+        }
     }
 
     private func poll() async {

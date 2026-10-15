@@ -39,6 +39,12 @@ struct OutageTests {
         #expect(Outage.verdict(reading(soc: 60, acW: 0), floorPct: 12, powerBack: hours(6), now: readAt) == .lasts(until: hours(6), spareHours: nil))
     }
 
+    @Test func underAMinuteShortStillLasts() throws {
+        let runsOut = try #require(QuickEstimate.estimate(reading(acW: 400), floorPct: 12).hours) * 3600
+        let back = readAt.addingTimeInterval(runsOut + 30)
+        #expect(Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: back, now: readAt) == .lasts(until: back, spareHours: 0))
+    }
+
     @Test(arguments: [(0.0, "0 min"), (40.0 / 60, "40 min"), (2.05, "2 h 03 min"), (10.0, "10 h 00 min")])
     func spansUseWholeMinutes(hours: Double, text: String) {
         #expect(formatSpan(hours) == text)
@@ -67,6 +73,21 @@ struct PowerBackTests {
 
     @Test func tomorrowKeepsTheTime() {
         #expect(Outage.moved(at("2026-10-15 18:00"), tomorrow: true, now: at("2026-10-15 14:00"), calendar: calendar) == at("2026-10-16 18:00"))
+    }
+
+    @Test func tomorrowOnTheLongAutumnDay() {
+        #expect(Outage.moved(at("2026-10-25 18:00"), tomorrow: true, now: at("2026-10-25 14:00"), calendar: calendar) == at("2026-10-26 18:00"))
+    }
+
+    @Test(arguments: [
+        ("2026-10-16 16:00", "18:00", "2026-10-16 18:00"),
+        ("2026-10-15 16:00", "15:00", "2026-10-15 15:00"),
+        ("2026-10-15 16:00", "13:00", "2026-10-16 13:00"),
+        (nil, "13:00", "2026-10-16 13:00"),
+    ] as [(String?, String, String)])
+    func retimingKeepsTheChosenDay(back: String?, picked: String, expected: String) {
+        let now = at("2026-10-15 14:00")
+        #expect(Outage.retimed(back.map(at), to: at("2026-10-15 \(picked)"), now: now, calendar: calendar) == at(expected))
     }
 
     @Test func todayOnlyWhileTheTimeIsAhead() {

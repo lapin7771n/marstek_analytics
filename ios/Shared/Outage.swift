@@ -21,8 +21,8 @@ enum Outage: Equatable {
         if est.mode == .charging { return nil }
         guard let hours = est.hours else { return .lasts(until: powerBack, spareHours: nil) }
         let runsOut = r.time.addingTimeInterval(hours * 3600)
-        let spare = runsOut.timeIntervalSince(powerBack) / 3600
-        return spare >= 0 ? .lasts(until: powerBack, spareHours: spare) : .short(runsOutAt: runsOut, shortHours: -spare, back: powerBack)
+        let spare = runsOut.timeIntervalSince(powerBack)
+        return spare > -60 ? .lasts(until: powerBack, spareHours: max(spare, 0) / 3600) : .short(runsOutAt: runsOut, shortHours: -spare / 3600, back: powerBack)
     }
 
     static func nextTime(_ picked: Date, after now: Date, calendar: Calendar = .current) -> Date {
@@ -30,10 +30,18 @@ enum Outage: Equatable {
         return calendar.nextDate(after: now, matching: time, matchingPolicy: .nextTime) ?? picked
     }
 
+    static func retimed(_ back: Date?, to picked: Date, now: Date, calendar: Calendar = .current) -> Date {
+        let time = calendar.dateComponents([.hour, .minute], from: picked)
+        if let back, let sameDay = calendar.date(bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: back), sameDay > now {
+            return sameDay
+        }
+        return nextTime(picked, after: now, calendar: calendar)
+    }
+
     static func moved(_ back: Date, tomorrow: Bool, now: Date, calendar: Calendar = .current) -> Date {
         let time = calendar.dateComponents([.hour, .minute], from: back)
-        let day = calendar.startOfDay(for: now).addingTimeInterval(tomorrow ? 86_400 : 0)
-        let moved = calendar.date(bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: day) ?? back
+        guard let day = calendar.date(byAdding: .day, value: tomorrow ? 1 : 0, to: calendar.startOfDay(for: now)),
+              let moved = calendar.date(bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: day) else { return back }
         return moved > now ? moved : back
     }
 }
