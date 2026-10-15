@@ -739,7 +739,7 @@ enum Schedule {
 - Create: `ios/App/Yasno.swift`
 - Modify: `ios/Tests/ScheduleTests.swift`, `ios/Tests/StoreTests.swift`
 
-- [ ] **4.1 Tests first.** Append to `ScheduleTests.swift`:
+- [x] **4.1 Tests first.** Append to `ScheduleTests.swift`:
 
 ```swift
 actor URLLog {
@@ -848,7 +848,7 @@ Append to `StoreTests` (battery safety rule 3). The reply is built around the re
 
 Run `make test`. Expected: the build fails because `YasnoClient`, `ScheduleFeed`, `Address` and `YasnoChoice` do not exist.
 
-- [ ] **4.2 Client and feed.** Create `ios/App/Yasno.swift`:
+- [x] **4.2 Client and feed.** Create `ios/App/Yasno.swift`:
 
 ```swift
 import Foundation
@@ -944,11 +944,11 @@ enum Address {
 }
 ```
 
-- [ ] **4.3 Gate.** Run `make test`. Expected: exit 0. Then change `Schedule.readEvery` to `60`, check that `theFeedReadsAtMostEvery30Minutes` fails, and restore it.
+- [x] **4.3 Gate.** Run `make test`. Expected: exit 0. Then change `Schedule.readEvery` to `60`, check that `theFeedReadsAtMostEvery30Minutes` fails, and restore it.
 
-- [ ] **4.4 Live check.** In a scratch Swift script outside the repo, call `YasnoClient.live` on the `planned-outages` URL through `URLSession` and print the status code and the first key. Expected: 200 and a key such as `"1.1"`. This shows Incapsula lets `URLSession` through.
+- [x] **4.4 Live check.** In a scratch Swift script outside the repo, call `YasnoClient.live` on the `planned-outages` URL through `URLSession` and print the status code and the first key. Expected: 200 and a key such as `"1.1"`. This shows Incapsula lets `URLSession` through.
 
-- [ ] **4.5 Commit.** `feat: read the yasno schedule every 30 min while the app is open`
+- [x] **4.5 Commit.** `feat: read the yasno schedule every 30 min while the app is open`
 
 ---
 

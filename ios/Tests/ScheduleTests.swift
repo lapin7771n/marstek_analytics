@@ -90,3 +90,83 @@ struct ScheduleTests {
         #expect(Schedule.fill(manual, answer: nil, now: kyiv("2026-10-15 09:00")) == manual)
     }
 }
+
+actor URLLog {
+    var urls: [URL] = []
+    func add(_ url: URL) { urls.append(url) }
+}
+
+struct FeedTests {
+    private func store() -> Store {
+        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        store.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        return store
+    }
+
+    private func client(_ log: URLLog, reply: String = yasnoSample) -> YasnoClient {
+        YasnoClient { url in
+            await log.add(url)
+            return Data(reply.utf8)
+        }
+    }
+
+    @Test func aTickFillsTheSlotEnd() async {
+        let store = store()
+        let changed = await ScheduleFeed.tick(store, now: kyiv("2026-10-15 09:00"), client: client(URLLog()))
+        #expect(changed)
+        #expect(store.powerBack == kyiv("2026-10-15 11:30"))
+        #expect(store.powerBackFromSchedule)
+    }
+
+    @Test func theFeedReadsAtMostEvery30Minutes() async {
+        let store = store()
+        let log = URLLog()
+        let start = kyiv("2026-10-15 07:00")
+        for minutes in [0.0, 10, 29, 31] {
+            _ = await ScheduleFeed.tick(store, now: start.addingTimeInterval(minutes * 60), client: client(log))
+        }
+        #expect(await log.urls.count == 2)
+        store.outageGroup = OutageGroup(group: 20, subgroup: 1, address: "вул. Хрещатик, 2")
+        _ = await ScheduleFeed.tick(store, now: start.addingTimeInterval(32 * 60), client: client(log))
+        #expect(await log.urls.count == 3)
+    }
+
+    @Test func aFailedReadKeepsTheLastSchedule() async {
+        let store = store()
+        let start = kyiv("2026-10-15 07:00")
+        _ = await ScheduleFeed.tick(store, now: start, client: client(URLLog()))
+        let failing = YasnoClient { _ in throw URLError(.notConnectedToInternet) }
+        _ = await ScheduleFeed.tick(store, now: start.addingTimeInterval(31 * 60), client: failing)
+        #expect(store.schedule?.failed == true)
+        #expect(store.schedule?.days != nil)
+        #expect(store.powerBack == kyiv("2026-10-15 11:30"))
+    }
+
+    @Test func noGroupReadsNothing() async {
+        let store = store()
+        store.outageGroup = nil
+        let log = URLLog()
+        let changed = await ScheduleFeed.tick(store, now: kyiv("2026-10-15 09:00"), client: client(log))
+        #expect(!changed)
+        #expect(await log.urls.isEmpty)
+    }
+
+    @Test(arguments: [("вулиця Хрещатик", "Хрещатик"), ("проспект Перемоги", "Перемоги"), ("бульвар Лесі Українки", "Лесі Українки"), ("Хрещатик", "Хрещатик")])
+    func aStreetIsSearchedWithoutItsType(street: String, query: String) {
+        #expect(Address.query(street) == query)
+    }
+
+    @Test func aStreetMatchesItsYasnoName() {
+        let streets = [YasnoChoice(id: 599, value: "вул. Набережно-Хрещатицька"), YasnoChoice(id: 1013, value: "вул. Хрещатик")]
+        #expect(Address.match("вулиця Хрещатик", in: streets)?.id == 1013)
+        #expect(Address.match("Хрещ", in: streets) == nil)
+        #expect(Address.match("10А", in: [YasnoChoice(id: 1, value: "10"), YasnoChoice(id: 2, value: "10а")])?.id == 2)
+    }
+
+    @Test(arguments: [#"{"group":19,"subgroup":1}"#, "19"])
+    func aGroupReplyDecodes(reply: String) async throws {
+        let group = try await client(URLLog(), reply: reply).group(street: 1013, house: 42494)
+        #expect(group.group == 19)
+    }
+}

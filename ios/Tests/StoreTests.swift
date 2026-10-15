@@ -183,6 +183,25 @@ struct StoreTests {
         #expect(store.outageGroup?.key == "19.1" && store.schedule?.key == "19.1" && store.powerBackFromSchedule)
     }
 
+    @Test func theScheduleFeedNeverTouchesTheBattery() async throws {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        let midnight = Schedule.kyiv.startOfDay(for: good.time)
+        let date = ISO8601DateFormatter.string(from: midnight, timeZone: Schedule.kyiv.timeZone, formatOptions: .withInternetDateTime)
+        let reply = #"{"19.1":{"today":{"slots":[{"start":0,"end":1440,"type":"Definite"}],"date":"\#(date)","status":"ScheduleApplies"},"tomorrow":{"slots":[],"date":"\#(date)","status":"WaitingForSchedule"}}}"#
+        let log = URLLog()
+        let now = good.time.addingTimeInterval(60)
+        #expect(await ScheduleFeed.tick(store, now: now, client: YasnoClient { url in await log.add(url); return Data(reply.utf8) }))
+        let counter = FetchCounter()
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { await counter.read($0) }
+        #expect(Face(snapshot, floorPct: 12, powerBack: store.powerBack, now: now).outage != nil)
+        #expect(await counter.count == 0)
+        let hosts = await log.urls.map(\.host)
+        #expect(!hosts.isEmpty && hosts.allSatisfy { $0 == "app.yasno.ua" && $0 != store.settings.host })
+    }
+
     @Test func pollingStaysAsItIs() {
         #expect(Refresher.appPollInterval == .seconds(30))
         #expect(Refresher.widgetMaxAge == 10 * 60)
