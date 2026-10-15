@@ -4,7 +4,7 @@ import type { Estimate } from "./types";
 
 export type PollError = DeviceErrorKind | "settings";
 
-export type Snapshot = { estimate?: Estimate; tempC?: number; error?: PollError; message?: string };
+export type Snapshot = { estimate?: Estimate; error?: PollError; message?: string };
 
 export type Tone = "neutral" | "good" | "warn" | "bad";
 
@@ -32,8 +32,7 @@ export function levelView(s: Snapshot): KeyView {
 
 export function etaHours(est: Estimate | undefined): number | null {
 	if (est === undefined) return null;
-	const hours = est.mode === "charging" ? est.toFullH : est.toEmptyH;
-	return hours !== null && Number.isFinite(hours) ? hours : null;
+	return est.hours !== null && Number.isFinite(est.hours) ? est.hours : null;
 }
 
 export function etaView(s: Snapshot, hours: number | null): KeyView {
@@ -42,11 +41,14 @@ export function etaView(s: Snapshot, hours: number | null): KeyView {
 
 	const stale = s.error !== undefined;
 	const foot = `${Math.round(Math.abs(est.batteryAcW))} W`;
-	const value = est.warmingUp || hours === null ? "··" : formatDuration(hours);
+	const value = hours === null ? "··" : formatDuration(hours);
 
-	if (est.mode === "charging") return { label: "FULL IN", value, foot, tone: "good", stale };
+	if (est.mode === "charging") {
+		return { label: "FULL IN", value: est.socPct >= 100 ? "FULL" : value, foot, tone: "good", stale };
+	}
 	if (est.mode === "discharging") {
-		return { label: "EMPTY IN", value, foot, tone: hours !== null && hours < 0.5 ? "bad" : "warn", stale };
+		const low = est.socPct < 20 || (hours !== null && hours < 0.5);
+		return { label: "EMPTY IN", value, foot, tone: low ? "bad" : "warn", stale };
 	}
 	if (hours !== null) return { label: "IF OUTAGE", value: formatDuration(hours), foot: "BACKUP", tone: "neutral", stale };
 
