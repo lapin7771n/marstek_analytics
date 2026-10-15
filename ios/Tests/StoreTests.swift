@@ -173,6 +173,64 @@ struct StoreTests {
         #expect(second == nil)
     }
 
+    @Test func powerBackIsStored() {
+        let store = store()
+        #expect(store.powerBack == nil)
+        let back = Date(timeIntervalSince1970: 1_760_020_000)
+        store.powerBack = back
+        #expect(store.powerBack == back)
+        store.powerBack = nil
+        #expect(store.powerBack == nil)
+    }
+
+    @Test func aPowerBackTimeSendsNoBatteryRequest() async {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        let counter = FetchCounter()
+        let now = good.time.addingTimeInterval(60)
+        store.powerBack = good.time.addingTimeInterval(6 * 3600)
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { await counter.read($0) }
+        #expect(Face(snapshot, floorPct: store.settings.floorPct, powerBack: store.powerBack, now: now).outage != nil)
+        #expect(await counter.count == 0)
+    }
+
+    @Test func theOutageGroupAndScheduleAreStored() {
+        let store = store()
+        #expect(store.outageGroup == nil && store.schedule == nil && !store.powerBackFromSchedule)
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        store.schedule = ScheduleState(key: "19.1", checkedAt: .now, days: nil)
+        store.powerBackFromSchedule = true
+        #expect(store.outageGroup?.key == "19.1" && store.schedule?.key == "19.1" && store.powerBackFromSchedule)
+    }
+
+    @Test func theScheduleFeedNeverTouchesTheBattery() async throws {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        let midnight = Schedule.kyiv.startOfDay(for: good.time)
+        let date = ISO8601DateFormatter.string(from: midnight, timeZone: Schedule.kyiv.timeZone, formatOptions: .withInternetDateTime)
+        let reply = #"{"19.1":{"today":{"slots":[{"start":0,"end":1440,"type":"Definite"}],"date":"\#(date)","status":"ScheduleApplies"},"tomorrow":{"slots":[],"date":"\#(date)","status":"WaitingForSchedule"}}}"#
+        let log = URLLog()
+        let now = good.time.addingTimeInterval(60)
+        #expect(await ScheduleFeed.tick(store, now: now, client: YasnoClient { url in await log.add(url); return Data(reply.utf8) }))
+        let counter = FetchCounter()
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { await counter.read($0) }
+        #expect(Face(snapshot, floorPct: 12, powerBack: store.powerBack, now: now).outage != nil)
+        #expect(await counter.count == 0)
+        let hosts = await log.urls.map(\.host)
+        #expect(!hosts.isEmpty && hosts.allSatisfy { $0 == "app.yasno.ua" && $0 != store.settings.host })
+    }
+
+    @Test func theWidgetReusesOnlyAFreshSnapshot() {
+        let now = Date(timeIntervalSince1970: 1_760_000_000)
+        #expect(!Refresher.widgetCanReuse(Snapshot(reading: nil, error: nil, checkedAt: now.addingTimeInterval(-15 * 60)), now: now))
+        #expect(Refresher.widgetCanReuse(Snapshot(reading: nil, error: nil, checkedAt: now.addingTimeInterval(-30)), now: now))
+        #expect(!Refresher.widgetCanReuse(Snapshot(reading: nil, error: .settings, checkedAt: now.addingTimeInterval(-30)), now: now))
+        #expect(!Refresher.widgetCanReuse(nil, now: now))
+    }
+
     @Test func aSearchSkipsTheFetch() async {
         let store = store()
         let now = Date(timeIntervalSince1970: 1000)
@@ -204,6 +262,11 @@ actor FetchCounter {
     }
 
     func fetchReading() -> Reading {
+        count += 1
+        return reading(acW: 400)
+    }
+
+    func read(_ settings: BatterySettings) -> Reading {
         count += 1
         return reading(acW: 400)
     }

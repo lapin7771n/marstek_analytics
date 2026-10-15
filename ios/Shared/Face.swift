@@ -16,12 +16,13 @@ struct Face: Equatable {
     var problem: String?
     var blocked = false
     var updated: Date?
+    var outage: Outage?
 }
 
 extension Face {
     static let staleAfter: TimeInterval = 30 * 60
 
-    init(_ snapshot: Snapshot?, floorPct: Int, now: Date = .now) {
+    init(_ snapshot: Snapshot?, floorPct: Int, powerBack: Date? = nil, now: Date = .now) {
         self.init()
         problem = snapshot?.error?.text
         blocked = snapshot?.error == .blocked
@@ -37,6 +38,7 @@ extension Face {
         charging = est.mode == .charging
         stale = snapshot?.error != nil || now.timeIntervalSince(r.time) >= Face.staleAfter
         updated = r.time
+        outage = powerBack.flatMap { Outage.verdict(r, floorPct: floorPct, powerBack: $0, now: now) }
 
         switch est.mode {
         case .charging:

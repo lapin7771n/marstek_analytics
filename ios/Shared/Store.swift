@@ -90,6 +90,26 @@ final class Store {
         set { save(newValue, "log") }
     }
 
+    var powerBack: Date? {
+        get { load("powerBack") }
+        set { save(newValue, "powerBack") }
+    }
+
+    var powerBackFromSchedule: Bool {
+        get { load("powerBackFromSchedule") ?? false }
+        set { save(newValue, "powerBackFromSchedule") }
+    }
+
+    var outageGroup: OutageGroup? {
+        get { load("outageGroup") }
+        set { save(newValue, "outageGroup") }
+    }
+
+    var schedule: ScheduleState? {
+        get { load("schedule") }
+        set { save(newValue, "schedule") }
+    }
+
     var searchUntil: Date? {
         get { load("searchUntil") }
         set { save(newValue, "searchUntil") }
@@ -139,6 +159,11 @@ enum Refresher {
         }
         store.snapshot = next
         return next
+    }
+
+    static func widgetCanReuse(_ snapshot: Snapshot?, now: Date = .now) -> Bool {
+        guard let snapshot, snapshot.error != .settings else { return false }
+        return (0..<60).contains(now.timeIntervalSince(snapshot.checkedAt))
     }
 
     static func live(_ settings: BatterySettings) async throws -> Reading {

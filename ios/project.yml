@@ -36,6 +36,7 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         NSLocalNetworkUsageDescription: Battery ETA reads your Marstek battery over your home Wi-Fi.
+        NSLocationWhenInUseUsageDescription: Battery ETA finds your street once to look up your outage group.
         ITSAppUsesNonExemptEncryption: false
         CFBundleLocalizations: [en, uk]
         CFBundleShortVersionString: $(MARKETING_VERSION)

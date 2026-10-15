@@ -143,15 +143,19 @@ struct MediumFace: View {
                     color: face.updated == nil && face.problem != nil ? Palette.bad : Palette.value(face),
                     unitColor: Palette.unit(face)
                 )
-                Group {
-                    if let updated = face.updated {
-                        Text("Updated \(Text(updated, style: .time))")
-                    } else {
-                        Text("Open the app")
+                if let outage = face.outage, !face.stale {
+                    OutageLine(outage: outage)
+                } else {
+                    Group {
+                        if let updated = face.updated {
+                            Text("Updated \(Text(updated, style: .time))")
+                        } else {
+                            Text("Open the app")
+                        }
                     }
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(face.stale ? Color(hex: 0xA3A3AD) : Palette.label)
                 }
-                .font(.system(size: 12, design: .rounded))
-                .foregroundStyle(face.stale ? Color(hex: 0xA3A3AD) : Palette.label)
             }
             Spacer(minLength: 0)
         }

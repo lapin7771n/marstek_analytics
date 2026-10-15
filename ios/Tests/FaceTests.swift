@@ -74,4 +74,11 @@ struct FaceTests {
         #expect(face.problem == "ERROR")
         #expect(face.stale)
     }
+
+    @Test func aPowerBackTimeAddsAVerdict() {
+        let back = readAt.addingTimeInterval(6 * 3600)
+        #expect(Face(snap(reading(acW: 400)), floorPct: 12, powerBack: back, now: readAt).outage != nil)
+        #expect(Face(snap(reading(acW: 400)), floorPct: 12, now: readAt).outage == nil)
+        #expect(Face(snap(nil, .noLink), floorPct: 12, powerBack: back, now: readAt).outage == nil)
+    }
 }

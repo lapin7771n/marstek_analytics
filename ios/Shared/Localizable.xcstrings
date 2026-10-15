@@ -41,6 +41,26 @@
         }
       }
     },
+    "%lld h %@ min": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld год %@ хв"
+          }
+        }
+      }
+    },
+    "%lld min": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld хв"
+          }
+        }
+      }
+    },
     "+%lld W": {
       "localizations": {
         "uk": {
@@ -67,6 +87,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Про застосунок"
+          }
+        }
+      }
+    },
+    "Address": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Адреса"
           }
         }
       }
@@ -311,6 +341,16 @@
         }
       }
     },
+    "Could not find your street. Type it.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося визначити вулицю. Введіть її."
+          }
+        }
+      }
+    },
     "Debug info": {
       "localizations": {
         "uk": {
@@ -421,12 +461,32 @@
         }
       }
     },
+    "Grid returns": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло дадуть"
+          }
+        }
+      }
+    },
     "Hour": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Година"
+          }
+        }
+      }
+    },
+    "House": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Будинок"
           }
         }
       }
@@ -481,6 +541,16 @@
         }
       }
     },
+    "LASTS": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ВИСТАЧИТЬ"
+          }
+        }
+      }
+    },
     "LOGS": {
       "localizations": {
         "uk": {
@@ -507,6 +577,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Останні дані"
+          }
+        }
+      }
+    },
+    "Lasts until %@, %@ to spare.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вистачить до %1$@, запас %2$@."
+          }
+        }
+      }
+    },
+    "Lasts until %@.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вистачить до %@."
+          }
+        }
+      }
+    },
+    "Location is off. Type the street.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Геолокацію вимкнено. Введіть вулицю."
           }
         }
       }
@@ -571,6 +671,16 @@
         }
       }
     },
+    "No match. YASNO covers Kyiv city only.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нічого не знайдено. YASNO обслуговує лише Київ."
+          }
+        }
+      }
+    },
     "No problems": {
       "localizations": {
         "uk": {
@@ -597,6 +707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Немає в списку? Увімкніть Open API для батареї в застосунку Marstek і пошукайте ще раз."
+          }
+        }
+      }
+    },
+    "Not set": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вказано"
           }
         }
       }
@@ -691,6 +811,46 @@
         }
       }
     },
+    "Power back %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %@"
+          }
+        }
+      }
+    },
+    "Power back %@ · +%@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %1$@ · +%2$@"
+          }
+        }
+      }
+    },
+    "Power back %@ · −%@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %1$@ · −%2$@"
+          }
+        }
+      }
+    },
+    "Power back at": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли дадуть світло"
+          }
+        }
+      }
+    },
     "Privacy policy": {
       "localizations": {
         "uk": {
@@ -701,12 +861,32 @@
         }
       }
     },
+    "RUNS OUT %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СЯДЕ О %@"
+          }
+        }
+      }
+    },
     "Recent events": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Останні події"
+          }
+        }
+      }
+    },
+    "Remove address": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видалити адресу"
           }
         }
       }
@@ -737,6 +917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Резерв має бути від 0 до 50 %"
+          }
+        }
+      }
+    },
+    "Runs out at %@, %@ short.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сяде о %1$@, бракує %2$@."
           }
         }
       }
@@ -781,12 +971,32 @@
         }
       }
     },
+    "Set": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вказати"
+          }
+        }
+      }
+    },
     "State": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Стан"
+          }
+        }
+      }
+    },
+    "Street": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вулиця"
           }
         }
       }
@@ -807,6 +1017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Торкніться, щоб відкрити Параметри, і ввімкніть «Локальна мережа». Якщо його там немає: Приватність і безпека › Локальна мережа."
+          }
+        }
+      }
+    },
+    "The app keeps only the group and the address text, not your location.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок зберігає лише групу й текст адреси, а не вашу геолокацію."
           }
         }
       }
@@ -851,6 +1071,16 @@
         }
       }
     },
+    "Tomorrow": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завтра"
+          }
+        }
+      }
+    },
     "Under 30 min left": {
       "localizations": {
         "uk": {
@@ -871,6 +1101,26 @@
         }
       }
     },
+    "Use YASNO": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Брати з YASNO"
+          }
+        }
+      }
+    },
+    "Use my location": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Визначити за геолокацією"
+          }
+        }
+      }
+    },
     "Use this battery": {
       "localizations": {
         "uk": {
@@ -887,6 +1137,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Витрачено"
+          }
+        }
+      }
+    },
+    "Uses the current load. The answer changes as the load changes.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розраховано за поточним навантаженням. Якщо воно зміниться, зміниться й відповідь."
+          }
+        }
+      }
+    },
+    "YASNO did not answer.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO не відповідає."
+          }
+        }
+      }
+    },
+    "YASNO, group %@: emergency outages, no end time.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO, група %@: аварійні відключення, час завершення невідомий."
+          }
+        }
+      }
+    },
+    "YASNO, group %@: no outage ahead.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO, група %@: найближчим часом відключень немає."
+          }
+        }
+      }
+    },
+    "YASNO, group %@: off %@–%@.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO, група %1$@: без світла %2$@–%3$@."
           }
         }
       }

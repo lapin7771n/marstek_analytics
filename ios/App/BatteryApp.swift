@@ -25,9 +25,15 @@ struct SettingsScreen: View {
     @State private var snapshot = Store().snapshot
     @State private var history = Store().history
     @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
+    @State private var powerBack = Store().powerBack
+    @State private var fromSchedule = Store().powerBackFromSchedule
+    @State private var outageGroup = Store().outageGroup
+    @State private var schedule = Store().schedule
     @State private var checking = false
     @State private var alertOn = Store().alert.on
     @State private var alertDenied = false
+    @State private var reloadAfterCheck = false
+    @State private var ticking = false
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var phase
 
@@ -87,6 +93,48 @@ struct SettingsScreen: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        AddressScreen(group: outageGroup, onSave: saveGroup)
+                    } label: {
+                        LabeledContent("Address", value: outageGroup?.address ?? String(localized: "Not set"))
+                    }
+                    LabeledContent("Grid returns") {
+                        if let back = powerBack, back > .now {
+                            HStack(spacing: 6) {
+                                Menu {
+                                    if Calendar.current.isDateInToday(back) || Outage.moved(back, tomorrow: false, now: .now) != back {
+                                        Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
+                                    }
+                                    Button("Tomorrow") { setPowerBack(Outage.moved(back, tomorrow: true, now: .now)) }
+                                    if !fromSchedule {
+                                        if offersSchedule { Button("Use YASNO") { useSchedule() } }
+                                        Button("Clear", role: .destructive) { setPowerBack(nil) }
+                                    }
+                                } label: {
+                                    Text(Calendar.current.isDateInToday(back) ? "Today" : "Tomorrow")
+                                        .padding(.horizontal, 11).frame(height: 34)
+                                        .background(Color(hex: 0x2C2C2E), in: RoundedRectangle(cornerRadius: 8))
+                                }
+                                .foregroundStyle(.white)
+                                DatePicker("Time", selection: backTime, displayedComponents: .hourAndMinute).labelsHidden()
+                            }
+                        } else {
+                            Button("Set") { setPowerBack(Calendar.current.nextDate(after: .now.addingTimeInterval(3600), matching: DateComponents(minute: 0), matchingPolicy: .nextTime)) }
+                        }
+                    }
+                    if let outageGroup {
+                        ScheduleNote(group: outageGroup, state: schedule, now: .now)
+                    }
+                    if let outage = face.outage {
+                        OutageRow(outage: outage, stale: face.stale)
+                    }
+                } header: {
+                    Text("Power back at")
+                } footer: {
+                    Text("Uses the current load. The answer changes as the load changes.")
+                }
+
+                Section {
                     TodayCard(day: day)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
@@ -135,7 +183,71 @@ struct SettingsScreen: View {
         }
         // A background alert run wakes the app; the poll must not wake with it.
         .task(id: phase) { if phase == .active { await poll() } }
+        .task(id: phase == .active ? outageGroup?.key : nil) { if phase == .active { await pollSchedule() } }
         .onOpenURL { url in if url == AppLinks.localNetwork { openSettings() } }
+    }
+
+    private var face: Face {
+        Face(snapshot, floorPct: settings.floorPct, powerBack: powerBack)
+    }
+
+    private var backTime: Binding<Date> {
+        Binding(get: { powerBack ?? .now }, set: { setPowerBack(Outage.retimed(powerBack, to: $0, now: .now)) })
+    }
+
+    private func setPowerBack(_ date: Date?) {
+        powerBack = date
+        fromSchedule = false
+        store.powerBack = date
+        store.powerBackFromSchedule = false
+        reloadEta()
+    }
+
+    private var offersSchedule: Bool {
+        guard let days = schedule?.days, schedule?.key == outageGroup?.key else { return false }
+        if case .off = Schedule.answer(days, now: .now) { return true }
+        return false
+    }
+
+    private func saveGroup(_ group: OutageGroup?) {
+        outageGroup = group
+        store.outageGroup = group
+    }
+
+    private func useSchedule() {
+        powerBack = nil
+        fromSchedule = false
+        store.powerBack = nil
+        store.powerBackFromSchedule = false
+        reloadEta()
+        Task { await tickSchedule() }
+    }
+
+    private func tickSchedule() async {
+        guard !ticking else { return }
+        ticking = true
+        defer { ticking = false }
+        let changed = await ScheduleFeed.tick(store)
+        schedule = store.schedule
+        guard changed else { return }
+        powerBack = store.powerBack
+        fromSchedule = store.powerBackFromSchedule
+        reloadEta()
+    }
+
+    private func pollSchedule() async {
+        while !Task.isCancelled {
+            await tickSchedule()
+            try? await Task.sleep(for: .seconds(30))
+        }
+    }
+
+    private func reloadEta() {
+        if !checking, store.settings.problem != nil || Refresher.widgetCanReuse(store.snapshot) {
+            WidgetCenter.shared.reloadTimelines(ofKind: "eta")
+        } else {
+            reloadAfterCheck = true
+        }
     }
 
     private var saveDisabled: Bool {
@@ -205,6 +317,11 @@ struct SettingsScreen: View {
         history = store.history
         day = history.day(now: .now, latest: snapshot?.reading)
         await BatteryLine.shared.release()
+        checking = false
+        if reloadAfterCheck {
+            reloadAfterCheck = false
+            WidgetCenter.shared.reloadTimelines(ofKind: "eta")
+        }
     }
 
     // Due a fixed interval after the last request, so a newly gentle host waits its 60 s at once.

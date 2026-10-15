@@ -22,7 +22,7 @@ struct BatteryProvider: TimelineProvider {
 
     func getSnapshot(in context: Context, completion: @escaping (BatteryEntry) -> Void) {
         let store = Store()
-        let face = context.isPreview ? .sample : Face(store.snapshot, floorPct: store.settings.floorPct)
+        let face = context.isPreview ? .sample : Face(store.snapshot, floorPct: store.settings.floorPct, powerBack: store.powerBack)
         completion(BatteryEntry(date: .now, face: face))
     }
 
@@ -35,12 +35,17 @@ struct BatteryProvider: TimelineProvider {
             }
             let now = Date.now
             let floorPct = Store().settings.floorPct
-            var entries = [BatteryEntry(date: now, face: Face(snapshot, floorPct: floorPct, now: now))]
+            let powerBack = Store().powerBack
+            var entries = [BatteryEntry(date: now, face: Face(snapshot, floorPct: floorPct, powerBack: powerBack, now: now))]
             if let time = snapshot.reading?.time {
                 let staleAt = time.addingTimeInterval(Face.staleAfter)
                 if staleAt > now {
-                    entries.append(BatteryEntry(date: staleAt, face: Face(snapshot, floorPct: floorPct, now: staleAt)))
+                    entries.append(BatteryEntry(date: staleAt, face: Face(snapshot, floorPct: floorPct, powerBack: powerBack, now: staleAt)))
                 }
+            }
+            if let powerBack, powerBack > now {
+                entries.append(BatteryEntry(date: powerBack, face: Face(snapshot, floorPct: floorPct, powerBack: powerBack, now: powerBack)))
+                entries.sort { $0.date < $1.date }
             }
             completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60))))
         }
