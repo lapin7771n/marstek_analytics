@@ -11,6 +11,16 @@
           }
         }
       }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery ETA один раз визначає вашу вулицю, щоб знайти групу відключень."
+          }
+        }
+      }
     }
   }
 }

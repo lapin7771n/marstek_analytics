@@ -958,9 +958,9 @@ enum Address {
 - Create: `ios/App/AddressScreen.swift`
 - Modify: `ios/project.yml`, `ios/App/Info.plist` (regenerated), `ios/App/InfoPlist.xcstrings`
 
-- [ ] **5.1 Location string.** In `ios/project.yml` under `BatteryETA.info.properties`, add `NSLocationWhenInUseUsageDescription: Battery ETA finds your street once to look up your outage group.` Run `make project` so `App/Info.plist` picks it up. Add the key to `App/InfoPlist.xcstrings` with uk `Battery ETA один раз визначає вашу вулицю, щоб знайти групу відключень.`
+- [x] **5.1 Location string.** In `ios/project.yml` under `BatteryETA.info.properties`, add `NSLocationWhenInUseUsageDescription: Battery ETA finds your street once to look up your outage group.` Run `make project` so `App/Info.plist` picks it up. Add the key to `App/InfoPlist.xcstrings` with uk `Battery ETA один раз визначає вашу вулицю, щоб знайти групу відключень.`
 
-- [ ] **5.2 Screen.** Create `ios/App/AddressScreen.swift` with:
+- [x] **5.2 Screen.** Create `ios/App/AddressScreen.swift` with:
   - `LocationOnce`, a `CLLocationManagerDelegate` class with `func locate() async -> CLLocation?`. It asks When-In-Use once when not determined, calls `requestLocation()` once authorized, and returns nil on denial or error. `desiredAccuracy = kCLLocationAccuracyHundredMeters`. It keeps no location after it returns.
   - `AddressScreen(group: OutageGroup?, onSave: (OutageGroup?) -> Void)`, pushed from the "Address" row. State: `street` text, `streets: [YasnoChoice]`, picked `YasnoChoice?`, `house` text, `houses`, a `note: LocalizedStringKey?` and a `busy` flag.
   - Section 1: a "Use my location" button. It runs `LocationOnce().locate()`, then `CLGeocoder().reverseGeocodeLocation(location, preferredLocale: Locale(identifier: "uk_UA")).first`, puts `thoroughfare` into `street` and `subThoroughfare` into `house`. Nil location sets the note "Location is off. Type the street."
@@ -970,9 +970,9 @@ enum Address {
   - Footer: "The app keeps only the group and the address text, not your location."
   - A failed request sets the note "YASNO did not answer."
 
-- [ ] **5.3 Gate.** Run `make test`. Expected: exit 0.
+- [x] **5.3 Gate.** Run `make test`. Expected: exit 0.
 
-- [ ] **5.4 Commit.** `feat: find the yasno outage group from the address`
+- [x] **5.4 Commit.** `feat: find the yasno outage group from the address`
 
 ---
 
