@@ -48,6 +48,12 @@ struct Snapshot: Codable, Equatable {
     var checkedAt: Date
 }
 
+struct AlertState: Codable, Equatable {
+    var on = false
+    var soonAlerted = false
+    var reserveAlerted = false
+}
+
 final class Store {
     private let defaults: UserDefaults
 
@@ -63,6 +69,11 @@ final class Store {
     var snapshot: Snapshot? {
         get { load("snapshot") }
         set { save(newValue, "snapshot") }
+    }
+
+    var alert: AlertState {
+        get { load("alert") ?? AlertState() }
+        set { save(newValue, "alert") }
     }
 
     var history: History {
