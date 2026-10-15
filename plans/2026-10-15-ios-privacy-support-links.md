@@ -97,11 +97,11 @@ Add next to `hint(_:_:)`:
 
 - [x] **1.6 Simulator check.** iPhone 18 Pro Max sim, English and Ukrainian: the About section shows two rows, and each opens its page in Safari. Use a fake IP such as `10.255.255.1` so no request reaches the battery.
 
-- [ ] **1.7 Commit.** `feat: link privacy policy and support from the ios app`
+- [x] **1.7 Commit.** `feat: link privacy policy and support from the ios app`
 
 ## Task 2: Build 3 and the design
 
-- [ ] **2.1 Upload.** From `ios/`: `make upload BUILD=3`.
+- [x] **2.1 Upload.** From `ios/`: `make upload BUILD=3`.
 - [ ] **2.2 Attach (owner OK first).** In App Store Connect, swap build 2 for build 3 on version 1.0. Don't submit.
-- [ ] **2.3 Design.** Add the About section with both rows to `Main.dc.html` on the Claude Design canvas.
+- [x] **2.3 Design.** Add the About section with both rows to `Main.dc.html` on the Claude Design canvas.
 - [ ] **2.4 Kit.** Delete blocker 2 from `docs/app-store-submission.md`.
