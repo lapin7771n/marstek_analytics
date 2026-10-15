@@ -12,10 +12,9 @@ struct GuideSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     step(1, "In the Marstek app, open your battery and tap the gear icon at the top right.", "GuideGear")
-                    step(2, "Under Wi‑Fi, write down the IP address.", "GuideIP")
-                    step(3, "Scroll down and turn on Local API. Leave the port at 30000.", "GuideLocalAPI")
-                    step(4, "Enter the IP here and tap Save and check.")
-                    step(5, "When the app asks to find devices on your local network, tap Allow.")
+                    step(2, "Scroll down and turn on Local API. Leave the port at 30000.", "GuideLocalAPI")
+                    step(3, "Tap Find battery. If it finds nothing, read the IP under Wi‑Fi in the Marstek app.", "GuideIP")
+                    step(4, "When the app asks to find devices on your local network, tap Allow.")
                     Text("This device and the battery must be on the same Wi‑Fi.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

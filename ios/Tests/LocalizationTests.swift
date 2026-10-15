@@ -8,7 +8,7 @@ struct LocalizationTests {
     @Test func everyStringHasUkrainian() throws {
         let json = try JSONSerialization.jsonObject(with: Data(contentsOf: catalog)) as? [String: Any]
         let strings = try #require(json?["strings"] as? [String: [String: Any]])
-        #expect(strings.count >= 96)
+        #expect(strings.count >= 133)
         for (key, entry) in strings {
             let uk = (entry["localizations"] as? [String: Any])?["uk"] as? [String: Any]
             let value = (uk?["stringUnit"] as? [String: Any])?["value"] as? String

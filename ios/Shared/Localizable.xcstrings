@@ -421,16 +421,6 @@
         }
       }
     },
-    "Enter the IP here and tap Save and check.": {
-      "localizations": {
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Введіть IP тут і торкніться «Зберегти й перевірити»."
-          }
-        }
-      }
-    },
     "Enter the battery IP address": {
       "localizations": {
         "uk": {
@@ -1061,6 +1051,16 @@
         }
       }
     },
+    "Tap Find battery. If it finds nothing, read the IP under Wi‑Fi in the Marstek app.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Торкніться «Знайти батарею». Якщо нічого не знайдено, подивіться IP-адресу під «Налаштування Wi‑Fi» у застосунку Marstek."
+          }
+        }
+      }
+    },
     "Tap to open Settings and turn on Local Network. If it is not there: Privacy & Security › Local Network.": {
       "localizations": {
         "uk": {
@@ -1147,16 +1147,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Лишилося менше 30 хв"
-          }
-        }
-      }
-    },
-    "Under Wi‑Fi, write down the IP address.": {
-      "localizations": {
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Запишіть IP-адресу під «Налаштування Wi‑Fi»."
           }
         }
       }
