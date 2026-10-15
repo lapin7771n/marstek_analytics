@@ -6,6 +6,8 @@ enum Palette {
     static let label = Color(hex: 0x8E8E93)
     static let stale = Color(hex: 0x6E6E76)
     static let good = Color(hex: 0x3DDC97)
+    static let warn = Color(hex: 0xFFB547)
+    static let cardEdge = Color(hex: 0x2A2A30)
     static let bad = Color(hex: 0xFF6B5E)
 
     static func accent(_ face: Face) -> Color {
@@ -13,7 +15,7 @@ enum Palette {
         switch face.tone {
         case .neutral: return Color(hex: 0xA3A3AD)
         case .good: return good
-        case .warn: return Color(hex: 0xFFB547)
+        case .warn: return warn
         case .bad: return bad
         }
     }
