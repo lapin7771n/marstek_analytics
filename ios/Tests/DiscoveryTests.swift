@@ -35,7 +35,7 @@ struct DiscoveryTests {
     }
 
     private func finder(_ clock: Clock = Clock(), line: BatteryLine = BatteryLine(), store: Store = testStore()) -> BatteryFinder {
-        BatteryFinder(store: store, line: line, hosts: { hosts }, now: { clock.now })
+        BatteryFinder(store: store, line: line, hosts: { hosts }, now: { clock.now }, settle: .zero)
     }
 
     @Test func oneSearchProbesEachAddressOnce() async {
@@ -64,11 +64,23 @@ struct DiscoveryTests {
         #expect(finder.outcome == .blocked)
     }
 
-    @Test func aSecondTapDuringASearchSendsNothing() async {
+    @Test func aTapAfterAllowingLocalNetworkSearchesAgain() async {
         let probes = Probes()
         let finder = finder()
+        finder.start { _ in throw DeviceError.blocked }
+        await finder.wait()
         finder.start(probe(probes))
-        finder.start(probe(probes))
+        await finder.wait()
+        #expect(await probes.hosts.count == hosts.count)
+    }
+
+    @Test func aSecondTapDuringASearchSendsNothing() async {
+        let probes = Probes()
+        let clock = Clock()
+        let finder = finder(clock)
+        finder.start(probe(probes, delay: .milliseconds(20)))
+        clock.now += 31
+        finder.start(probe(probes, delay: .milliseconds(20)))
         await finder.wait()
         #expect(await probes.hosts.count == hosts.count)
     }
@@ -99,6 +111,22 @@ struct DiscoveryTests {
         await finder.wait()
         #expect(await probes.hosts.count == started)
         #expect(started < hosts.count)
+    }
+
+    @Test func aSearchStoppedWhileWaitingForTheLineSendsNothing() async throws {
+        let line = BatteryLine()
+        let store = testStore()
+        let probes = Probes()
+        #expect(await line.claim())
+        let finder = finder(line: line, store: store)
+        finder.start(probe(probes))
+        try await Task.sleep(for: .milliseconds(50))
+        finder.stop()
+        await line.release()
+        await finder.wait()
+        #expect(await probes.hosts.isEmpty)
+        #expect(store.searchUntil == nil)
+        #expect(!finder.searching)
     }
 
     @Test func theLineRefusesASecondClaim() async {

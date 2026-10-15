@@ -27,9 +27,9 @@ Each rule has a test in `ios/Tests/DiscoveryTests.swift` that fails if the rule 
 | # | Rule | Test |
 |---|---|---|
 | 1 | Each address gets at most one `Marstek.GetDevice` per search, including addresses that already answered. No retry, no second pass. | `oneSearchProbesEachAddressOnce`, `theProbeSendsOneGetDeviceAndNeverRetries` |
-| 2 | A search holds `BatteryLine`, the app's one-request-to-the-battery lock. The 30 s `ES.GetStatus` poll skips while a search holds it; a search waits for a poll already in flight. Widgets skip their fetch while `searchUntil` is set. | `theLineRefusesASecondClaim`, `aSearchHoldsTheLineUntilItEnds`, `aSearchWaitsForAPollInFlight`, `aSearchPausesTheWidgets`, `StoreTests.aSearchSkipsTheFetch`, `StoreTests.anExpiredSearchFetches` |
-| 3 | 32 addresses in flight at most, 1 s timeout each. Closing the sheet, picking a battery or leaving the app stops the search: no new address is probed after that. | `probesStayWithinTheWidth`, `stopProbesNoNewAddress` |
-| 4 | A tap while a search runs does nothing. A new search starts at most once per 30 s; an earlier tap reopens the sheet with the last results. | `aSecondTapDuringASearchSendsNothing`, `oneSearchPer30Seconds` |
+| 2 | A search holds `BatteryLine`, the app's one-request-to-the-battery lock. The 30 s `ES.GetStatus` poll skips while a search holds it; a search waits for a poll already in flight. Widgets skip their fetch while `searchUntil` is set, and a search waits 5 s after taking the line so a widget fetch already in flight finishes. A search stopped while it waits for the line never takes it and clears `searchUntil`. | `theLineRefusesASecondClaim`, `aSearchHoldsTheLineUntilItEnds`, `aSearchWaitsForAPollInFlight`, `aSearchStoppedWhileWaitingForTheLineSendsNothing`, `aSearchPausesTheWidgets`, `StoreTests.aSearchSkipsTheFetch`, `StoreTests.anExpiredSearchFetches` |
+| 3 | 32 addresses in flight at most, 1 s timeout each. Closing the sheet, picking a battery or sending the app to the background stops the search: no new address is probed after that, including probes already queued in the sweep. | `probesStayWithinTheWidth`, `stopProbesNoNewAddress`, `aSearchStoppedWhileWaitingForTheLineSendsNothing` |
+| 4 | A tap while a search runs does nothing. A new search starts at most once per 30 s; an earlier tap reopens the sheet with the last results. A search blocked by Local Network sent nothing, so the next tap searches at once. | `aSecondTapDuringASearchSendsNothing`, `oneSearchPer30Seconds`, `aTapAfterAllowingLocalNetworkSearchesAgain` |
 | 5 | Only a tap starts a search: never on launch, on a timer, from a widget or in the background. | No runtime test can prove an absence. `BatteryFinder` gets its probe only in `start(_:)`, the button action is its one caller, and the code lives in `ios/App/`, which the widget target does not compile. Review checks all three. |
 
 ## Design
@@ -38,7 +38,7 @@ Each rule has a test in `ios/Tests/DiscoveryTests.swift` that fails if the rule 
 - **Subnet cap /22.** A mask wider than /22 is narrowed to the /22 around the phone's address. A full /22 takes up to 32 s, a /24 up to 8 s.
 - **Sheet.** The tap opens "Batteries on this Wi‑Fi". Batteries appear as they answer, as `model`, then `IP · …:A4:1C`. The first one is checked; a tap checks another. "Use this battery" stops the search, fills the IP and runs "Save and check".
 - **Permission.** A probe that fails with `localNetworkDenied` stops the search, and the sheet says to allow Local Network and tap again.
-- **Widget pause.** A search writes `searchUntil = now + 60 s` to the App Group and clears it when it ends. While it is set and in the future, `Refresher.refresh` returns the stored snapshot without a fetch, so a widget refresh never meets the sweep at the battery. The 60 s expiry frees the widgets if the app dies mid-search.
+- **Widget pause.** A search writes `searchUntil = now + 70 s` to the App Group and clears it when it ends. While it is set and in the future, `Refresher.refresh` returns the stored snapshot without a fetch. After taking the line, the search waits 5 s before the first probe, so a widget fetch already in flight (2 s timeout, 1 s gap, 2 s retry) finishes and never meets the sweep at the battery. Each search takes 5 s longer: up to 13 s for a /24, 37 s for a /22. The 70 s expiry frees the widgets if the app dies mid-search.
 - **Merge footprint.** New files: `App/Discovery.swift`, `App/FindBattery.swift`. `BatteryApp.swift` gains the row and routes `refresh()` through `BatteryLine`. `Store.swift` gains `searchUntil` and one line in `Refresher.refresh`. `project.yml` does not change.
 
 ## Global constraints
@@ -239,7 +239,7 @@ struct DiscoveryTests {
     }
 
     private func finder(_ clock: Clock = Clock(), line: BatteryLine = BatteryLine(), store: Store = testStore()) -> BatteryFinder {
-        BatteryFinder(store: store, line: line, hosts: { hosts }, now: { clock.now })
+        BatteryFinder(store: store, line: line, hosts: { hosts }, now: { clock.now }, settle: .zero)
     }
 
     @Test func oneSearchProbesEachAddressOnce() async {
@@ -268,11 +268,23 @@ struct DiscoveryTests {
         #expect(finder.outcome == .blocked)
     }
 
-    @Test func aSecondTapDuringASearchSendsNothing() async {
+    @Test func aTapAfterAllowingLocalNetworkSearchesAgain() async {
         let probes = Probes()
         let finder = finder()
+        finder.start { _ in throw DeviceError.blocked }
+        await finder.wait()
         finder.start(probe(probes))
-        finder.start(probe(probes))
+        await finder.wait()
+        #expect(await probes.hosts.count == hosts.count)
+    }
+
+    @Test func aSecondTapDuringASearchSendsNothing() async {
+        let probes = Probes()
+        let clock = Clock()
+        let finder = finder(clock)
+        finder.start(probe(probes, delay: .milliseconds(20)))
+        clock.now += 31
+        finder.start(probe(probes, delay: .milliseconds(20)))
         await finder.wait()
         #expect(await probes.hosts.count == hosts.count)
     }
@@ -303,6 +315,22 @@ struct DiscoveryTests {
         await finder.wait()
         #expect(await probes.hosts.count == started)
         #expect(started < hosts.count)
+    }
+
+    @Test func aSearchStoppedWhileWaitingForTheLineSendsNothing() async throws {
+        let line = BatteryLine()
+        let store = testStore()
+        let probes = Probes()
+        #expect(await line.claim())
+        let finder = finder(line: line, store: store)
+        finder.start(probe(probes))
+        try await Task.sleep(for: .milliseconds(50))
+        finder.stop()
+        await line.release()
+        await finder.wait()
+        #expect(await probes.hosts.isEmpty)
+        #expect(store.searchUntil == nil)
+        #expect(!finder.searching)
     }
 
     @Test func theLineRefusesASecondClaim() async {
@@ -467,8 +495,8 @@ actor BatteryLine {
         return true
     }
 
-    func take() async {
-        while !claim() { try? await Task.sleep(for: .milliseconds(100)) }
+    func take() async throws {
+        while !claim() { try await Task.sleep(for: .milliseconds(100)) }
     }
 
     func release() {
@@ -488,6 +516,7 @@ enum Discovery {
             func next() {
                 guard !Task.isCancelled, let host = pending.next() else { return }
                 group.addTask {
+                    if Task.isCancelled { return nil }
                     do { return try await probe(host).map { FoundBattery(host: host, model: $0.model, mac: $0.mac) } }
                     catch DeviceError.blocked { throw DeviceError.blocked }
                     catch { return nil }
@@ -514,23 +543,27 @@ final class BatteryFinder {
     private(set) var searching = false
     private(set) var found: [FoundBattery] = []
     private(set) var outcome: Outcome?
+    private(set) var stopped = false
     private var startedAt: Date?
     private var task: Task<Void, Never>?
     private let store: Store
     private let line: BatteryLine
     private let hosts: () -> [String]
     private let now: () -> Date
+    private let settle: Duration
 
     init(
         store: Store = Store(),
         line: BatteryLine = .shared,
         hosts: @escaping () -> [String] = Subnet.localHosts,
-        now: @escaping () -> Date = { .now }
+        now: @escaping () -> Date = { .now },
+        settle: Duration = .seconds(5)
     ) {
         self.store = store
         self.line = line
         self.hosts = hosts
         self.now = now
+        self.settle = settle
     }
 
     func start(_ probe: @escaping Probe) {
@@ -542,13 +575,23 @@ final class BatteryFinder {
         guard !hosts.isEmpty else { outcome = .noWifi; return }
         startedAt = now()
         searching = true
+        stopped = false
         task = Task {
-            store.searchUntil = Date.now + 60
-            await line.take()
+            store.searchUntil = Date.now + 70
             do {
+                try await line.take()
+            } catch {
+                store.searchUntil = nil
+                searching = false
+                return
+            }
+            do {
+                try await Task.sleep(for: settle)
                 try await Discovery.sweep(hosts, probe: probe) { battery in await self.add(battery) }
+            } catch is CancellationError {
             } catch {
                 outcome = .blocked
+                startedAt = nil
             }
             store.searchUntil = nil
             await line.release()
@@ -557,6 +600,7 @@ final class BatteryFinder {
     }
 
     func stop() {
+        if searching { stopped = true }
         task?.cancel()
     }
 
@@ -665,7 +709,7 @@ struct FindBatteryRow: View {
             .presentationDetents([.medium, .large])
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { finder.stop() }
+            if phase == .background { finder.stop() }
         }
     }
 }
@@ -742,7 +786,7 @@ struct FindBatterySheet: View {
             Text("Join the same Wi‑Fi as the battery, then tap Find battery.")
         } else if finder.outcome == .blocked {
             Text("Allow Local Network for Battery ETA, then tap Find battery again.")
-        } else if finder.found.isEmpty {
+        } else if finder.found.isEmpty && !finder.stopped {
             Text("No battery found.")
         }
     }
@@ -764,14 +808,14 @@ struct FindBatterySheet: View {
 ```swift
     private func refresh(waiting: Bool = false) async {
         guard !checking else { return }
+        checking = true
+        defer { checking = false }
         if waiting {
-            await BatteryLine.shared.take()
+            do { try await BatteryLine.shared.take() } catch { return }
         } else if await !BatteryLine.shared.claim() {
             return
         }
-        checking = true
         snapshot = await Refresher.refresh(store)
-        checking = false
         await BatteryLine.shared.release()
     }
 ```

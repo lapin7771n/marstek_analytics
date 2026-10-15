@@ -75,8 +75,8 @@ actor BatteryLine {
         return true
     }
 
-    func take() async {
-        while !claim() { try? await Task.sleep(for: .milliseconds(100)) }
+    func take() async throws {
+        while !claim() { try await Task.sleep(for: .milliseconds(100)) }
     }
 
     func release() {
@@ -96,6 +96,7 @@ enum Discovery {
             func next() {
                 guard !Task.isCancelled, let host = pending.next() else { return }
                 group.addTask {
+                    if Task.isCancelled { return nil }
                     do { return try await probe(host).map { FoundBattery(host: host, model: $0.model, mac: $0.mac) } }
                     catch DeviceError.blocked { throw DeviceError.blocked }
                     catch { return nil }
@@ -122,23 +123,27 @@ final class BatteryFinder {
     private(set) var searching = false
     private(set) var found: [FoundBattery] = []
     private(set) var outcome: Outcome?
+    private(set) var stopped = false
     private var startedAt: Date?
     private var task: Task<Void, Never>?
     private let store: Store
     private let line: BatteryLine
     private let hosts: () -> [String]
     private let now: () -> Date
+    private let settle: Duration
 
     init(
         store: Store = Store(),
         line: BatteryLine = .shared,
         hosts: @escaping () -> [String] = Subnet.localHosts,
-        now: @escaping () -> Date = { .now }
+        now: @escaping () -> Date = { .now },
+        settle: Duration = .seconds(5)
     ) {
         self.store = store
         self.line = line
         self.hosts = hosts
         self.now = now
+        self.settle = settle
     }
 
     func start(_ probe: @escaping Probe) {
@@ -150,13 +155,23 @@ final class BatteryFinder {
         guard !hosts.isEmpty else { outcome = .noWifi; return }
         startedAt = now()
         searching = true
+        stopped = false
         task = Task {
-            store.searchUntil = Date.now + 60
-            await line.take()
+            store.searchUntil = Date.now + 70
             do {
+                try await line.take()
+            } catch {
+                store.searchUntil = nil
+                searching = false
+                return
+            }
+            do {
+                try await Task.sleep(for: settle)
                 try await Discovery.sweep(hosts, probe: probe) { battery in await self.add(battery) }
+            } catch is CancellationError {
             } catch {
                 outcome = .blocked
+                startedAt = nil
             }
             store.searchUntil = nil
             await line.release()
@@ -165,6 +180,7 @@ final class BatteryFinder {
     }
 
     func stop() {
+        if searching { stopped = true }
         task?.cancel()
     }
 

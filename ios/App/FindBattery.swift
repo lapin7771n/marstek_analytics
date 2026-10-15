@@ -27,7 +27,7 @@ struct FindBatteryRow: View {
             .presentationDetents([.medium, .large])
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { finder.stop() }
+            if phase == .background { finder.stop() }
         }
     }
 }
@@ -104,7 +104,7 @@ struct FindBatterySheet: View {
             Text("Join the same Wi‑Fi as the battery, then tap Find battery.")
         } else if finder.outcome == .blocked {
             Text("Allow Local Network for Battery ETA, then tap Find battery again.")
-        } else if finder.found.isEmpty {
+        } else if finder.found.isEmpty && !finder.stopped {
             Text("No battery found.")
         }
     }

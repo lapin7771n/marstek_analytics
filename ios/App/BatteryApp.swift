@@ -193,16 +193,16 @@ struct SettingsScreen: View {
 
     private func refresh(waiting: Bool = false) async {
         guard !checking else { return }
+        checking = true
+        defer { checking = false }
         if waiting {
-            await BatteryLine.shared.take()
+            do { try await BatteryLine.shared.take() } catch { return }
         } else if await !BatteryLine.shared.claim() {
             return
         }
-        checking = true
         snapshot = await Refresher.refresh(store)
         history = store.history
         day = history.day(now: .now, latest: snapshot?.reading)
-        checking = false
         await BatteryLine.shared.release()
     }
 
