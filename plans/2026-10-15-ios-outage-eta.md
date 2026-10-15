@@ -1053,12 +1053,13 @@ Run `make test`. Expected: the expectation fails.
 | `Remove address` | `Видалити адресу` |
 | `Use YASNO` | `Брати з YASNO` |
 | `Location is off. Type the street.` | `Геолокацію вимкнено. Введіть вулицю.` |
+| `Could not find your street. Type it.` | `Не вдалося визначити вулицю. Введіть її.` |
 | `No match. YASNO covers Kyiv city only.` | `Нічого не знайдено. YASNO обслуговує лише Київ.` |
 | `YASNO did not answer.` | `YASNO не відповідає.` |
-| `The app keeps only the group and the address text, not your location.` | `Застосунок зберігає лише групу й адресу, без вашої геолокації.` |
+| `The app keeps only the group and the address text, not your location.` | `Застосунок зберігає лише групу й текст адреси, а не вашу геолокацію.` |
 | `YASNO, group %@: off %@–%@.` | `YASNO, група %1$@: без світла %2$@–%3$@.` |
-| `YASNO, group %@: emergency outages, no end time.` | `YASNO, група %@: аварійні відключення, час невідомий.` |
-| `YASNO, group %@: no outage ahead.` | `YASNO, група %@: відключень попереду немає.` |
+| `YASNO, group %@: emergency outages, no end time.` | `YASNO, група %@: аварійні відключення, час завершення невідомий.` |
+| `YASNO, group %@: no outage ahead.` | `YASNO, група %@: найближчим часом відключень немає.` |
 
 - [x] **6.5 Gate.** Run `make test`. Expected: exit 0.
 

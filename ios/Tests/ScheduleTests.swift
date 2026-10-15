@@ -31,6 +31,12 @@ struct ScheduleTests {
         #expect(try Schedule.decode(Data(yasnoSample.utf8), key: "19") == nil)
     }
 
+    @Test func anotherMalformedGroupDoesNotBreakOurs() throws {
+        let feed = #"{"1.1":{"today":{"slots":"broken"}},"2.1":7,"# + yasnoSample.dropFirst()
+        let days = try #require(try Schedule.decode(Data(feed.utf8), key: "19.1"))
+        #expect(days.today.slots[1] == ScheduleSlot(start: 480, end: 690, type: "Definite"))
+    }
+
     @Test func groupKeysMatchTheFeed() {
         #expect(OutageGroup(group: 19, subgroup: 1, address: "").key == "19.1")
         #expect(OutageGroup(group: 5, subgroup: 0, address: "").key == "5")
@@ -59,6 +65,10 @@ struct ScheduleTests {
 
     @Test func emergencyHasNoEnd() {
         #expect(Schedule.answer(days(today: day("2026-10-15", "EmergencyShutdowns")), now: kyiv("2026-10-15 12:00")) == .emergency)
+    }
+
+    @Test func anOutdatedEmergencyDayIsNotAnEmergency() {
+        #expect(Schedule.answer(days(today: day("2026-10-15", "EmergencyShutdowns")), now: kyiv("2026-10-17 12:00")) == .clear)
     }
 
     @Test func possibleSlotsDoNotCount() {
@@ -164,9 +174,10 @@ struct FeedTests {
         #expect(Address.match("10А", in: [YasnoChoice(id: 1, value: "10"), YasnoChoice(id: 2, value: "10а")])?.id == 2)
     }
 
-    @Test(arguments: [#"{"group":19,"subgroup":1}"#, "19"])
-    func aGroupReplyDecodes(reply: String) async throws {
+    @Test(arguments: [(#"{"group":19,"subgroup":1}"#, 1), ("19", 0)])
+    func aGroupReplyDecodes(reply: String, subgroup: Int) async throws {
         let group = try await client(URLLog(), reply: reply).group(street: 1013, house: 42494)
         #expect(group.group == 19)
+        #expect(group.subgroup == subgroup)
     }
 }

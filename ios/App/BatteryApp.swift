@@ -33,6 +33,7 @@ struct SettingsScreen: View {
     @State private var alertOn = Store().alert.on
     @State private var alertDenied = false
     @State private var reloadAfterCheck = false
+    @State private var ticking = false
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var phase
 
@@ -209,12 +210,18 @@ struct SettingsScreen: View {
     }
 
     private func useSchedule() {
+        powerBack = nil
+        fromSchedule = false
         store.powerBack = nil
         store.powerBackFromSchedule = false
+        reloadEta()
         Task { await tickSchedule() }
     }
 
     private func tickSchedule() async {
+        guard !ticking else { return }
+        ticking = true
+        defer { ticking = false }
         let changed = await ScheduleFeed.tick(store)
         schedule = store.schedule
         guard changed else { return }
@@ -231,7 +238,11 @@ struct SettingsScreen: View {
     }
 
     private func reloadEta() {
-        if checking { reloadAfterCheck = true } else { WidgetCenter.shared.reloadTimelines(ofKind: "eta") }
+        if !checking, store.settings.problem != nil || Refresher.widgetCanReuse(store.snapshot) {
+            WidgetCenter.shared.reloadTimelines(ofKind: "eta")
+        } else {
+            reloadAfterCheck = true
+        }
     }
 
     private var saveDisabled: Bool {

@@ -202,6 +202,14 @@ struct StoreTests {
         #expect(!hosts.isEmpty && hosts.allSatisfy { $0 == "app.yasno.ua" && $0 != store.settings.host })
     }
 
+    @Test func theWidgetReusesOnlyAFreshSnapshot() {
+        let now = Date(timeIntervalSince1970: 1_760_000_000)
+        #expect(!Refresher.widgetCanReuse(Snapshot(reading: nil, error: nil, checkedAt: now.addingTimeInterval(-15 * 60)), now: now))
+        #expect(Refresher.widgetCanReuse(Snapshot(reading: nil, error: nil, checkedAt: now.addingTimeInterval(-30)), now: now))
+        #expect(!Refresher.widgetCanReuse(Snapshot(reading: nil, error: .settings, checkedAt: now.addingTimeInterval(-30)), now: now))
+        #expect(!Refresher.widgetCanReuse(nil, now: now))
+    }
+
     @Test func pollingStaysAsItIs() {
         #expect(Refresher.appPollInterval == .seconds(30))
         #expect(Refresher.widgetMaxAge == 10 * 60)

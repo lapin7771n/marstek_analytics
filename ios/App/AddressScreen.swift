@@ -1,6 +1,7 @@
 import CoreLocation
 import SwiftUI
 
+@MainActor
 final class LocationOnce: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var waiting: CheckedContinuation<CLLocation?, Never>?
@@ -14,8 +15,10 @@ final class LocationOnce: NSObject, CLLocationManagerDelegate {
     }
 
     func locate() async -> CLLocation? {
-        await withCheckedContinuation { continuation in
+        finish(nil)
+        return await withCheckedContinuation { continuation in
             waiting = continuation
+            requested = false
             advance()
         }
     }
@@ -39,20 +42,21 @@ final class LocationOnce: NSObject, CLLocationManagerDelegate {
     }
 
     private func finish(_ location: CLLocation?) {
-        waiting?.resume(returning: location)
+        let continuation = waiting
         waiting = nil
+        continuation?.resume(returning: location)
     }
 
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        advance()
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        MainActor.assumeIsolated { advance() }
     }
 
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        finish(locations.last)
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        MainActor.assumeIsolated { finish(locations.last) }
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        finish(nil)
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        MainActor.assumeIsolated { finish(nil) }
     }
 }
 
@@ -65,6 +69,7 @@ struct AddressScreen: View {
     @State private var streets: [YasnoChoice] = []
     @State private var picked: YasnoChoice?
     @State private var house = ""
+    @State private var fromLocation = false
     @State private var houses: [YasnoChoice] = []
     @State private var note: LocalizedStringKey?
     @State private var busy = false
@@ -91,7 +96,7 @@ struct AddressScreen: View {
             }
 
             Section("Street") {
-                TextField("Street", text: $street)
+                TextField("Street", text: Binding(get: { street }, set: { if $0 != street { fromLocation = false }; street = $0 }))
                     .autocorrectionDisabled()
                 ForEach(streets) { choice in
                     Button(choice.value) {
@@ -108,7 +113,7 @@ struct AddressScreen: View {
 
             if let picked {
                 Section("House") {
-                    TextField("House", text: $house)
+                    TextField("House", text: Binding(get: { house }, set: { if $0 != house { fromLocation = false }; house = $0 }))
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.characters)
                     ForEach(houses) { choice in
@@ -143,11 +148,15 @@ struct AddressScreen: View {
     private func useLocation() async {
         busy = true
         note = nil
-        if let location = await LocationOnce().locate(),
-           let mark = try? await CLGeocoder().reverseGeocodeLocation(location, preferredLocale: Locale(identifier: "uk_UA")).first,
-           let thoroughfare = mark.thoroughfare {
-            house = mark.subThoroughfare ?? ""
-            street = thoroughfare
+        if let location = await LocationOnce().locate() {
+            if let mark = try? await CLGeocoder().reverseGeocodeLocation(location, preferredLocale: Locale(identifier: "uk_UA")).first,
+               let thoroughfare = mark.thoroughfare {
+                house = mark.subThoroughfare ?? ""
+                fromLocation = true
+                street = thoroughfare
+            } else {
+                note = "Could not find your street. Type it."
+            }
         } else {
             note = "Location is off. Type the street."
         }
@@ -186,7 +195,7 @@ struct AddressScreen: View {
         do {
             let found = try await YasnoClient().houses(street: street.id, query: query)
             guard !Task.isCancelled else { return }
-            if let match = Address.match(query, in: found) {
+            if fromLocation, let match = Address.match(query, in: found) {
                 await save(match, on: street)
             } else {
                 houses = found

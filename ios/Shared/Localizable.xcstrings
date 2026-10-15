@@ -331,6 +331,16 @@
         }
       }
     },
+    "Could not find your street. Type it.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося визначити вулицю. Введіть її."
+          }
+        }
+      }
+    },
     "EMPTY IN": {
       "localizations": {
         "uk": {

@@ -150,6 +150,11 @@ enum Refresher {
         return next
     }
 
+    static func widgetCanReuse(_ snapshot: Snapshot?, now: Date = .now) -> Bool {
+        guard let snapshot, snapshot.error != .settings else { return false }
+        return (0..<60).contains(now.timeIntervalSince(snapshot.checkedAt))
+    }
+
     static func live(_ settings: BatterySettings) async throws -> Reading {
         var client = MarstekClient(host: settings.host, port: UInt16(settings.port))
         client.trace = { Store().log($1, at: $0) }

@@ -10,7 +10,7 @@ struct YasnoClient {
     static let region = 25
     static let dso = 902
 
-    var get: @Sendable (URL) async throws -> Data = YasnoClient.live
+    var get: @Sendable (URL) async throws -> Data = { try await YasnoClient.live($0) }
 
     static func live(_ url: URL) async throws -> Data {
         let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: 15))

@@ -53,13 +53,20 @@ enum Schedule {
     }()
 
     static func decode(_ data: Data, key: String) throws -> GroupDays? {
+        guard let groups = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "The feed is not an object"))
+        }
+        guard let group = groups[key] else { return nil }
+        guard let fields = group as? [String: Any] else {
+            throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Group \(key) is not an object"))
+        }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode([String: GroupDays].self, from: data)[key]
+        return try decoder.decode(GroupDays.self, from: JSONSerialization.data(withJSONObject: fields))
     }
 
     static func answer(_ days: GroupDays, now: Date, calendar: Calendar = kyiv) -> ScheduleAnswer {
-        if days.today.status == "EmergencyShutdowns" { return .emergency }
+        if days.today.status == "EmergencyShutdowns", calendar.isDate(days.today.date, inSameDayAs: now) { return .emergency }
         var spans: [(from: Date, until: Date)] = []
         for day in [days.today, days.tomorrow] where day.status == "ScheduleApplies" {
             for slot in day.slots where slot.type == "Definite" {
