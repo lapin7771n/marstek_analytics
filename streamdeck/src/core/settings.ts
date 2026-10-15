@@ -1,11 +1,7 @@
-import { defaultLearned } from "./estimator";
-import type { Learned } from "./types";
-
 export type Settings = {
 	host?: string;
 	port?: string | number;
 	floorPercent?: string | number;
-	learned?: Learned;
 };
 
 export type Resolved = { host: string; port: number; floorPct: number };
@@ -27,24 +23,8 @@ export function resolve(settings: Settings): Resolved {
 	return { host, port, floorPct };
 }
 
-export function restoreLearned(settings: Settings): Learned {
-	const learned = settings.learned;
-	if (learned === undefined) return defaultLearned();
-
-	const taperOk =
-		Array.isArray(learned.taper) && learned.taper.length === 10 && learned.taper.every((value) => inRange(value, 0.05, 1));
-	const typicalOk = learned.typicalLoadW === null || inRange(learned.typicalLoadW, 0, 10_000);
-	const ok = taperOk && typicalOk && inRange(learned.chargeRatio, 0.7, 1) && inRange(learned.dischargeRatio, 1, 1.5);
-
-	return ok ? { ...learned, taper: [...learned.taper] } : defaultLearned();
-}
-
 function filled(value: string | number | undefined): string | number | undefined {
 	if (typeof value !== "string") return value;
 	const text = value.trim();
 	return text === "" ? undefined : text;
-}
-
-function inRange(value: number, low: number, high: number): boolean {
-	return typeof value === "number" && Number.isFinite(value) && value >= low && value <= high;
 }

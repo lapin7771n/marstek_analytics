@@ -8,13 +8,10 @@ const charging: Estimate = {
 	mode: "charging",
 	socPct: 82,
 	batteryAcW: -797,
-	toFullH: 1.25,
-	toEmptyH: 9.5,
-	projected: true,
-	warmingUp: false,
+	hours: 1.25,
 };
-const discharging: Estimate = { ...charging, mode: "discharging", batteryAcW: 300, toFullH: null, toEmptyH: 3.66, projected: false };
-const idle: Estimate = { ...charging, mode: "idle", socPct: 100, batteryAcW: 0, toFullH: null, toEmptyH: 11.2 };
+const discharging: Estimate = { ...charging, mode: "discharging", batteryAcW: 300, hours: 3.66 };
+const idle: Estimate = { ...charging, mode: "idle", socPct: 100, batteryAcW: 0, hours: 11.2 };
 
 test("level shows percent, signed power and a fill", () => {
 	expect(levelView({ estimate: charging })).toMatchObject({ value: "82%", foot: "+797 W", tone: "good", fill: 0.82, stale: false, bolt: true });
@@ -38,7 +35,7 @@ test("errors with a reading keep the value and mark it stale", () => {
 	expect(levelView({ estimate: charging, error: "timeout" })).toMatchObject({ value: "82%", stale: true });
 });
 
-test("the eta key follows the time to full while charging and the time to empty otherwise", () => {
+test("the eta key shows the hours of the estimate", () => {
 	expect(etaHours(charging)).toBe(1.25);
 	expect(etaHours(discharging)).toBe(3.66);
 	expect(etaHours(idle)).toBe(11.2);
@@ -47,13 +44,15 @@ test("the eta key follows the time to full while charging and the time to empty 
 
 test("eta while charging", () => {
 	expect(etaView({ estimate: charging }, 1.25)).toMatchObject({ label: "FULL IN", value: "1h20", foot: "797 W", tone: "good" });
-	expect(etaView({ estimate: { ...charging, warmingUp: true } }, 1.25).value).toBe("··");
 	expect(etaView({ estimate: charging }, 0).value).toBe("0m");
+	expect(etaView({ estimate: { ...charging, socPct: 100 } }, 0)).toMatchObject({ label: "FULL IN", value: "FULL", tone: "good" });
 });
 
 test("eta while discharging", () => {
 	expect(etaView({ estimate: discharging }, 3.66)).toMatchObject({ label: "EMPTY IN", value: "3h40", foot: "300 W", tone: "warn" });
 	expect(etaView({ estimate: discharging }, 0.3).tone).toBe("bad");
+	expect(etaView({ estimate: { ...discharging, socPct: 19 } }, 3.66).tone).toBe("bad");
+	expect(etaView({ estimate: { ...discharging, socPct: 20 } }, 3.66).tone).toBe("warn");
 	expect(etaView({ estimate: discharging }, 0).value).toBe("0m");
 	expect(etaView({ estimate: discharging }, null).value).toBe("··");
 });
@@ -73,7 +72,7 @@ test("rendered keys never contain NaN or Infinity and escape markup", () => {
 });
 
 test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])("an estimate of %f hours shows the placeholder", (hours) => {
-	for (const estimate of [{ ...charging, toFullH: hours }, { ...discharging, toEmptyH: hours }]) {
+	for (const estimate of [{ ...charging, hours }, { ...discharging, hours }]) {
 		expect(etaHours(estimate)).toBeNull();
 		const view = etaView({ estimate }, etaHours(estimate));
 		expect(view.value).toBe("··");
