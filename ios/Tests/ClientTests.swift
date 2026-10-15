@@ -31,6 +31,31 @@ struct ClientTests {
         await #expect(throws: DeviceError.timeout) { try await client(fake).call("ES.GetStatus") }
     }
 
+    @Test func aGentleReadSendsOneDatagram() async throws {
+        var attempts = 0
+        let fake = try await FakeBattery.start { request, attempt in
+            attempts = attempt
+            return attempt == 1 ? [] : [#"{"id":\#(request.id),"result":{"bat_soc":82}}"#]
+        }
+        defer { fake.stop() }
+        var gentle = client(fake)
+        gentle.retry = false
+        await #expect(throws: DeviceError.timeout) { try await gentle.call("ES.GetStatus") }
+        #expect(attempts == 1)
+    }
+
+    @Test func aGentleHostIsReadWithoutARetry() async throws {
+        var attempts = 0
+        let fake = try await FakeBattery.start { request, attempt in
+            attempts = attempt
+            return attempt == 1 ? [] : [#"{"id":\#(request.id),"result":{"bat_soc":82,"bat_cap":5120,"ongrid_power":0}}"#]
+        }
+        defer { fake.stop() }
+        let settings = BatterySettings(host: "127.0.0.1", port: Int(fake.port), gentleHost: "127.0.0.1")
+        await #expect(throws: DeviceError.timeout) { try await Refresher.live(settings) }
+        #expect(attempts == 1)
+    }
+
     @Test func aReadingAsksOnlyForEsStatus() async throws {
         var methods: [String] = []
         let fake = try await FakeBattery.start { request, _ in

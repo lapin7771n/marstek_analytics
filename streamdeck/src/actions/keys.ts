@@ -1,11 +1,4 @@
-import {
-	action,
-	type PropertyInspectorDidAppearEvent,
-	type PropertyInspectorDidDisappearEvent,
-	SingletonAction,
-	type WillAppearEvent,
-	type WillDisappearEvent,
-} from "@elgato/streamdeck";
+import { action, SingletonAction, type WillAppearEvent } from "@elgato/streamdeck";
 
 import { Stabiliser } from "../core/format";
 import type { Poller } from "../core/poller";
@@ -14,7 +7,6 @@ import { etaHours, etaView, type KeyView, levelView, type Snapshot } from "../co
 
 export abstract class BatteryKey extends SingletonAction {
 	poller!: Poller;
-	onInspector?: (context: string, open: boolean) => void;
 	#painted?: string;
 
 	protected abstract view(snapshot: Snapshot): KeyView;
@@ -22,18 +14,6 @@ export abstract class BatteryKey extends SingletonAction {
 	override async onWillAppear(ev: WillAppearEvent): Promise<void> {
 		if (!ev.action.isKey()) return;
 		await ev.action.setImage(toDataUri(renderKey(this.view(this.poller.snapshot))));
-	}
-
-	override onWillDisappear(ev: WillDisappearEvent): void {
-		this.onInspector?.(ev.action.id, false);
-	}
-
-	override onPropertyInspectorDidAppear(ev: PropertyInspectorDidAppearEvent): void {
-		this.onInspector?.(ev.action.id, true);
-	}
-
-	override onPropertyInspectorDidDisappear(ev: PropertyInspectorDidDisappearEvent): void {
-		this.onInspector?.(ev.action.id, false);
 	}
 
 	override async onKeyDown(): Promise<void> {

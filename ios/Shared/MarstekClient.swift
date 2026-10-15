@@ -25,6 +25,11 @@ struct MarstekClient {
         Reading(time: time, es: try MarstekProtocol.esStatus(await call("ES.GetStatus")))
     }
 
+    func device() async throws -> DeviceInfo {
+        let id = MarstekProtocol.newId()
+        return try MarstekProtocol.device(await exchange(MarstekProtocol.deviceRequest(id: id), id: id))
+    }
+
     func call(_ method: String) async throws -> Data {
         let id = MarstekProtocol.newId()
         do {

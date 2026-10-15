@@ -8,7 +8,7 @@ struct LocalizationTests {
     @Test func everyStringHasUkrainian() throws {
         let json = try JSONSerialization.jsonObject(with: Data(contentsOf: catalog)) as? [String: Any]
         let strings = try #require(json?["strings"] as? [String: [String: Any]])
-        #expect(strings.count >= 85)
+        #expect(strings.count >= 96)
         for (key, entry) in strings {
             let uk = (entry["localizations"] as? [String: Any])?["uk"] as? [String: Any]
             let value = (uk?["stringUnit"] as? [String: Any])?["value"] as? String
@@ -32,5 +32,6 @@ struct LocalizationTests {
         #expect(uk.localizedString(forKey: "Lasts until %@, %@ to spare.", value: nil, table: nil) == "Вистачить до %1$@, запас %2$@.")
         #expect(uk.localizedString(forKey: "%lld h %@ min", value: nil, table: nil) == "%lld год %@ хв")
         #expect(uk.localizedString(forKey: "YASNO, group %@: off %@–%@.", value: nil, table: nil) == "YASNO, група %1$@: без світла %2$@–%3$@.")
+        #expect(uk.localizedString(forKey: "Find battery", value: nil, table: nil) == "Знайти батарею")
     }
 }
