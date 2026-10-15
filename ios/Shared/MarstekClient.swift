@@ -18,6 +18,7 @@ struct MarstekClient {
     let port: UInt16
     var timeout: TimeInterval = 2
     var gap: Duration = .seconds(1)
+    var retry = true
 
     func reading(at time: Date = .now) async throws -> Reading {
         Reading(time: time, es: try MarstekProtocol.esStatus(await call("ES.GetStatus")))
@@ -27,7 +28,7 @@ struct MarstekClient {
         let id = MarstekProtocol.newId()
         do {
             return try await exchange(MarstekProtocol.request(id: id, method: method), id: id)
-        } catch DeviceError.timeout {
+        } catch DeviceError.timeout where retry {
             try await Task.sleep(for: gap)
             return try await exchange(MarstekProtocol.request(id: id + 1, method: method), id: id + 1)
         }

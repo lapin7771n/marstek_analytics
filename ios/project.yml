@@ -40,6 +40,8 @@ targets:
         CFBundleLocalizations: [en, uk]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers: [com.mlapin.marstek.battery.alert]
         CFBundleURLTypes:
           - CFBundleURLName: com.mlapin.marstek.battery
             CFBundleURLSchemes: [batteryeta]
