@@ -6,11 +6,10 @@ struct TodayCard: View {
 
     private var domain: ClosedRange<Date> { day.start...max(day.now, day.start.addingTimeInterval(3 * 3600)) }
 
-    private var ticks: [Date] {
-        let hours = [0, 6, 12, 18]
+    private var hourTicks: [Date] {
+        [0, 6, 12, 18]
             .compactMap { Calendar.current.date(bySettingHour: $0, minute: 0, second: 0, of: day.start) }
             .filter { day.now.timeIntervalSince($0) >= 2 * 3600 }
-        return hours + [day.now]
     }
 
     private var peak: Int { max(1, day.hours.map { abs($0.watts) }.max() ?? 1) }
@@ -82,14 +81,15 @@ struct TodayCard: View {
         .chartPlotStyle { $0.clipped() }
         .chartYAxis(.hidden)
         .chartXAxis {
-            AxisMarks(values: ticks) { v in
+            AxisMarks(values: hourTicks) { v in
                 AxisValueLabel {
-                    if v.as(Date.self) == day.now {
-                        Text("now")
-                    } else if let date = v.as(Date.self) {
+                    if let date = v.as(Date.self) {
                         Text(verbatim: String(format: "%02d", Calendar.current.component(.hour, from: date)))
                     }
                 }
+            }
+            AxisMarks(values: [day.now]) { _ in
+                AxisValueLabel(anchor: .topTrailing) { Text("now") }
             }
         }
         .frame(height: 84)
