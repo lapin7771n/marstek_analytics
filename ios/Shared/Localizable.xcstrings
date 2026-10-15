@@ -451,6 +451,16 @@
         }
       }
     },
+    "Fast (1 min)": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Часто (1 хв)"
+          }
+        }
+      }
+    },
     "Find battery": {
       "localizations": {
         "uk": {
@@ -547,6 +557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "У застосунку Marstek відкрийте свою батарею й торкніться значка шестерні вгорі праворуч."
+          }
+        }
+      }
+    },
+    "Infrequent (15 min)": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рідко (15 хв)"
           }
         }
       }
@@ -667,6 +687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сповіщення про низький заряд"
+          }
+        }
+      }
+    },
+    "Medium (5 min)": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помірно (5 хв)"
           }
         }
       }
@@ -907,6 +937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Останні події"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оновлення"
           }
         }
       }

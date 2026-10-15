@@ -16,11 +16,33 @@ struct StoreTests {
     }
 
     @Test func aTypedHostIsPolledAsUsual() {
-        #expect(BatterySettings(host: "192.168.68.50").pollInterval == .seconds(30))
+        #expect(BatterySettings(host: "192.168.68.50").pollInterval == .seconds(60))
         #expect(BatterySettings(host: "192.168.68.50").retries)
         let other = BatterySettings(host: "192.168.68.51", gentleHost: "192.168.68.50")
-        #expect(other.pollInterval == .seconds(30))
+        #expect(other.pollInterval == .seconds(60))
         #expect(other.retries)
+    }
+
+    @Test func eachSpeedHasItsInterval() {
+        #expect(BatterySettings(host: "192.168.68.50", speed: .fast).pollInterval == .seconds(60))
+        #expect(BatterySettings(host: "192.168.68.50", speed: .medium).pollInterval == .seconds(300))
+        #expect(BatterySettings(host: "192.168.68.50", speed: .infrequent).pollInterval == .seconds(900))
+    }
+
+    @Test func aGentleHostKeepsTheChosenSpeedWithoutRetries() {
+        let host = "192.168.68.50"
+        let settings = BatterySettings(host: host, gentleHost: host, speed: .infrequent)
+        #expect(settings.pollInterval == .seconds(900))
+        #expect(!settings.retries)
+    }
+
+    @Test func aChosenSpeedIsStored() {
+        let store = store()
+        var settings = store.settings
+        settings.chosenSpeed = .infrequent
+        store.settings = settings
+        #expect(store.settings.speed == .infrequent)
+        #expect(store.settings.pollInterval == .seconds(900))
     }
 
     @Test func settingsStoredBeforeThisStillDecode() throws {
@@ -28,6 +50,8 @@ struct StoreTests {
         let settings = try JSONDecoder().decode(BatterySettings.self, from: old)
         #expect(settings == BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 15))
         #expect(settings.gentleHost == nil)
+        #expect(settings.speed == nil)
+        #expect(settings.pollInterval == .seconds(60))
     }
 
     @Test func aGoodFetchIsStored() async {
