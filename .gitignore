@@ -6,3 +6,4 @@ node_modules/
 plans/reports/
 ios/build/
 ios/*.xcodeproj
+docs/onboarding/

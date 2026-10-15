@@ -34,6 +34,7 @@ struct SettingsScreen: View {
     @State private var alertDenied = false
     @State private var reloadAfterCheck = false
     @State private var ticking = false
+    @State private var guide = GuideSheet.showsAtLaunch(Store().settings)
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var phase
 
@@ -180,6 +181,11 @@ struct SettingsScreen: View {
                 }
             }
             .navigationTitle("Battery ETA")
+            .toolbar {
+                Button { guide = true } label: { Image(systemName: "questionmark.circle") }
+                    .accessibilityLabel("How to connect")
+            }
+            .sheet(isPresented: $guide) { GuideSheet() }
         }
         // A background alert run wakes the app; the poll must not wake with it.
         .task(id: phase) { if phase == .active { await poll() } }

@@ -371,6 +371,16 @@
         }
       }
     },
+    "Done": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        }
+      }
+    },
     "EMPTY IN": {
       "localizations": {
         "uk": {
@@ -407,6 +417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Розрядиться через %1$lld хв (%2$@). Вимкніть потужні прилади."
+          }
+        }
+      }
+    },
+    "Enter the IP here and tap Save and check.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введіть IP тут і торкніться «Зберегти й перевірити»."
           }
         }
       }
@@ -491,6 +511,16 @@
         }
       }
     },
+    "How to connect": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Як підключити"
+          }
+        }
+      }
+    },
     "IDLE": {
       "localizations": {
         "uk": {
@@ -517,6 +547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Якщо не працює"
+          }
+        }
+      }
+    },
+    "In the Marstek app, open your battery and tap the gear icon at the top right.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У застосунку Marstek відкрийте свою батарею й торкніться значка шестерні вгорі праворуч."
           }
         }
       }
@@ -951,6 +991,16 @@
         }
       }
     },
+    "Scroll down and turn on Local API. Leave the port at 30000.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прокрутіть униз і ввімкніть Local API. Порт залиште 30000."
+          }
+        }
+      }
+    },
     "Searching…": {
       "localizations": {
         "uk": {
@@ -1041,6 +1091,16 @@
         }
       }
     },
+    "This device and the battery must be on the same Wi‑Fi.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей пристрій і батарея мають бути в одній мережі Wi‑Fi."
+          }
+        }
+      }
+    },
     "Time": {
       "localizations": {
         "uk": {
@@ -1087,6 +1147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Лишилося менше 30 хв"
+          }
+        }
+      }
+    },
+    "Under Wi‑Fi, write down the IP address.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запишіть IP-адресу під «Налаштування Wi‑Fi»."
           }
         }
       }
@@ -1147,6 +1217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Розраховано за поточним навантаженням. Якщо воно зміниться, зміниться й відповідь."
+          }
+        }
+      }
+    },
+    "When the app asks to find devices on your local network, tap Allow.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли застосунок попросить доступ до пристроїв у локальній мережі, торкніться «Дозволити»."
           }
         }
       }

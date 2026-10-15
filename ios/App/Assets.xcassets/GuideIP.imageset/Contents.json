@@ -1,0 +1,8 @@
+{
+  "images" : [
+    { "filename" : "02-ip.png", "idiom" : "universal" },
+    { "filename" : "02-ip-uk.png", "idiom" : "universal", "locale" : "uk" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 },
+  "properties" : { "localizable" : true }
+}
