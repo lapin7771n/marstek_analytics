@@ -10,21 +10,25 @@
 <main>
 <nav><a href="../">Battery ETA</a><a href="../support/">Support</a></nav>
 <h1>Privacy policy</h1>
-<p class="muted">Effective 15 October 2026</p>
+<p class="muted">Effective 16 October 2026</p>
 <p>Battery ETA does not collect, share or sell any personal data. It has no account, no server, no analytics, no advertising and no tracking.</p>
 
 <h2>What the app stores on your device</h2>
 <ul>
 <li>The battery IP address, port and reserve you enter.</li>
 <li>Recent readings from your battery, used to draw the app and its widgets.</li>
+<li>The address and outage group you pick on the Address screen, and the outage schedule for that group.</li>
 </ul>
-<p>This data stays in the app's storage on your iPhone or iPad. It never leaves the device. Deleting the app deletes it.</p>
+<p>This data stays in the app's storage on your iPhone or iPad. Battery readings never leave the device. Deleting the app deletes all of it.</p>
 
 <h2>Network use</h2>
-<p>The app sends status requests only to the battery address on your local Wi‑Fi. It contacts no other server.</p>
+<p>The app reads the battery only at its address on your local Wi‑Fi. Find battery sends one device query to each address on your Wi‑Fi network and nowhere else.</p>
+<p>The Address screen is optional. When you use it, the app sends the street and house text you type to the public YASNO outage API (app.yasno.ua) to find your outage group. It then downloads the public Kyiv outage schedule, a request that carries no personal data. YASNO's own privacy policy covers these requests.</p>
+<p>When you tap Use my location, iOS asks for your permission and gives the app your location once. Apple's geocoding service turns it into a street name, and the app keeps only that street and house text. Your coordinates are not stored or sent anywhere else.</p>
+<p>The app contacts no other server.</p>
 
 <h2>Third parties</h2>
-<p>None. If you turned on sharing with app developers in iOS settings, Apple may send crash reports to the developer. Apple's privacy policy covers that.</p>
+<p>The app has no third-party code, analytics or advertising SDKs. If you turned on sharing with app developers in iOS settings, Apple may send crash reports to the developer. Apple's privacy policy covers that.</p>
 
 <h2>Children</h2>
 <p>The app collects no data from anyone, including children.</p>
