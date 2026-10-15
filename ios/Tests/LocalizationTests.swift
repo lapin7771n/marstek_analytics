@@ -22,6 +22,7 @@ struct LocalizationTests {
         #expect(uk.localizedString(forKey: "NO LINK", value: nil, table: nil) == "НЕМАЄ ЗВʼЯЗКУ")
         #expect(uk.localizedString(forKey: "h", value: nil, table: nil) == "год")
         #expect(uk.localizedString(forKey: "−%lld W", value: nil, table: nil) == "−%lld Вт")
+        #expect(uk.localizedString(forKey: "%@ kWh", value: nil, table: nil) == "%@ кВт·год")
         #expect(uk.localizedString(forKey: "Privacy policy", value: nil, table: nil) == "Політика конфіденційності")
         #expect(uk.localizedString(forKey: "Support", value: nil, table: nil) == "Підтримка")
     }

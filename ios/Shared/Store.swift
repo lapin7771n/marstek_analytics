@@ -65,6 +65,11 @@ final class Store {
         set { save(newValue, "snapshot") }
     }
 
+    var history: History {
+        get { load("history") ?? History() }
+        set { save(newValue, "history") }
+    }
+
     private func load<T: Decodable>(_ key: String) -> T? {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(T.self, from: $0) }
     }
@@ -92,7 +97,13 @@ enum Refresher {
         if settings.problem != nil {
             next.error = .settings
         } else {
-            do { next.reading = try await fetch(settings) } catch { next.error = FetchError(error) }
+            do {
+                let reading = try await fetch(settings)
+                next.reading = reading
+                store.history.add(reading)
+            } catch {
+                next.error = FetchError(error)
+            }
         }
         store.snapshot = next
         return next
