@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ kWh": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ кВт·год"
+          }
+        }
+      }
+    },
     "%@ left, %@. The battery stops at the reserve.": {
       "localizations": {
         "uk": {
@@ -151,6 +161,36 @@
         }
       }
     },
+    "Built from readings the app and widgets already take. Dotted: no reading, the line joins the gap.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Графік будується з даних, які застосунок і віджети вже отримують. Пунктир: даних немає, лінія зʼєднує проміжок."
+          }
+        }
+      }
+    },
+    "CHARGE": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ЗАРЯД"
+          }
+        }
+      }
+    },
+    "Charge": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заряд"
+          }
+        }
+      }
+    },
     "Charge and power.": {
       "localizations": {
         "uk": {
@@ -177,6 +217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Заряд, потужність і час до повного заряду чи розряду."
+          }
+        }
+      }
+    },
+    "Charged": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заряджено"
           }
         }
       }
@@ -261,6 +311,16 @@
         }
       }
     },
+    "Hour": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Година"
+          }
+        }
+      }
+    },
     "IDLE": {
       "localizations": {
         "uk": {
@@ -321,6 +381,16 @@
         }
       }
     },
+    "No readings yet today.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сьогодні ще немає даних."
+          }
+        }
+      }
+    },
     "Notifications are off. Turn them on for Battery ETA in Settings.": {
       "localizations": {
         "uk": {
@@ -341,12 +411,32 @@
         }
       }
     },
+    "On battery": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Від батареї"
+          }
+        }
+      }
+    },
     "Open the app": {
       "localizations": {
         "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Відкрийте застосунок"
+          }
+        }
+      }
+    },
+    "POWER": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ПОТУЖНІСТЬ"
           }
         }
       }
@@ -367,6 +457,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Порт має бути від 1 до 65535"
+          }
+        }
+      }
+    },
+    "Power": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Потужність"
           }
         }
       }
@@ -421,6 +521,16 @@
         }
       }
     },
+    "Segment": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відрізок"
+          }
+        }
+      }
+    },
     "Support": {
       "localizations": {
         "uk": {
@@ -451,6 +561,36 @@
         }
       }
     },
+    "Time": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Час"
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сьогодні"
+          }
+        }
+      }
+    },
+    "Today in numbers": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сьогодні в цифрах"
+          }
+        }
+      }
+    },
     "Under 30 min left": {
       "localizations": {
         "uk": {
@@ -471,6 +611,36 @@
         }
       }
     },
+    "Used": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Витрачено"
+          }
+        }
+      }
+    },
+    "charge": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "заряд"
+          }
+        }
+      }
+    },
+    "discharge": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "розряд"
+          }
+        }
+      }
+    },
     "h": {
       "comment": "Hours unit, as in 6h20 and 21h",
       "localizations": {
@@ -482,6 +652,16 @@
         }
       }
     },
+    "low %@ · high %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "мін. %1$@ · макс. %2$@"
+          }
+        }
+      }
+    },
     "m": {
       "comment": "Minutes unit, as in 25m",
       "localizations": {
@@ -489,6 +669,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "хв"
+          }
+        }
+      }
+    },
+    "now": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "зараз"
           }
         }
       }

@@ -23,6 +23,8 @@ struct SettingsScreen: View {
     private let store = Store()
     @State private var settings = Store().settings
     @State private var snapshot = Store().snapshot
+    @State private var history = Store().history
+    @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
     @State private var checking = false
     @State private var alertOn = Store().alert.on
     @State private var alertDenied = false
@@ -77,6 +79,20 @@ struct SettingsScreen: View {
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                         .onTapGesture { if Face(snapshot, floorPct: settings.floorPct).blocked { openSettings() } }
+                }
+
+                Section {
+                    TodayCard(day: day)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                } header: {
+                    Text("Today")
+                } footer: {
+                    Text("Built from readings the app and widgets already take. Dotted: no reading, the line joins the gap.")
+                }
+
+                if !day.isEmpty {
+                    Section("Today in numbers") { TodayNumbers(day: day) }
                 }
 
                 Section {
@@ -159,7 +175,7 @@ struct SettingsScreen: View {
     }
 
     private func save() async {
-        if settings.host != store.settings.host { store.snapshot = nil }
+        if settings.host != store.settings.host { store.snapshot = nil; store.history = History() }
         store.settings = settings
         await refresh()
         WidgetCenter.shared.reloadAllTimelines()
@@ -169,6 +185,8 @@ struct SettingsScreen: View {
         guard !checking else { return }
         checking = true
         snapshot = await Refresher.refresh(store)
+        history = store.history
+        day = history.day(now: .now, latest: snapshot?.reading)
         checking = false
     }
 
