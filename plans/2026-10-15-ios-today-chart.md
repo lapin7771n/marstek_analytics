@@ -409,9 +409,9 @@ Run `make test`. Expected: all tests pass.
 - Consumes: `History.day(now:latest:calendar:)`, `DaySummary`, `formatDuration`, `Store.history`.
 - Produces: `TodayCard(day:)`, `TodayNumbers(day:)`, `Palette.warn`, `Palette.cardEdge`.
 
-- [ ] **3.1 Palette.** In `ios/Shared/Faces.swift`, add below `good`: `static let warn = Color(hex: 0xFFB547)` and `static let cardEdge = Color(hex: 0x2A2A30)`. Make `accent` return `warn` for `.warn`.
+- [x] **3.1 Palette.** In `ios/Shared/Faces.swift`, add below `good`: `static let warn = Color(hex: 0xFFB547)` and `static let cardEdge = Color(hex: 0x2A2A30)`. Make `accent` return `warn` for `.warn`.
 
-- [ ] **3.2 Card and numbers.** Create `ios/App/TodayCard.swift`:
+- [x] **3.2 Card and numbers.** Create `ios/App/TodayCard.swift`:
 
 ```swift
 import Charts
@@ -551,7 +551,7 @@ struct TodayNumbers: View {
 
 If an API above does not exist in the iOS 17 SDK (`BarMark.cornerRadius`, `AxisGridLine(stroke:)`), drop that modifier; keep the layout.
 
-- [ ] **3.3 Settings screen.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
+- [x] **3.3 Settings screen.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
   - Add `@State private var history = Store().history` below `snapshot`.
   - Below the `Section("Now")`, add:
 
@@ -582,7 +582,7 @@ If an API above does not exist in the iOS 17 SDK (`BarMark.cornerRadius`, `AxisG
   - In `save()`, change the first line to `if settings.host != store.settings.host { store.snapshot = nil; store.history = History() }`.
   - In `refresh()`, add `history = store.history` after `snapshot = await Refresher.refresh(store)`.
 
-- [ ] **3.4 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings` (same shape as existing entries, `state: translated`), keeping keys sorted. Skip a key that already exists. Run the `ukrainian-translation-review` skill on the new values before committing.
+- [x] **3.4 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings` (same shape as existing entries, `state: translated`), keeping keys sorted. Skip a key that already exists. Run the `ukrainian-translation-review` skill on the new values before committing.
 
 | Key | uk |
 |---|---|
@@ -608,6 +608,6 @@ If an API above does not exist in the iOS 17 SDK (`BarMark.cornerRadius`, `AxisG
 
 In `LocalizationTests.theAppShipsUkrainian`, add `#expect(uk.localizedString(forKey: "%@ kWh", value: nil, table: nil) == "%@ кВт·год")`.
 
-- [ ] **3.5 Check.** Run `make test`. Expected: all tests pass. Then run the app in the iPhone simulator against the battery and compare the screen with the "Today chart" artboard: card edge and radius, header labels, dotted gap, now dot and rule, bar colours, axis `00 06 12 18 now`, numbers row. Switch the simulator to Ukrainian and check that no label is cut off.
+- [x] **3.5 Check.** Run `make test`. Expected: all tests pass. Then run the app in the iPhone simulator against the battery and compare the screen with the "Today chart" artboard: card edge and radius, header labels, dotted gap, now dot and rule, bar colours, axis `00 06 12 18 now`, numbers row. Switch the simulator to Ukrainian and check that no label is cut off.
 
-- [ ] **3.6 Commit.** `git add ios && git commit -m "feat: show today's charge and power in the ios app"`
+- [x] **3.6 Commit.** `git add ios && git commit -m "feat: show today's charge and power in the ios app"`
