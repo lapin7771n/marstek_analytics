@@ -1,0 +1,8 @@
+{
+  "images" : [
+    { "filename" : "03-local-api.png", "idiom" : "universal" },
+    { "filename" : "03-local-api-uk.png", "idiom" : "universal", "locale" : "uk" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 },
+  "properties" : { "localizable" : true }
+}
