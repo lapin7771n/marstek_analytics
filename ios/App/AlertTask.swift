@@ -23,7 +23,7 @@ enum AlertTask {
 
     // One ES.GetStatus at most, no retry: a failed read waits for the next run.
     @Sendable static func fetchOnce(_ settings: BatterySettings) async throws -> Reading {
-        try await MarstekClient(host: settings.host, port: UInt16(settings.port), retry: false).reading()
+        try await MarstekClient(host: settings.host, port: UInt16(settings.port), retry: false, trace: { Store().log($1, at: $0) }).reading()
     }
 
     static func evaluate(

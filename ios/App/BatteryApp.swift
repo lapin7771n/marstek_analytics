@@ -114,6 +114,11 @@ struct SettingsScreen: View {
                     }
                     .buttonStyle(.plain)
                     hint("NO LINK", "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.")
+                    NavigationLink {
+                        DebugLogScreen()
+                    } label: {
+                        hint("LOGS", "Open the app's recent log and debug info to send with a bug report.")
+                    }
                 }
 
                 Section("About") {
@@ -177,6 +182,7 @@ struct SettingsScreen: View {
     private func save() async {
         if settings.host != store.settings.host { store.snapshot = nil; store.history = History() }
         store.settings = settings
+        store.log("Saved \(settings.host):\(settings.port)")
         await refresh()
         WidgetCenter.shared.reloadAllTimelines()
     }

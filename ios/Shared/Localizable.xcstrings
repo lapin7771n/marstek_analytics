@@ -91,6 +91,16 @@
         }
       }
     },
+    "App": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок"
+          }
+        }
+      }
+    },
     "BATTERY": {
       "localizations": {
         "uk": {
@@ -241,6 +251,56 @@
         }
       }
     },
+    "Clear": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистити"
+          }
+        }
+      }
+    },
+    "Copied": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопійовано"
+          }
+        }
+      }
+    },
+    "Copy": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати"
+          }
+        }
+      }
+    },
+    "Debug info": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Технічні дані"
+          }
+        }
+      }
+    },
+    "Device": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пристрій"
+          }
+        }
+      }
+    },
     "EMPTY IN": {
       "localizations": {
         "uk": {
@@ -361,6 +421,46 @@
         }
       }
     },
+    "LOGS": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ЖУРНАЛ"
+          }
+        }
+      }
+    },
+    "Last check": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остання перевірка"
+          }
+        }
+      }
+    },
+    "Last reading": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Останні дані"
+          }
+        }
+      }
+    },
+    "Log": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Журнал"
+          }
+        }
+      }
+    },
     "Low-battery alert": {
       "localizations": {
         "uk": {
@@ -377,6 +477,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "НЕМАЄ ЗВʼЯЗКУ"
+          }
+        }
+      }
+    },
+    "No events yet.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подій поки немає."
+          }
+        }
+      }
+    },
+    "No problems": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проблем немає"
           }
         }
       }
@@ -431,6 +551,16 @@
         }
       }
     },
+    "Open the app's recent log and debug info to send with a bug report.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрийте журнал і технічні дані застосунку, щоб додати їх до звіту про помилку."
+          }
+        }
+      }
+    },
     "POWER": {
       "localizations": {
         "uk": {
@@ -481,6 +611,26 @@
         }
       }
     },
+    "Recent events": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Останні події"
+          }
+        }
+      }
+    },
+    "Reserve": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резерв"
+          }
+        }
+      }
+    },
     "Reserve ": {
       "localizations": {
         "uk": {
@@ -527,6 +677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відрізок"
+          }
+        }
+      }
+    },
+    "State": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стан"
           }
         }
       }
