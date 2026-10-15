@@ -34,7 +34,7 @@ struct SubnetTests {
         #expect(FoundBattery(host: "h", model: "m", mac: nil).detail == "h")
     }
 
-    @Test(arguments: [(135, "VenusE 3.0"), (147, "VenusE 3.0"), (153, "VenusE")])
+    @Test(arguments: [(135, "VenusE 3.0"), (147, "VenusE 3.0"), (149, "VenusE 3.0"), (153, "VenusE"), (155, "VenusE")])
     func oldFirmwareResetsUnderLoad(firmware: Int, model: String) {
         #expect(FoundBattery(host: "h", model: model, mac: nil, firmware: firmware).resetsUnderLoad)
     }

@@ -207,10 +207,19 @@ struct SettingsScreen: View {
         await BatteryLine.shared.release()
     }
 
+    // Due a fixed interval after the last request, so a newly gentle host waits its 60 s at once.
     private func poll() async {
+        var tried = Date.distantPast
         while !Task.isCancelled {
-            if store.settings.problem == nil { await refresh() }
-            try? await Task.sleep(for: store.settings.pollInterval)
+            let now = Date.now
+            let checked = store.snapshot.map(\.checkedAt).flatMap { $0 <= now ? $0 : nil } ?? .distantPast
+            let due = max(tried, checked) + TimeInterval(store.settings.pollInterval.components.seconds)
+            if now >= due {
+                tried = now
+                if store.settings.problem == nil { await refresh() }
+            } else {
+                try? await Task.sleep(for: .seconds(min(due.timeIntervalSince(now), 5)))
+            }
         }
     }
 }

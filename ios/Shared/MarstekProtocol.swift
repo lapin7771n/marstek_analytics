@@ -39,9 +39,9 @@ enum MarstekProtocol {
         )
     }
 
-    // ver is an integer, a float like 150.9, a string like "148.3", or 1476 for 147.6.
+    // ver is an integer, a float like 150.9, a string like "148.3", or 1476 for 147.6. Below 100 is no Venus firmware.
     static func firmware(_ ver: Double?) -> Int? {
-        guard let ver, ver >= 0, ver < 10_000 else { return nil }
+        guard let ver, ver >= 100, ver < 10_000 else { return nil }
         let whole = Int(ver)
         return (1000...1999).contains(whole) ? whole / 10 : whole
     }

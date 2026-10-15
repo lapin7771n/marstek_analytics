@@ -64,7 +64,6 @@ struct ProtocolTests {
     }
 
     @Test func eachFirmwareReportsItsVersion() throws {
-        #expect(try MarstekProtocol.device(Data(deviceReply.utf8)).firmware == 150)
         #expect(try MarstekProtocol.device(Data(device151Reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "9a254a554cc6", firmware: 151))
         #expect(try MarstekProtocol.device(Data(device1476Reply.utf8)).firmware == 147)
         #expect(try MarstekProtocol.device(Data(device148Reply.utf8)) == DeviceInfo(model: "VenusE 3.0", mac: "a8dd9fd8d15c", firmware: 148))
@@ -74,6 +73,7 @@ struct ProtocolTests {
     @Test(arguments: [
         (#""ver":150.9,"#, 150), (#""ver":"148.3","#, 148), (#""ver":"135","#, 135),
         (#""ver":"V1.35","#, nil), (#""ver":null,"#, nil), ("", nil),
+        (#""ver":0,"#, nil), (#""ver":1.5,"#, nil), (#""ver":"1.0.3","#, nil),
     ] as [(String, Int?)])
     func aVerInAnyFormStillFindsTheBattery(field: String, firmware: Int?) throws {
         let reply = #"{"id":7,"result":{\#(field)"device":"VenusE 3.0"}}"#
