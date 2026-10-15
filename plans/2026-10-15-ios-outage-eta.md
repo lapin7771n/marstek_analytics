@@ -32,7 +32,7 @@
 |------|------|
 | 1. The verdict comes only from the stored snapshot and the ETA the app already has. Setting the return time or opening the screen sends no request. | `StoreTests.aPowerBackTimeSendsNoBatteryRequest`: a fresh snapshot, a power-back time, then the widget's refresh path and `Face` give a verdict while `FetchCounter` stays at 0. |
 | 2. No new polling and no faster poll. The app sends one `ES.GetStatus` every 30 s while open; widgets keep the shared fetch and its 10 min reuse. Never `Bat.GetStatus`. | `StoreTests.pollingStaysAsItIs`: `Refresher.appPollInterval == .seconds(30)` and `Refresher.widgetMaxAge == 600`. `ClientTests.aReadingAsksOnlyForEsStatus` already covers `Bat.GetStatus`. |
-| 3. A phase 2 schedule feed talks only to the schedule service on the internet (YASNO, DTEK, or a mirror the owner approves), never to the battery. | Phase 2 adds its own test: a schedule fetch runs with the battery fetch replaced by `FetchCounter`, which stays at 0, and the feed's host is not the battery's IP. |
+| 3. The phase 2 schedule feed talks only to YASNO (`app.yasno.ua`), never to the battery. | `StoreTests.theScheduleFeedNeverTouchesTheBattery` (Phase 2, Task 4). |
 | 4. Computing the verdict sends zero battery requests. | Covered by the rule 1 test, which uses the existing `FetchCounter` from `StoreTests.swift`. |
 
 **Review focus:**
@@ -454,23 +454,614 @@ struct OutageLine: View {
 
 ---
 
-## Phase 2: schedule feed from DTEK or YASNO (not approved)
+## Phase 2: fill the power-back time from the YASNO schedule
 
 Full findings with sources: `plans/2026-10-15-outage-schedule-sources.md`.
 
 **Facts (checked 2026-10-15):**
-- Neither DTEK nor YASNO publishes an official API.
-- YASNO's own web app uses a public JSON API with no login: `https://app.yasno.ua/api/blackout-service/public/shutdowns/regions/{region}/dsos/{dso}/planned-outages`. It returns each group ("1.1", "1.2" …) with `today` and `tomorrow`, each with a `status` and `slots` of `{start, end, type}` in minutes from midnight. It covers Kyiv city (25/902) and Dnipro (3/301, 3/303). Public address routes turn a street and house into a group. Today every Kyiv group is `EmergencyShutdowns` with empty slots, so the populated slot shape is unconfirmed.
-- DTEK sites sit behind Incapsula. Kyiv city and Kyiv oblast challenge plain clients, so an iPhone cannot read them. Dnipro and Odesa embed the schedule in the page and need a CSRF token.
-- `Baskerville42/outage-data-ua` (MIT, updated every few minutes) republishes DTEK schedules for Kyiv, Kyiv oblast, Dnipro and Odesa as raw GitHub JSON.
-- No terms of use for either site were found.
+- Neither DTEK nor YASNO publishes an official API. DTEK Kyiv blocks plain clients (Incapsula).
+- YASNO's own web app reads a public JSON API with no login: `https://app.yasno.ua/api/blackout-service/public/shutdowns/regions/25/dsos/902/planned-outages` for Kyiv city.
+- The feed is an object keyed by group. The web app builds the key as `"\(group).\(subgroup)"`, or `"\(group)"` when the subgroup is 0. On 15.10 Kyiv had 60 keys, `"1.1"` to `"60.1"`.
+- Each key has `today` and `tomorrow`. Each day has `date` (local midnight with offset, `"2026-10-15T00:00:00+03:00"`), `status` and `slots`. A populated day covers 0 to 1440 with no gaps, for example group 19.1 on 15.10: `{0,480,NotPlanned}`, `{480,690,Definite}`, `{690,1440,NotPlanned}`. Two outages in a day are two separate `Definite` slots.
+- Slot types in the web app: `Definite`, `Possible`, `NotPlanned`, `Unknown`. Day statuses: `ScheduleApplies`, `EmergencyShutdowns`, `WaitingForSchedule`, `NoOutages`. A `WaitingForSchedule` day still carries one `NotPlanned` slot over the whole day.
+- Address routes: `addresses/v2/streets?regionId=25&dsoId=902&query=Хрещ` returns `[{id:599,value:"вул. Набережно-Хрещатицька"},{id:1013,value:"вул. Хрещатик"}]`; `houses?…&streetId=1013&query=1` returns `{id,value}` pairs; `group?…&streetId=1013&houseId=42494` returns `{"group":19,"subgroup":1}`. The web app also accepts a bare number or string as the group reply.
+- House ids change: house 1 on Khreshchatyk was 42064 earlier on 15.10 and 42494 later. Store the group, never the ids.
 
-**Design (owner decisions 15.10: testers live in Kyiv; most reliable source; fill or suggest is our pick):**
-- Source: the YASNO API only, Kyiv city (region 25, DSO 902). It is the provider's own feed. The GitHub mirror scrapes DTEK pages through Playwright in CI and adds a second point of failure. DTEK Kyiv blocks plain clients.
-- Address from location: on "Use my location" the app asks for When-In-Use location once, reverse-geocodes it with `CLGeocoder`, and turns street and house into a group through `addresses/v2/streets?regionId=25&dsoId=902&query=…`, then `houses`, then `group`. Checked 15.10: `query=Хрещ` returns `вул. Хрещатик` (id 1013), and street 1013 house 42064 returns `{"group":19,"subgroup":1}`. The app stores only the group and the street and house text it shows; it does not keep coordinates. If the street does not match, the tester picks from the returned list.
-- Fill: while the app is open it reads `planned-outages` at most every 30 min. When the tester has no manual time, the end of the current or next outage slot for the group fills the power-back time, marked "from YASNO". A manual time wins until it passes. Widgets do not fetch the schedule.
-- During `EmergencyShutdowns` (all Kyiv groups on 15.10) there is no slot end, so the section says so and the tester types the time.
-- Open check before coding: the group key format in `planned-outages` ("19.1" for group 19, subgroup 1) is unconfirmed, and so is the shape of a populated slot. Both need one day with a published schedule.
-- `project.yml` gets `NSLocationWhenInUseUsageDescription`, in English and Ukrainian.
+**Design (owner decisions 15.10):**
+- Source: YASNO only, Kyiv city (region 25, DSO 902).
+- Address: an "Address" screen. "Use my location" asks for When-In-Use location once, reverse-geocodes it with `CLGeocoder` in Ukrainian, and searches YASNO streets with the street name minus its type word ("вулиця Хрещатик" → "Хрещатик"). One exact match picks itself; otherwise the tester taps the street in the list. The house works the same way. Typing the street works without location. The app stores only the group and the address text, never coordinates.
+- Feed: while the app is open it reads `planned-outages` at most every 30 min, and at once when the group changes. The last read stays in the App Group, so reopening the app inside 30 min reads nothing.
+- Power-back time from the schedule: the end of the current or next `Definite` span. Touching slots merge, so 21:00–24:00 today plus 00:00–02:00 tomorrow ends at 02:00. Only `ScheduleApplies` days count. `EmergencyShutdowns` today gives no time. `Possible` slots do not count. Minutes are wall-clock time in Europe/Kyiv.
+- Fill: every 30 s tick the app recomputes the answer from the stored read, with no network. A manual time still ahead wins. Otherwise the slot end fills the power-back time, marked as from YASNO. A YASNO time is dropped when the schedule no longer has a slot ahead. Any manual edit (time, day, Clear) makes the time manual.
+- Widgets do not fetch the schedule. They show whatever power-back time the App Group holds.
+- The feed lives in `ios/App/`, so the widget target cannot call it. It has no access to `MarstekClient` or `Refresher`.
 
-Time: about half a day, plus a day of live use with a populated schedule.
+**Deviations, for the owner to decide:**
+1. Before an outage starts, the next slot's end fills the time, and the verdict counts down from the current load. With the grid still on, that answer is cautious: it assumes the battery drains from now.
+2. A YASNO time has no "Clear" in the day menu, because the next 30 s tick would fill it again. To stop using YASNO, the tester removes the address. A manual time gets a "Use YASNO" item when YASNO has a slot ahead.
+3. After a YASNO time passes with the app closed, the widget shows "Updated …" until the app opens and fills the next slot.
+
+**Battery safety, rule 3 test:** `StoreTests.theScheduleFeedNeverTouchesTheBattery`. A schedule tick fills the power-back time from a fake YASNO reply. Then the widget refresh path runs with the battery fetch replaced by `FetchCounter`, which stays at 0. Every URL the feed asked for has host `app.yasno.ua`, and none has the battery's host.
+
+**Review focus:**
+1. The feed cannot reach the battery: no `MarstekClient`, `Refresher.refresh` or `BatteryLine` call in `ios/App/Yasno.swift` or `AddressScreen.swift`. (Task 4 test, and by reading.)
+2. A manual time ahead is never overwritten by the schedule. (Task 3 test.)
+3. The feed reads at most once per 30 min per group. (Task 4 test.)
+4. Slot times use Europe/Kyiv, not the phone's time zone. (Task 3 tests run in Kyiv time; read `Schedule.time`.)
+5. No coordinates are stored or sent. Only street and house text goes to YASNO. (By reading Task 5.)
+
+**Batches:** Tasks 3 and 4 go to one `implementer`, then Tasks 5 and 6 to a second one. One `reviewer` on the whole phase 2 diff, then one `fixer`.
+
+Time: about 4 hours, plus 20 minutes in the simulator. A day of live use on a phone with a published schedule is the owner's.
+
+---
+
+## Task 3: Schedule model and fill rule
+
+**Files**
+- Create: `ios/Shared/Schedule.swift`, `ios/Tests/ScheduleTests.swift`
+- Modify: `ios/Shared/Store.swift` (added lines only)
+
+- [ ] **3.1 Tests first.** Create `ios/Tests/ScheduleTests.swift`:
+
+```swift
+import Foundation
+import Testing
+@testable import BatteryETA
+
+let yasnoSample = """
+{"19.1":{"today":{"slots":[{"start":0,"end":480,"type":"NotPlanned"},{"start":480,"end":690,"type":"Definite"},{"start":690,"end":1440,"type":"NotPlanned"}],"date":"2026-10-15T00:00:00+03:00","status":"ScheduleApplies"},"tomorrow":{"slots":[{"start":0,"end":1440,"type":"NotPlanned"}],"date":"2026-10-16T00:00:00+03:00","status":"WaitingForSchedule"},"updatedOn":"2026-10-15T02:24:56+00:00"}}
+"""
+
+func kyiv(_ text: String) -> Date {
+    let format = DateFormatter()
+    format.calendar = Schedule.kyiv
+    format.timeZone = Schedule.kyiv.timeZone
+    format.dateFormat = "yyyy-MM-dd HH:mm"
+    return format.date(from: text)!
+}
+
+struct ScheduleTests {
+    private func day(_ ymd: String, _ status: String = "ScheduleApplies", off: [(Int, Int)] = [], type: String = "Definite") -> ScheduleDay {
+        ScheduleDay(date: kyiv("\(ymd) 00:00"), status: status, slots: off.map { ScheduleSlot(start: $0.0, end: $0.1, type: type) })
+    }
+
+    private func days(today: ScheduleDay, tomorrow: ScheduleDay? = nil) -> GroupDays {
+        GroupDays(today: today, tomorrow: tomorrow ?? day("2026-10-16", "WaitingForSchedule"))
+    }
+
+    @Test func decodesTheLiveFeed() throws {
+        let days = try #require(try Schedule.decode(Data(yasnoSample.utf8), key: "19.1"))
+        #expect(days.today.status == "ScheduleApplies")
+        #expect(days.today.slots[1] == ScheduleSlot(start: 480, end: 690, type: "Definite"))
+        #expect(days.today.date == kyiv("2026-10-15 00:00"))
+        #expect(try Schedule.decode(Data(yasnoSample.utf8), key: "19") == nil)
+    }
+
+    @Test func groupKeysMatchTheFeed() {
+        #expect(OutageGroup(group: 19, subgroup: 1, address: "").key == "19.1")
+        #expect(OutageGroup(group: 5, subgroup: 0, address: "").key == "5")
+    }
+
+    @Test(arguments: ["2026-10-15 07:00", "2026-10-15 09:00"])
+    func theCurrentOrNextSlotCounts(now: String) {
+        let answer = Schedule.answer(days(today: day("2026-10-15", off: [(480, 690), (1020, 1230)])), now: kyiv(now))
+        #expect(answer == .off(from: kyiv("2026-10-15 08:00"), until: kyiv("2026-10-15 11:30")))
+    }
+
+    @Test func afterTodaysSlotsTomorrowCounts() {
+        let answer = Schedule.answer(days(today: day("2026-10-15", off: [(480, 690)]), tomorrow: day("2026-10-16", off: [(840, 1050)])), now: kyiv("2026-10-15 12:00"))
+        #expect(answer == .off(from: kyiv("2026-10-16 14:00"), until: kyiv("2026-10-16 17:30")))
+    }
+
+    @Test func aSlotAcrossMidnightEndsTomorrow() {
+        let answer = Schedule.answer(days(today: day("2026-10-15", off: [(1260, 1440)]), tomorrow: day("2026-10-16", off: [(0, 120)])), now: kyiv("2026-10-15 22:00"))
+        #expect(answer == .off(from: kyiv("2026-10-15 21:00"), until: kyiv("2026-10-16 02:00")))
+    }
+
+    @Test func anUnpublishedTomorrowDoesNotCount() {
+        let answer = Schedule.answer(days(today: day("2026-10-15", off: [(480, 690)]), tomorrow: day("2026-10-16", "WaitingForSchedule", off: [(840, 1050)])), now: kyiv("2026-10-15 12:00"))
+        #expect(answer == .clear)
+    }
+
+    @Test func emergencyHasNoEnd() {
+        #expect(Schedule.answer(days(today: day("2026-10-15", "EmergencyShutdowns")), now: kyiv("2026-10-15 12:00")) == .emergency)
+    }
+
+    @Test func possibleSlotsDoNotCount() {
+        #expect(Schedule.answer(days(today: day("2026-10-15", off: [(840, 1050)], type: "Possible")), now: kyiv("2026-10-15 12:00")) == .clear)
+    }
+
+    @Test func aManualTimeAheadWins() {
+        let now = kyiv("2026-10-15 09:00")
+        let manual = kyiv("2026-10-15 13:00")
+        #expect(Schedule.fill(PowerBack(at: manual, fromSchedule: false), answer: .off(from: now, until: kyiv("2026-10-15 11:30")), now: now) == PowerBack(at: manual, fromSchedule: false))
+    }
+
+    @Test func theScheduleFillsAnEmptyOrPassedTime() {
+        let now = kyiv("2026-10-15 09:00")
+        let filled = PowerBack(at: kyiv("2026-10-15 11:30"), fromSchedule: true)
+        let answer = ScheduleAnswer.off(from: now, until: kyiv("2026-10-15 11:30"))
+        #expect(Schedule.fill(PowerBack(at: nil, fromSchedule: false), answer: answer, now: now) == filled)
+        #expect(Schedule.fill(PowerBack(at: kyiv("2026-10-15 08:00"), fromSchedule: false), answer: answer, now: now) == filled)
+    }
+
+    @Test(arguments: [ScheduleAnswer.clear, .emergency, nil] as [ScheduleAnswer?])
+    func aScheduleTimeGoesWithItsSlot(answer: ScheduleAnswer?) {
+        let now = kyiv("2026-10-15 09:00")
+        #expect(Schedule.fill(PowerBack(at: kyiv("2026-10-15 11:30"), fromSchedule: true), answer: answer, now: now) == PowerBack(at: nil, fromSchedule: false))
+    }
+
+    @Test func noScheduleLeavesAManualTime() {
+        let manual = PowerBack(at: kyiv("2026-10-15 08:00"), fromSchedule: false)
+        #expect(Schedule.fill(manual, answer: nil, now: kyiv("2026-10-15 09:00")) == manual)
+    }
+}
+```
+
+Append to `StoreTests`:
+
+```swift
+    @Test func theOutageGroupAndScheduleAreStored() {
+        let store = store()
+        #expect(store.outageGroup == nil && store.schedule == nil && !store.powerBackFromSchedule)
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        store.schedule = ScheduleState(key: "19.1", checkedAt: .now, days: nil)
+        store.powerBackFromSchedule = true
+        #expect(store.outageGroup?.key == "19.1" && store.schedule?.key == "19.1" && store.powerBackFromSchedule)
+    }
+```
+
+Run `make test`. Expected: the build fails because `Schedule`, `OutageGroup` and the new `Store` properties do not exist.
+
+- [ ] **3.2 Model.** Create `ios/Shared/Schedule.swift`:
+
+```swift
+import Foundation
+
+struct OutageGroup: Codable, Equatable {
+    var group: Int
+    var subgroup: Int
+    var address: String
+
+    var key: String { subgroup == 0 ? "\(group)" : "\(group).\(subgroup)" }
+}
+
+struct ScheduleSlot: Codable, Equatable {
+    var start: Int
+    var end: Int
+    var type: String
+}
+
+struct ScheduleDay: Codable, Equatable {
+    var date: Date
+    var status: String
+    var slots: [ScheduleSlot]
+}
+
+struct GroupDays: Codable, Equatable {
+    var today: ScheduleDay
+    var tomorrow: ScheduleDay
+}
+
+struct ScheduleState: Codable, Equatable {
+    var key: String
+    var checkedAt: Date
+    var days: GroupDays?
+    var failed = false
+}
+
+enum ScheduleAnswer: Equatable {
+    case off(from: Date, until: Date)
+    case emergency
+    case clear
+}
+
+struct PowerBack: Equatable {
+    var at: Date?
+    var fromSchedule: Bool
+}
+
+enum Schedule {
+    static let readEvery: TimeInterval = 30 * 60
+
+    static let kyiv: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Kyiv")!
+        return calendar
+    }()
+
+    static func decode(_ data: Data, key: String) throws -> GroupDays? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode([String: GroupDays].self, from: data)[key]
+    }
+
+    static func answer(_ days: GroupDays, now: Date, calendar: Calendar = kyiv) -> ScheduleAnswer {
+        if days.today.status == "EmergencyShutdowns" { return .emergency }
+        var spans: [(from: Date, until: Date)] = []
+        for day in [days.today, days.tomorrow] where day.status == "ScheduleApplies" {
+            for slot in day.slots where slot.type == "Definite" {
+                let from = time(slot.start, on: day.date, calendar), until = time(slot.end, on: day.date, calendar)
+                if let last = spans.last, from <= last.until {
+                    spans[spans.count - 1].until = max(last.until, until)
+                } else {
+                    spans.append((from, until))
+                }
+            }
+        }
+        guard let next = spans.first(where: { $0.until > now }) else { return .clear }
+        return .off(from: next.from, until: next.until)
+    }
+
+    static func fill(_ current: PowerBack, answer: ScheduleAnswer?, now: Date) -> PowerBack {
+        if let at = current.at, at > now, !current.fromSchedule { return current }
+        if case let .off(_, until)? = answer { return PowerBack(at: until, fromSchedule: true) }
+        return current.fromSchedule ? PowerBack(at: nil, fromSchedule: false) : current
+    }
+
+    private static func time(_ minutes: Int, on day: Date, _ calendar: Calendar) -> Date {
+        let midnight = calendar.startOfDay(for: day)
+        if minutes >= 1440 { return calendar.date(byAdding: .day, value: 1, to: midnight) ?? midnight }
+        return calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: midnight) ?? midnight
+    }
+}
+```
+
+- [ ] **3.3 Store.** In `ios/Shared/Store.swift`, add below `var powerBack`:
+
+```swift
+    var powerBackFromSchedule: Bool {
+        get { load("powerBackFromSchedule") ?? false }
+        set { save(newValue, "powerBackFromSchedule") }
+    }
+
+    var outageGroup: OutageGroup? {
+        get { load("outageGroup") }
+        set { save(newValue, "outageGroup") }
+    }
+
+    var schedule: ScheduleState? {
+        get { load("schedule") }
+        set { save(newValue, "schedule") }
+    }
+```
+
+- [ ] **3.4 Gate.** Run `make test`. Expected: exit 0. Then delete the `!current.fromSchedule` check in `Schedule.fill`, check that `aManualTimeAheadWins` still passes but `aScheduleTimeGoesWithItsSlot` fails, and restore it.
+
+- [ ] **3.5 Commit.** `feat: compute the power-back time from a yasno schedule`
+
+---
+
+## Task 4: YASNO client and the 30 min feed
+
+**Files**
+- Create: `ios/App/Yasno.swift`
+- Modify: `ios/Tests/ScheduleTests.swift`, `ios/Tests/StoreTests.swift`
+
+- [ ] **4.1 Tests first.** Append to `ScheduleTests.swift`:
+
+```swift
+actor URLLog {
+    var urls: [URL] = []
+    func add(_ url: URL) { urls.append(url) }
+}
+
+struct FeedTests {
+    private func store() -> Store {
+        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        store.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        return store
+    }
+
+    private func client(_ log: URLLog, reply: String = yasnoSample) -> YasnoClient {
+        YasnoClient { url in
+            await log.add(url)
+            return Data(reply.utf8)
+        }
+    }
+
+    @Test func aTickFillsTheSlotEnd() async {
+        let store = store()
+        let changed = await ScheduleFeed.tick(store, now: kyiv("2026-10-15 09:00"), client: client(URLLog()))
+        #expect(changed)
+        #expect(store.powerBack == kyiv("2026-10-15 11:30"))
+        #expect(store.powerBackFromSchedule)
+    }
+
+    @Test func theFeedReadsAtMostEvery30Minutes() async {
+        let store = store()
+        let log = URLLog()
+        let start = kyiv("2026-10-15 07:00")
+        for minutes in [0.0, 10, 29, 31] {
+            _ = await ScheduleFeed.tick(store, now: start.addingTimeInterval(minutes * 60), client: client(log))
+        }
+        #expect(await log.urls.count == 2)
+        store.outageGroup = OutageGroup(group: 20, subgroup: 1, address: "вул. Хрещатик, 2")
+        _ = await ScheduleFeed.tick(store, now: start.addingTimeInterval(32 * 60), client: client(log))
+        #expect(await log.urls.count == 3)
+    }
+
+    @Test func aFailedReadKeepsTheLastSchedule() async {
+        let store = store()
+        let start = kyiv("2026-10-15 07:00")
+        _ = await ScheduleFeed.tick(store, now: start, client: client(URLLog()))
+        let failing = YasnoClient { _ in throw URLError(.notConnectedToInternet) }
+        _ = await ScheduleFeed.tick(store, now: start.addingTimeInterval(31 * 60), client: failing)
+        #expect(store.schedule?.failed == true)
+        #expect(store.schedule?.days != nil)
+        #expect(store.powerBack == kyiv("2026-10-15 11:30"))
+    }
+
+    @Test func noGroupReadsNothing() async {
+        let store = store()
+        store.outageGroup = nil
+        let log = URLLog()
+        let changed = await ScheduleFeed.tick(store, now: kyiv("2026-10-15 09:00"), client: client(log))
+        #expect(!changed)
+        #expect(await log.urls.isEmpty)
+    }
+
+    @Test(arguments: [("вулиця Хрещатик", "Хрещатик"), ("проспект Перемоги", "Перемоги"), ("бульвар Лесі Українки", "Лесі Українки"), ("Хрещатик", "Хрещатик")])
+    func aStreetIsSearchedWithoutItsType(street: String, query: String) {
+        #expect(Address.query(street) == query)
+    }
+
+    @Test func aStreetMatchesItsYasnoName() {
+        let streets = [YasnoChoice(id: 599, value: "вул. Набережно-Хрещатицька"), YasnoChoice(id: 1013, value: "вул. Хрещатик")]
+        #expect(Address.match("вулиця Хрещатик", in: streets)?.id == 1013)
+        #expect(Address.match("Хрещ", in: streets) == nil)
+        #expect(Address.match("10А", in: [YasnoChoice(id: 1, value: "10"), YasnoChoice(id: 2, value: "10а")])?.id == 2)
+    }
+
+    @Test(arguments: [#"{"group":19,"subgroup":1}"#, "19"])
+    func aGroupReplyDecodes(reply: String) async throws {
+        let group = try await client(URLLog(), reply: reply).group(street: 1013, house: 42494)
+        #expect(group.group == 19)
+    }
+}
+```
+
+Append to `StoreTests` (battery safety rule 3). The reply is built around the reading's own time, so the widget path reuses the stored snapshot:
+
+```swift
+    @Test func theScheduleFeedNeverTouchesTheBattery() async throws {
+        let store = store()
+        let good = reading(acW: 400)
+        _ = await Refresher.refresh(store, now: good.time) { _ in good }
+        store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
+        let midnight = Schedule.kyiv.startOfDay(for: good.time)
+        let date = ISO8601DateFormatter.string(from: midnight, timeZone: Schedule.kyiv.timeZone, formatOptions: .withInternetDateTime)
+        let reply = #"{"19.1":{"today":{"slots":[{"start":0,"end":1440,"type":"Definite"}],"date":"\#(date)","status":"ScheduleApplies"},"tomorrow":{"slots":[],"date":"\#(date)","status":"WaitingForSchedule"}}}"#
+        let log = URLLog()
+        let now = good.time.addingTimeInterval(60)
+        #expect(await ScheduleFeed.tick(store, now: now, client: YasnoClient { url in await log.add(url); return Data(reply.utf8) }))
+        let counter = FetchCounter()
+        let snapshot = await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge) { await counter.read($0) }
+        #expect(Face(snapshot, floorPct: 12, powerBack: store.powerBack, now: now).outage != nil)
+        #expect(await counter.count == 0)
+        let hosts = await log.urls.map(\.host)
+        #expect(!hosts.isEmpty && hosts.allSatisfy { $0 == "app.yasno.ua" && $0 != store.settings.host })
+    }
+```
+
+Run `make test`. Expected: the build fails because `YasnoClient`, `ScheduleFeed`, `Address` and `YasnoChoice` do not exist.
+
+- [ ] **4.2 Client and feed.** Create `ios/App/Yasno.swift`:
+
+```swift
+import Foundation
+
+struct YasnoChoice: Codable, Hashable, Identifiable {
+    var id: Int
+    var value: String
+}
+
+struct YasnoClient {
+    static let base = URL(string: "https://app.yasno.ua/api/blackout-service/public/shutdowns/")!
+    static let region = 25
+    static let dso = 902
+
+    var get: @Sendable (URL) async throws -> Data = YasnoClient.live
+
+    static func live(_ url: URL) async throws -> Data {
+        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: 15))
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
+        return data
+    }
+
+    func planned(_ key: String) async throws -> GroupDays? {
+        try Schedule.decode(await get(Self.base.appending(path: "regions/\(Self.region)/dsos/\(Self.dso)/planned-outages")), key: key)
+    }
+
+    func streets(_ query: String) async throws -> [YasnoChoice] {
+        try await list("addresses/v2/streets", ["query": query])
+    }
+
+    func houses(street: Int, query: String) async throws -> [YasnoChoice] {
+        try await list("addresses/v2/houses", ["streetId": "\(street)", "query": query])
+    }
+
+    func group(street: Int, house: Int) async throws -> (group: Int, subgroup: Int) {
+        let data = try await get(url("addresses/v2/group", ["streetId": "\(street)", "houseId": "\(house)"]))
+        struct Reply: Decodable { var group: Int; var subgroup: Int? }
+        if let reply = try? JSONDecoder().decode(Reply.self, from: data) { return (reply.group, reply.subgroup ?? 0) }
+        let text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: CharacterSet(charactersIn: "\" \n"))
+        guard let group = Int(text) else { throw URLError(.cannotParseResponse) }
+        return (group, 0)
+    }
+
+    private func list(_ path: String, _ query: [String: String]) async throws -> [YasnoChoice] {
+        try JSONDecoder().decode([YasnoChoice].self, from: await get(url(path, query)))
+    }
+
+    private func url(_ path: String, _ query: [String: String]) -> URL {
+        let items = [URLQueryItem(name: "regionId", value: "\(Self.region)"), URLQueryItem(name: "dsoId", value: "\(Self.dso)")]
+            + query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+        return Self.base.appending(path: path).appending(queryItems: items)
+    }
+}
+
+enum ScheduleFeed {
+    static func tick(_ store: Store, now: Date = .now, client: YasnoClient = YasnoClient()) async -> Bool {
+        var state = store.schedule
+        if let group = store.outageGroup {
+            let age = state.map { now.timeIntervalSince($0.checkedAt) } ?? .infinity
+            if state?.key != group.key || !(0..<Schedule.readEvery).contains(age) {
+                let kept = state?.key == group.key ? state?.days : nil
+                do {
+                    state = ScheduleState(key: group.key, checkedAt: now, days: try await client.planned(group.key))
+                } catch {
+                    state = ScheduleState(key: group.key, checkedAt: now, days: kept, failed: true)
+                }
+                store.schedule = state
+            }
+        } else {
+            state = nil
+        }
+        let current = PowerBack(at: store.powerBack, fromSchedule: store.powerBackFromSchedule)
+        let next = Schedule.fill(current, answer: state?.days.map { Schedule.answer($0, now: now) }, now: now)
+        guard next != current else { return false }
+        store.powerBack = next.at
+        store.powerBackFromSchedule = next.fromSchedule
+        return true
+    }
+}
+
+enum Address {
+    private static let types: Set<String> = ["вулиця", "вул.", "проспект", "просп.", "бульвар", "бульв.", "провулок", "пров.", "площа", "пл.", "набережна", "наб.", "узвіз", "шосе", "алея", "проїзд", "тупик", "майдан"]
+
+    static func query(_ street: String) -> String {
+        street.split(separator: " ").filter { !types.contains($0.lowercased()) }.joined(separator: " ")
+    }
+
+    static func match(_ name: String, in choices: [YasnoChoice]) -> YasnoChoice? {
+        let wanted = query(name).lowercased()
+        let exact = choices.filter { query($0.value).lowercased() == wanted }
+        return exact.count == 1 ? exact[0] : nil
+    }
+}
+```
+
+- [ ] **4.3 Gate.** Run `make test`. Expected: exit 0. Then change `Schedule.readEvery` to `60`, check that `theFeedReadsAtMostEvery30Minutes` fails, and restore it.
+
+- [ ] **4.4 Live check.** In a scratch Swift script outside the repo, call `YasnoClient.live` on the `planned-outages` URL through `URLSession` and print the status code and the first key. Expected: 200 and a key such as `"1.1"`. This shows Incapsula lets `URLSession` through.
+
+- [ ] **4.5 Commit.** `feat: read the yasno schedule every 30 min while the app is open`
+
+---
+
+## Task 5: Address screen with one-time location
+
+**Files**
+- Create: `ios/App/AddressScreen.swift`
+- Modify: `ios/project.yml`, `ios/App/Info.plist` (regenerated), `ios/App/InfoPlist.xcstrings`
+
+- [ ] **5.1 Location string.** In `ios/project.yml` under `BatteryETA.info.properties`, add `NSLocationWhenInUseUsageDescription: Battery ETA finds your street once to look up your outage group.` Run `make project` so `App/Info.plist` picks it up. Add the key to `App/InfoPlist.xcstrings` with uk `Battery ETA один раз визначає вашу вулицю, щоб знайти групу відключень.`
+
+- [ ] **5.2 Screen.** Create `ios/App/AddressScreen.swift` with:
+  - `LocationOnce`, a `CLLocationManagerDelegate` class with `func locate() async -> CLLocation?`. It asks When-In-Use once when not determined, calls `requestLocation()` once authorized, and returns nil on denial or error. `desiredAccuracy = kCLLocationAccuracyHundredMeters`. It keeps no location after it returns.
+  - `AddressScreen(group: OutageGroup?, onSave: (OutageGroup?) -> Void)`, pushed from the "Address" row. State: `street` text, `streets: [YasnoChoice]`, picked `YasnoChoice?`, `house` text, `houses`, a `note: LocalizedStringKey?` and a `busy` flag.
+  - Section 1: a "Use my location" button. It runs `LocationOnce().locate()`, then `CLGeocoder().reverseGeocodeLocation(location, preferredLocale: Locale(identifier: "uk_UA")).first`, puts `thoroughfare` into `street` and `subThoroughfare` into `house`. Nil location sets the note "Location is off. Type the street."
+  - Section "Street": a text field. `.task(id: street)` waits 400 ms, then loads `YasnoClient().streets(Address.query(street))` when the query has 3 or more letters. `Address.match` picks one exact match by itself; otherwise the results show as tappable rows. No results set the note "No match. YASNO covers Kyiv city only."
+  - Section "House", shown once a street is picked: the same pattern with `houses(street:query:)`. Picking a house calls `group(street:house:)`, then `onSave(OutageGroup(group:, subgroup:, address: "\(street.value), \(house.value)"))` and dismisses.
+  - When a group is stored, a destructive "Remove address" button calls `onSave(nil)`.
+  - Footer: "The app keeps only the group and the address text, not your location."
+  - A failed request sets the note "YASNO did not answer."
+
+- [ ] **5.3 Gate.** Run `make test`. Expected: exit 0.
+
+- [ ] **5.4 Commit.** `feat: find the yasno outage group from the address`
+
+---
+
+## Task 6: Schedule in the "Power back at" section
+
+**Files**
+- Create: `ios/App/ScheduleViews.swift`
+- Modify: `ios/App/BatteryApp.swift`, `ios/Shared/Localizable.xcstrings`
+- Test: `ios/Tests/LocalizationTests.swift`
+
+- [ ] **6.1 Test first.** In `LocalizationTests.theAppShipsUkrainian`, add:
+
+```swift
+        #expect(uk.localizedString(forKey: "YASNO, group %@: off %@–%@.", value: nil, table: nil) == "YASNO, група %1$@: без світла %2$@–%3$@.")
+```
+
+Run `make test`. Expected: the expectation fails.
+
+- [ ] **6.2 Note view.** Create `ios/App/ScheduleViews.swift` with `ScheduleNote(group: OutageGroup, state: ScheduleState?, now: Date)`, one secondary `.subheadline` line:
+  - `.off(from, until)`: "YASNO, group 19.1: off 14:00–17:30." (times with `Text(_, style: .time)`).
+  - `.emergency`: "YASNO, group %@: emergency outages, no end time."
+  - `.clear`: "YASNO, group %@: no outage ahead."
+  - No days and `failed`: "YASNO did not answer."
+  - No state yet: nothing.
+
+- [ ] **6.3 Section.** In `ios/App/BatteryApp.swift` `SettingsScreen`:
+  - Add `@State private var fromSchedule = Store().powerBackFromSchedule`, `@State private var outageGroup = Store().outageGroup`, `@State private var schedule = Store().schedule`.
+  - First row of "Power back at": `NavigationLink { AddressScreen(group: outageGroup, onSave: saveGroup) } label: { LabeledContent("Address", value: outageGroup?.address ?? String(localized: "Not set")) }`.
+  - Under "Grid returns", when `outageGroup` is set: `ScheduleNote(group:state:now:)`.
+  - Day menu: show "Clear" only when `!fromSchedule`. Add "Use YASNO" when `!fromSchedule` and the stored schedule has an `.off` answer; it calls `useSchedule()`.
+  - `setPowerBack` also sets `fromSchedule = false` and `store.powerBackFromSchedule = false`. Move its widget reload into `reloadEta()`.
+  - Add the helpers:
+
+```swift
+    private func saveGroup(_ group: OutageGroup?) {
+        outageGroup = group
+        store.outageGroup = group
+    }
+
+    private func useSchedule() {
+        store.powerBack = nil
+        store.powerBackFromSchedule = false
+        Task { await tickSchedule() }
+    }
+
+    private func tickSchedule() async {
+        let changed = await ScheduleFeed.tick(store)
+        schedule = store.schedule
+        guard changed else { return }
+        powerBack = store.powerBack
+        fromSchedule = store.powerBackFromSchedule
+        reloadEta()
+    }
+
+    private func pollSchedule() async {
+        while !Task.isCancelled {
+            await tickSchedule()
+            try? await Task.sleep(for: Refresher.appPollInterval)
+        }
+    }
+
+    private func reloadEta() {
+        if checking { reloadAfterCheck = true } else { WidgetCenter.shared.reloadTimelines(ofKind: "eta") }
+    }
+```
+
+  - Add `.task(id: outageGroup?.key) { await pollSchedule() }` next to `.task { await poll() }`, so a new group reads at once.
+
+- [ ] **6.4 Ukrainian.** Add to `ios/Shared/Localizable.xcstrings`, each with `"state": "translated"`. Run the `ukrainian-translation-review` skill on the values before committing.
+
+| Key | uk |
+|-----|----|
+| `Address` | `Адреса` |
+| `Not set` | `Не вказано` |
+| `Use my location` | `Визначити за геолокацією` |
+| `Street` | `Вулиця` |
+| `House` | `Будинок` |
+| `Remove address` | `Видалити адресу` |
+| `Use YASNO` | `Брати з YASNO` |
+| `Location is off. Type the street.` | `Геолокацію вимкнено. Введіть вулицю.` |
+| `No match. YASNO covers Kyiv city only.` | `Нічого не знайдено. YASNO обслуговує лише Київ.` |
+| `YASNO did not answer.` | `YASNO не відповідає.` |
+| `The app keeps only the group and the address text, not your location.` | `Застосунок зберігає лише групу й адресу, без вашої геолокації.` |
+| `YASNO, group %@: off %@–%@.` | `YASNO, група %1$@: без світла %2$@–%3$@.` |
+| `YASNO, group %@: emergency outages, no end time.` | `YASNO, група %@: аварійні відключення, час невідомий.` |
+| `YASNO, group %@: no outage ahead.` | `YASNO, група %@: відключень попереду немає.` |
+
+- [ ] **6.5 Gate.** Run `make test`. Expected: exit 0.
+
+- [ ] **6.6 Look.** In the `iPhone 18 Pro` simulator, run `xcrun simctl location booted set 50.4475,30.5219` (Khreshchatyk), open Address, tap "Use my location", and pick the house. Screenshot the "Power back at" section in English and Ukrainian with the YASNO line. Then set a manual time, check that it stays, and use "Use YASNO".
+
+- [ ] **6.7 Commit.** `feat: fill the power-back time from yasno`

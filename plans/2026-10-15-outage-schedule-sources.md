@@ -24,22 +24,23 @@ Base: `https://app.yasno.ua/api/blackout-service/public/shutdowns/`. All routes 
 | `regions/{r}/dsos/{d}/settings` | `startupModalMessage` as HTML. For Kyiv (25/902) it says the stabilization schedules are not in effect after an accident on the right bank. |
 | `probable-outages?regionId=25&dsoId=902` | Weekly template: region, then DSO, then group, then slots keyed by weekday 0 to 6. Each slot is `{start, end, type}`, with minutes from 0 to 1440. Observed type: `NotPlanned`. |
 | `addresses/v2/cities`, `streets?regionId&dsoId&cityId&query`, `houses?regionId&dsoId&streetId&query` | Address lookup. Each returns a list of `{id, value}`. |
-| `addresses/v2/group?regionId&dsoId&streetId&houseId` | `{"group":19,"subgroup":1}` for Kyiv, Khreshchatyk, house 1 (streetId 1013, houseId 42064). |
+| `addresses/v2/group?regionId&dsoId&streetId&houseId` | `{"group":19,"subgroup":1}` for Kyiv, Khreshchatyk, house 1 (streetId 1013). House ids change: house 1 was 42064 early on 15.10 and 42494 later. |
 
 Route names come from the bundle, and the lookup chain was confirmed by calls. Also used by https://github.com/aavdberg/ha-yasno/blob/main/custom_components/ha_yasno/api/const.py
 
 Status values from the bundle: `NoOutages`, `ScheduleApplies`, `EmergencyShutdowns`, `WaitingForSchedule`.
 
+Slot types from the bundle: `Definite`, `Possible`, `NotPlanned`, `Unknown`.
+
 State on 2026-10-15 (observed):
-- Kyiv (902): every group `EmergencyShutdowns`, slots empty.
+- Kyiv (902), afternoon: every group `ScheduleApplies` today and `WaitingForSchedule` tomorrow. Keys "1.1" to "60.1". A populated day covers 0 to 1440 with no gaps, e.g. 19.1: `{0,480,NotPlanned}`, `{480,690,Definite}`, `{690,1440,NotPlanned}`. Groups had 0 to 2 `Definite` slots. Earlier that day every group was `EmergencyShutdowns` with empty slots.
 - Dnipro (301 and 303): `NoOutages` today, `WaitingForSchedule` tomorrow, slots empty.
-- I did not see a populated `ScheduleApplies` payload. The slot shape beyond `{start, end, type}` is UNVERIFIED.
 
 Other points:
-- Mapping group 19 subgroup 1 to the key "19.1" in `planned-outages` is UNVERIFIED.
+- The key format comes from the bundle: `subgroup ? "${group}.${subgroup}" : String(group)`. The bundle also accepts a bare number or string as the `group` reply, with subgroup 0.
 - The ICS route `regions/25/dsos/902/groups/19/subgroups/1/download` returned 500, "There is no file for group Id: 19". Do not use it with that id.
 - `https://api.yasno.com.ua/api/v1/pages/home/schedule-turn-off-electricity` returned 503 with `Retry-After: 5`, three times (observed). The path `electricity-outages-schedule` is not in the bundle. Both are UNVERIFIED as working endpoints.
-- Bot protection: `app.yasno.ua` sets Incapsula cookies (`visid_incap`, `incap_ses`) and an `x-iinfo` header. My plain requests got no challenge. Behaviour from iOS URLSession is UNVERIFIED.
+- Bot protection: `app.yasno.ua` sets Incapsula cookies (`visid_incap`, `incap_ses`) and an `x-iinfo` header. Plain requests with an iPhone User-Agent got no challenge. Behaviour from iOS URLSession is UNVERIFIED.
 - The `ha-yasno` author says the login flow rejects plain HTTP clients with 400 and needs a browser TLS fingerprint. Source: https://github.com/aavdberg/ha-yasno/blob/main/custom_components/ha_yasno/api/auth.py
 - Account routes use MSAL login at `login.yasno.ua`. Source: same file.
 
