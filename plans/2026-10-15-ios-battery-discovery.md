@@ -845,5 +845,5 @@ struct FindBatterySheet: View {
 
 ## Task 4: Owner check on the iPhone (10 minutes)
 
-- [ ] **4.1** `make upload BUILD=<next>`, install from TestFlight, clear the IP field, tap Find battery. Expected: the battery appears within 10 s; "Use this battery" fills `192.168.68.50` and "Now" shows a reading.
+- [ ] **4.1** `make upload BUILD=<next>`, install from TestFlight, clear the IP field, tap Find battery. Expected: the battery appears within 15 s; "Use this battery" fills `192.168.68.50` and "Now" shows a reading.
 - [ ] **4.2** Watch the battery output for 10 minutes after the search. Expected: no cut.
