@@ -1,4 +1,4 @@
-import type { BatStatus, EsStatus } from "./types";
+import type { EsStatus } from "./types";
 
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
@@ -28,18 +28,15 @@ export function resultOf(body: JsonObject): JsonObject {
 }
 
 export function toEsStatus(result: JsonObject, t: number): EsStatus {
+	const ratedWh = num(result, "bat_cap");
+	if (ratedWh <= 0) throw new ProtocolError(`Reply has bat_cap ${ratedWh}`);
 	return {
 		t,
-		socPct: num(result, "bat_soc"),
+		socPct: Math.round(num(result, "bat_soc")),
+		ratedWh,
 		ongridW: num(result, "ongrid_power"),
 		offgridW: num(result, "offgrid_power"),
 	};
-}
-
-export function toBatStatus(result: JsonObject, t: number): BatStatus {
-	const ratedWh = num(result, "rated_capacity");
-	if (ratedWh <= 0) throw new ProtocolError(`Reply has rated_capacity ${ratedWh}`);
-	return { t, capacityWh: num(result, "bat_capacity"), ratedWh, tempC: num(result, "bat_temp") };
 }
 
 function isObject(value: Json | undefined): value is JsonObject {

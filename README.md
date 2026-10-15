@@ -3,13 +3,13 @@
 A Stream Deck plugin for the Marstek Venus E 3.0 home battery. It reads the battery over your LAN and shows two keys:
 
 - **Battery level:** charge percent on a ring gauge and current power (`+` while charging).
-- **ETA:** time until full while charging, time until empty while discharging. While idle on the grid it shows `IF OUTAGE`: how long the battery would carry the backup-socket load, or your typical load when that socket is idle.
+- **ETA:** time until full while charging, time until empty while discharging. While idle on the grid it shows `IF OUTAGE`: how long the battery would carry the backup-socket load. With that socket idle it shows `—`.
 
 ![Battery level keys on the top row, ETA keys on the bottom row](docs/keys.png)
 
 Green means charging, amber discharging, red under 20 % or under 30 min. A red dot means the last poll failed and the key shows the last reading.
 
-The plugin only reads and never sends a command that changes the battery. It sends `ES.GetStatus` every 15 s. It sends `Bat.GetStatus` only right after `ES.GetStatus` answers: every 5 minutes, and once when readings resume after a gap of over 2 minutes. While it has no capacity reading, it retries a failed `Bat.GetStatus` after 1, 2 and 4 minutes, then every 5 minutes.
+The plugin only reads and never sends a command that changes the battery. It sends only `ES.GetStatus`, every 15 s.
 
 ## Requirements
 
@@ -52,7 +52,7 @@ Requires Xcode, `brew install xcodegen librsvg imagemagick`, and team `WSCTL2V8W
 
 ## How the ETA works
 
-The estimator forecasts load from a 1-minute and a 15-minute average, so a kettle barely moves a 10-hour estimate. It learns the charge and discharge efficiency and the slow-down above 90 % from the battery's own counters and keeps them in the plugin settings. Details: [plans/2026-10-12-streamdeck-battery-eta.md](plans/2026-10-12-streamdeck-battery-eta.md).
+Each ETA comes from the latest reading alone, with the same formula as the iPhone app. Time to full is the missing energy ÷ (charge power × 0.88). Time to empty is the energy above the floor ÷ 1.09 ÷ load. Power within 30 W of zero counts as idle, and every ETA stops at 240 h. The formula lives in `streamdeck/src/core/estimator.ts` and `ios/Shared/Estimate.swift`.
 
 ## Development
 
