@@ -84,7 +84,7 @@ struct FindBatterySheet: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: battery.model).font(.headline)
-                Text(verbatim: [battery.host, battery.macTail].compactMap { $0 }.joined(separator: " · "))
+                Text(verbatim: battery.detail)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()

@@ -901,7 +901,7 @@ On any firmware:
 
 - [ ] **5.0 Real replies (when a battery on another firmware is reachable).** From a Mac on its Wi‑Fi, send the step 0.1 command to its IP, then 10 s later the same with `ES.GetStatus` and `"params":{"id":0}`. Paste both replies into the fixtures, mark them captured, and fix the table above.
 
-- [ ] **5.1 Tests first.** In `ios/Tests/ProtocolTests.swift`, add after `deviceReply`:
+- [x] **5.1 Tests first.** In `ios/Tests/ProtocolTests.swift`, add after `deviceReply`:
 
 ```swift
 let device151Reply = #"{"id":7,"src":"VNSE3-0-bc2a3314ce8d","result":{"device":"VenusE 3.0","ver":151,"ble_mac":"bc2a3314ce8d","wifi_mac":"9a254a554cc6","wifi_name":"Home","ip":"192.168.68.50"}}"#
@@ -971,7 +971,7 @@ In `ios/Tests/SubnetTests.swift`, next to the `macTail` checks:
 
 Run `make test`. Expected: compile errors on `firmware` and `detail`; once stubbed, `eachFirmwareReportsItsVersion`, `aVerInAnyFormStillFindsTheBattery`, `aMissingRatedCapacityUsesTheVenusRating` and `aNullOffgridPowerCountsAsZero` fail. `olderFirmwareStatusParses`, `aSilentBatteryManagementSystemIsBad` and `aNullOngridPowerIsBad` pass already and guard those shapes.
 
-- [ ] **5.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`:
+- [x] **5.2 Protocol.** In `ios/Shared/MarstekProtocol.swift`:
 
 ```swift
 struct DeviceInfo: Equatable, Sendable {
@@ -1005,7 +1005,7 @@ struct DeviceInfo: Equatable, Sendable {
 
 `EsResult` gets `let offgridW: Double?` and `let ratedWh: Double?`. `DeviceResult` gets `let ver: Double?` and an `init(from:)` that reads `ver` as a `Double`, else as a `String` whose leading digits before an optional `.` parse as a `Double`, else `nil`, never throwing. `device(_:)` passes `firmware: firmware(result.ver)`.
 
-- [ ] **5.3 Sheet.** In `ios/App/Discovery.swift`, `FoundBattery` gets `var firmware: Int? = nil` and:
+- [x] **5.3 Sheet.** In `ios/App/Discovery.swift`, `FoundBattery` gets `var firmware: Int? = nil` and:
 
 ```swift
     var detail: String {
@@ -1015,7 +1015,7 @@ struct DeviceInfo: Equatable, Sendable {
 
 The sweep builds `FoundBattery(host: host, model: $0.model, mac: $0.mac, firmware: $0.firmware)`. In `ios/App/FindBattery.swift`, the row's second line becomes `Text(verbatim: battery.detail)`.
 
-- [ ] **5.4 Gate and commit.** `make test`. Expected: pass. Revert the `rated > 0 ? rated : venusRatedWh` fallback to `rated` and check that `aMissingRatedCapacityUsesTheVenusRating` fails; restore. `git add ios && git commit -m "feat: read venus e replies from firmware 135 to 151"`
+- [x] **5.4 Gate and commit.** `make test`. Expected: pass. Revert the `rated > 0 ? rated : venusRatedWh` fallback to `rated` and check that `aMissingRatedCapacityUsesTheVenusRating` fails; restore. `git add ios && git commit -m "feat: read venus e replies from firmware 135 to 151"`
 
 ## Task 6: Gentler polling on firmware that resets (needs owner yes)
 

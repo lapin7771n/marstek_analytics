@@ -30,5 +30,7 @@ struct SubnetTests {
     @Test func theMacTailIsTheLastTwoBytes() {
         #expect(FoundBattery(host: "h", model: "m", mac: "bc2a3314a41c").macTail == "…:A4:1C")
         #expect(FoundBattery(host: "h", model: "m", mac: nil).macTail == nil)
+        #expect(FoundBattery(host: "h", model: "m", mac: "bc2a3314a41c", firmware: 147).detail == "h · …:A4:1C · V147")
+        #expect(FoundBattery(host: "h", model: "m", mac: nil).detail == "h")
     }
 }

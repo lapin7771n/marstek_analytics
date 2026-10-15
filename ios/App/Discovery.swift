@@ -54,11 +54,16 @@ struct FoundBattery: Equatable, Identifiable, Sendable {
     let host: String
     let model: String
     let mac: String?
+    var firmware: Int? = nil
     var id: String { host }
 
     var macTail: String? {
         guard let hex = mac?.filter(\.isHexDigit).uppercased(), hex.count >= 4 else { return nil }
         return "…:\(hex.suffix(4).prefix(2)):\(hex.suffix(2))"
+    }
+
+    var detail: String {
+        [host, macTail, firmware.map { "V\($0)" }].compactMap { $0 }.joined(separator: " · ")
     }
 }
 
@@ -97,7 +102,7 @@ enum Discovery {
                 guard !Task.isCancelled, let host = pending.next() else { return }
                 group.addTask {
                     if Task.isCancelled { return nil }
-                    do { return try await probe(host).map { FoundBattery(host: host, model: $0.model, mac: $0.mac) } }
+                    do { return try await probe(host).map { FoundBattery(host: host, model: $0.model, mac: $0.mac, firmware: $0.firmware) } }
                     catch DeviceError.blocked { throw DeviceError.blocked }
                     catch { return nil }
                 }
