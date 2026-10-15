@@ -17,3 +17,10 @@ From `ios/`: `make test` · `make icon` · `make upload BUILD=<n>`
 - The firmware answers one UDP request at a time. Keep one request in flight and the 15 s poll.
 - `src/core/` must not import `@elgato/streamdeck`.
 - Device facts and the ETA design: `plans/2026-10-12-streamdeck-battery-eta.md`.
+
+## Git flow
+
+- One branch per task, cut from master: `git switch -c <type>/<slug> --no-track origin/master`. `<type>` is the Conventional Commit type of the work: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`.
+- A session in an app worktree starts on `claude/<slug>`. Rename it before the first push: `git branch -m <type>/<slug>`.
+- When the gate passes, push and open the PR to `master` without asking: `git push -u origin <branch>`, then `gh pr create --base master`. Before the PR, remove this branch's plan file and put a screenshot of the change in the PR body.
+- Never merge. After `gh pr create`, run `/land-pr`: it waits for the owner's merge, then deletes the branch.
