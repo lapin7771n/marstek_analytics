@@ -53,6 +53,12 @@ test("ignores a late reply that carries another id", async () => {
 	expect(await client(device.port).call("ES.GetStatus")).toEqual({ bat_soc: 81 });
 });
 
+test("ignores a datagram that is not JSON or has no id", async () => {
+	const device = await fake((msg) => ["garbage", `{"src":"no id"}`, `{"id":${msg.id},"result":{"bat_soc":84}}`]);
+	expect(await client(device.port).call("ES.GetStatus")).toEqual({ bat_soc: 84 });
+	expect(device.seen).toHaveLength(1);
+});
+
 test("retries once after a timeout", async () => {
 	const device = await fake((msg, attempt) => (attempt === 1 ? [] : [`{"id":${msg.id},"result":{"bat_soc":82}}`]));
 	expect(await client(device.port).call("ES.GetStatus")).toEqual({ bat_soc: 82 });

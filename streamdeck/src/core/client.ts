@@ -92,9 +92,9 @@ export class MarstekClient implements Device {
 			};
 			const fail = (err: DeviceError) => settle(() => reject(err));
 			const onMessage = (data: Buffer) => {
+				const reply = parsed(data);
+				if (reply === undefined || reply.id !== id) return;
 				try {
-					const reply = envelope(data.toString("utf8"));
-					if (reply.id !== id) return;
 					const result = resultOf(reply.body);
 					settle(() => resolve(result));
 				} catch (err) {
@@ -114,4 +114,12 @@ export class MarstekClient implements Device {
 
 function closedError(): DeviceError {
 	return new DeviceError("network", "Client is closed");
+}
+
+function parsed(data: Buffer): { id: number; body: JsonObject } | undefined {
+	try {
+		return envelope(data.toString("utf8"));
+	} catch {
+		return undefined;
+	}
 }
