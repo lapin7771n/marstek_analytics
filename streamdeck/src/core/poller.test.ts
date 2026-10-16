@@ -142,7 +142,7 @@ test("reconfigure closes the working device and polls the new one", async () => 
 	expect(a.calls).toEqual(["ES.GetStatus"]);
 
 	poller.reconfigure();
-	await flush();
+	await vi.advanceTimersByTimeAsync(1_000);
 	expect(a.closed).toBe(true);
 	expect(devices.count()).toBe(2);
 	expect(a.calls).toHaveLength(1);
@@ -159,24 +159,30 @@ test("stop closes the device", async () => {
 	expect(device.closed).toBe(true);
 });
 
-test("a reconfigure during a poll discards that poll and polls the new device at once", async () => {
+test("a settings save during a call lets it finish and leaves 1 s before the next device sends", async () => {
 	const a = new HeldDevice();
 	const b = new FakeDevice({ ...ES, bat_soc: 40 });
 	const { published, poller } = rig(inTurn(a, b).connect);
 	void poller.kick();
 	await flush();
-	expect(a.calls).toEqual(["ES.GetStatus"]);
 
 	poller.reconfigure();
-	a.reply();
+	poller.reconfigure();
 	await flush();
-	expect(a.calls).toEqual(["ES.GetStatus"]);
-	expect(published.map((snapshot) => snapshot.estimate?.socPct)).toEqual([40]);
+	expect(a.closed).toBe(false);
+	expect(b.calls).toEqual([]);
+
+	a.reply();
+	await vi.advanceTimersByTimeAsync(999);
+	expect(b.calls).toEqual([]);
+	await vi.advanceTimersByTimeAsync(1);
+	expect(a.closed).toBe(true);
 	expect(b.calls).toEqual(["ES.GetStatus"]);
+	expect(published.map((snapshot) => snapshot.estimate?.socPct)).toEqual([40]);
 	poller.stop();
 });
 
-test("a call that the reconfigure cut off is not a failed poll", async () => {
+test("a call that fails after a settings save is not a failed poll", async () => {
 	const a = new HeldDevice();
 	const b = new HeldDevice();
 	const { published, poller } = rig(inTurn(a, b).connect);
@@ -184,8 +190,8 @@ test("a call that the reconfigure cut off is not a failed poll", async () => {
 	await flush();
 
 	poller.reconfigure();
-	a.reject(new DeviceError("blocked", "Client is closed"));
-	await flush();
+	a.reject(new DeviceError("timeout", "No reply"));
+	await vi.advanceTimersByTimeAsync(1_000);
 	expect(published).toEqual([]);
 	expect(b.calls).toEqual(["ES.GetStatus"]);
 	poller.stop();
@@ -247,12 +253,30 @@ test("a reconfigure applies the new interval", async () => {
 
 	pollMs = 60_000;
 	poller.reconfigure();
-	await flush();
+	await vi.advanceTimersByTimeAsync(1_000);
 	expect(device.calls).toHaveLength(2);
 	await vi.advanceTimersByTimeAsync(59_000);
 	expect(device.calls).toHaveLength(2);
 	await vi.advanceTimersByTimeAsync(1_000);
 	expect(device.calls).toHaveLength(3);
+	poller.stop();
+});
+
+test("a nudge within a minute of the last request sends nothing", async () => {
+	const { device, poller } = rig(undefined, 900_000);
+	await poller.kick();
+	await vi.advanceTimersByTimeAsync(59_000);
+	await poller.nudge();
+	expect(device.calls).toHaveLength(1);
+	poller.stop();
+});
+
+test("a nudge a minute after the last request polls at once", async () => {
+	const { device, poller } = rig(undefined, 900_000);
+	await poller.kick();
+	await vi.advanceTimersByTimeAsync(60_000);
+	await poller.nudge();
+	expect(device.calls).toHaveLength(2);
 	poller.stop();
 });
 

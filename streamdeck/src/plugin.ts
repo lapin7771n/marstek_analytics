@@ -26,7 +26,7 @@ for (const key of keys) {
 }
 
 streamDeck.settings.onDidReceiveGlobalSettings<Settings>(() => poller.reconfigure());
-streamDeck.system.onSystemDidWakeUp(() => void poller.kick());
+streamDeck.system.onSystemDidWakeUp(() => void poller.nudge());
 
 await streamDeck.connect();
 
