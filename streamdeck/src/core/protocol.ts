@@ -27,15 +27,19 @@ export function resultOf(body: JsonObject): JsonObject {
 	return result;
 }
 
+const VENUS_RATED_WH = 5120;
+
 export function toEsStatus(result: JsonObject, t: number): EsStatus {
-	const ratedWh = num(result, "bat_cap");
-	if (ratedWh <= 0) throw new ProtocolError(`Reply has bat_cap ${ratedWh}`);
+	const soc = num(result, "bat_soc");
+	const rated = optional(result, "bat_cap") ?? 0;
+	// A silent battery management system reports bat_cap 0, then bat_soc 0.
+	if (rated <= 0 && soc <= 0) throw new ProtocolError(`Reply has bat_cap ${rated}`);
 	return {
 		t,
-		socPct: Math.round(num(result, "bat_soc")),
-		ratedWh,
+		socPct: Math.round(soc),
+		ratedWh: rated > 0 ? rated : VENUS_RATED_WH,
 		ongridW: num(result, "ongrid_power"),
-		offgridW: num(result, "offgrid_power"),
+		offgridW: optional(result, "offgrid_power") ?? 0,
 	};
 }
 
@@ -47,4 +51,8 @@ function num(result: JsonObject, key: string): number {
 	const value = result[key];
 	if (typeof value !== "number" || !Number.isFinite(value)) throw new ProtocolError(`Reply has no ${key}`);
 	return value;
+}
+
+function optional(result: JsonObject, key: string): number | undefined {
+	return result[key] === undefined || result[key] === null ? undefined : num(result, key);
 }
