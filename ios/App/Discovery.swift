@@ -67,6 +67,8 @@ struct FoundBattery: Equatable, Identifiable, Sendable {
         return firmware < 150 || (model == "VenusE" && firmware < 156)
     }
 
+    var takesRetry: Bool { firmware != nil && !resetsUnderLoad }
+
     var detail: String {
         [host, macTail, firmware.map { "V\($0)" }].compactMap { $0 }.joined(separator: " · ")
     }
