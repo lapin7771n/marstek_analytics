@@ -4,13 +4,7 @@ App Store Connect app 6822926943. First release: version 1.1, build 4. Checked a
 
 ## Left for the owner
 
-| # | Step | Where |
-| --- | --- | --- |
-| 1 | Fill the review contact: first name, last name, phone, email. App Store Connect saves none of them without the phone | Version page › App Review Information |
-| 2 | Record the demo video on an iPhone with the battery, attach it | Same section, Attachment |
-| 3 | Press Publish. It attests that Data Not Collected is accurate | App Privacy |
-| 4 | Enroll in the App Store Small Business Program, so Apple keeps 15 % of each sale, not 30 % | developer.apple.com › Small Business Program › Enroll |
-| 5 | Press Add for Review, then Submit | Version page |
+Press Add for Review, then Submit, on the version page.
 
 ## App information
 
@@ -168,32 +162,31 @@ Answer None or No to every question. Expected result: 4+.
 ## App Review Information
 
 - Sign-in required: No
-- Contact: Mykyta Lapin, nikita.lapin.201248@gmail.com and a phone, entered by the owner
-- Attachment: the demo video
+- Contact: Mykyta Lapin, nikita.lapin.201248@gmail.com and a phone
+- Attachment: `battery-eta-demo.mp4`, iPhone then iPad
 
 Notes:
 
 ```
 Battery ETA reads a Marstek Venus E 3.0 home battery over the local Wi‑Fi network (UDP to the battery's IP address, port 30000). It needs the physical battery on the same network, so without one the app shows "NO LINK" after "Save and check". There is no login and no server.
 
-The attached video shows on an iPhone with the battery:
-1. Find battery, then allowing Local Network access when iOS asks.
-2. The live reading: charge, power and EMPTY IN.
-3. Power back at: the LASTS or RUNS OUT verdict.
-4. Adding the Home Screen and Lock Screen widgets.
-5. Denying Local Network: the widget shows ALLOW LAN and tapping it opens Settings.
+The attached video shows the app with a real battery.
+
+iPhone, 0:00–1:00:
+1. The first-launch guide, then Find battery picks the Venus E 3.0 on this Wi‑Fi.
+2. Save and check: the live reading with charge, power and FULL IN while the battery charges.
+3. Power back at: the address finds the YASNO outage group, and Grid returns sets when power comes back.
+4. The low-battery alert asks for notification permission.
+5. The ALLOW LAN row opens the app's page in Settings, where Local Network access is switched.
+
+iPad, 1:00–1:26:
+1. Adding the Battery and ETA widget to the Home Screen.
+2. The widget and the app show the same live reading.
+
+The Lock Screen widgets, circular and rectangular, show the same reading.
 
 The app only reads status (the battery's ES.GetStatus method) and never changes battery settings. The Address screen looks up the user's outage group from the public YASNO schedule API for Kyiv; location is used once, only when the user taps "Use my location".
 ```
-
-## Demo video script (about 90 s)
-
-1. Start a screen recording from Control Center with the app closed.
-2. Open Battery ETA, tap Find battery, tap Allow on the Local Network prompt, pick the battery.
-3. Hold 5 s on the Now card while a load runs, so EMPTY IN shows a time.
-4. Set Power back at to an hour from now and show the verdict.
-5. Go home, add the medium widget, then the Lock Screen rectangular widget.
-6. Settings › Privacy & Security › Local Network: turn Battery ETA off, tap ALLOW LAN on the widget to show it opens Settings, turn it back on.
 
 ## Privacy and support pages
 
