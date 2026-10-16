@@ -47,4 +47,14 @@ struct SubnetTests {
     @Test func unknownFirmwareIsPolledAsUsual() {
         #expect(!FoundBattery(host: "h", model: "VenusE", mac: nil).resetsUnderLoad)
     }
+
+    @Test(arguments: [(150, "VenusE 3.0"), (156, "VenusE")])
+    func newerFirmwareTakesARetry(firmware: Int, model: String) {
+        #expect(FoundBattery(host: "h", model: model, mac: nil, firmware: firmware).takesRetry)
+    }
+
+    @Test(arguments: [147, nil] as [Int?])
+    func oldOrUnknownFirmwareTakesNoRetry(firmware: Int?) {
+        #expect(!FoundBattery(host: "h", model: "VenusE", mac: nil, firmware: firmware).takesRetry)
+    }
 }

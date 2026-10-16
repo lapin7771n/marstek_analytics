@@ -9,31 +9,31 @@ struct StoreTests {
         return store
     }
 
-    @Test func aBatteryOnOldFirmwareIsPolledGently() {
-        let settings = BatterySettings(host: "192.168.68.50", gentleHost: "192.168.68.50")
-        #expect(settings.pollInterval == .seconds(60))
+    @Test func aTypedHostGetsNoRetry() {
+        #expect(!BatterySettings(host: "192.168.68.50").retries)
+    }
+
+    @Test func aHostFindBatteryVettedRetriesUntilTheHostChanges() {
+        #expect(BatterySettings(host: "192.168.68.50", retryHost: "192.168.68.50").retries)
+        #expect(!BatterySettings(host: "192.168.68.51", retryHost: "192.168.68.50").retries)
+    }
+
+    @Test func settingsSavedBy11GetNoRetry() throws {
+        let old = Data(#"{"host":"192.168.68.50","port":30000,"floorPct":15,"gentleHost":"192.168.68.40"}"#.utf8)
+        let settings = try JSONDecoder().decode(BatterySettings.self, from: old)
         #expect(!settings.retries)
     }
 
     @Test func aTypedHostIsPolledAsUsual() {
         #expect(BatterySettings(host: "192.168.68.50").pollInterval == .seconds(60))
-        #expect(BatterySettings(host: "192.168.68.50").retries)
-        let other = BatterySettings(host: "192.168.68.51", gentleHost: "192.168.68.50")
+        let other = BatterySettings(host: "192.168.68.51", retryHost: "192.168.68.50")
         #expect(other.pollInterval == .seconds(60))
-        #expect(other.retries)
     }
 
     @Test func eachSpeedHasItsInterval() {
         #expect(BatterySettings(host: "192.168.68.50", speed: .fast).pollInterval == .seconds(60))
         #expect(BatterySettings(host: "192.168.68.50", speed: .medium).pollInterval == .seconds(300))
         #expect(BatterySettings(host: "192.168.68.50", speed: .infrequent).pollInterval == .seconds(900))
-    }
-
-    @Test func aGentleHostKeepsTheChosenSpeedWithoutRetries() {
-        let host = "192.168.68.50"
-        let settings = BatterySettings(host: host, gentleHost: host, speed: .infrequent)
-        #expect(settings.pollInterval == .seconds(900))
-        #expect(!settings.retries)
     }
 
     @Test func aChosenSpeedIsStored() {
@@ -49,7 +49,7 @@ struct StoreTests {
         let old = Data(#"{"host":"192.168.68.50","port":30000,"floorPct":15}"#.utf8)
         let settings = try JSONDecoder().decode(BatterySettings.self, from: old)
         #expect(settings == BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 15))
-        #expect(settings.gentleHost == nil)
+        #expect(settings.retryHost == nil)
         #expect(settings.speed == nil)
         #expect(settings.pollInterval == .seconds(60))
     }

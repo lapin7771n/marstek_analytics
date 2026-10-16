@@ -16,7 +16,7 @@ struct BatterySettings: Codable, Equatable {
     var host = ""
     var port = 30000
     var floorPct = 12
-    var gentleHost: String?
+    var retryHost: String?
     var speed: PollSpeed?
 
     var chosenSpeed: PollSpeed {
@@ -25,7 +25,8 @@ struct BatterySettings: Codable, Equatable {
     }
 
     var pollInterval: Duration { chosenSpeed.interval }
-    var retries: Bool { gentleHost != host }
+    // Only Find battery reads the firmware; a typed host may reset under load.
+    var retries: Bool { retryHost == host }
 
     var problem: String? {
         if host.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) == nil || !isIPv4OrName {

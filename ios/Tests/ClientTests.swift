@@ -44,16 +44,29 @@ struct ClientTests {
         #expect(attempts == 1)
     }
 
-    @Test func aGentleHostIsReadWithoutARetry() async throws {
+    @Test func aTypedHostIsReadWithoutARetry() async throws {
         var attempts = 0
         let fake = try await FakeBattery.start { request, attempt in
             attempts = attempt
             return attempt == 1 ? [] : [#"{"id":\#(request.id),"result":{"bat_soc":82,"bat_cap":5120,"ongrid_power":0}}"#]
         }
         defer { fake.stop() }
-        let settings = BatterySettings(host: "127.0.0.1", port: Int(fake.port), gentleHost: "127.0.0.1")
+        let settings = BatterySettings(host: "127.0.0.1", port: Int(fake.port))
         await #expect(throws: DeviceError.timeout) { try await Refresher.live(settings) }
         #expect(attempts == 1)
+    }
+
+    @Test func aVettedHostIsReadWithARetry() async throws {
+        var attempts = 0
+        let fake = try await FakeBattery.start { request, attempt in
+            attempts = attempt
+            return attempt == 1 ? [] : [#"{"id":\#(request.id),"result":{"bat_soc":82,"bat_cap":5120,"ongrid_power":0}}"#]
+        }
+        defer { fake.stop() }
+        let settings = BatterySettings(host: "127.0.0.1", port: Int(fake.port), retryHost: "127.0.0.1")
+        let reading = try await Refresher.live(settings)
+        #expect(reading.socPct == 82)
+        #expect(attempts == 2)
     }
 
     @Test func aReadingAsksOnlyForEsStatus() async throws {
