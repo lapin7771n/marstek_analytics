@@ -39,6 +39,6 @@ These answer "when does the power go off or come back". None answers "will my ba
 
 ## Position
 
-Battery ETA is the only app that joins a live Marstek reading with the YASNO outage schedule: "Lasts until 18:00, 1 h 20 min to spare". It is free, has no account, no ads and no in-app purchases, and only reads the battery.
+Battery ETA is the only app that joins a live Marstek reading with the YASNO outage schedule: "Lasts until 18:00, 1 h 20 min to spare". It costs $2.99 once, with no account, no ads and no in-app purchases, and only reads the battery.
 
 Search gap: "marstek" returns 2 apps in UA and 3 in DE.
