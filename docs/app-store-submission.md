@@ -88,7 +88,7 @@ PRIVACY
 Battery ETA only reads the battery status and never changes a battery setting. Readings stay on your device. No ads, no analytics, no tracking.
 
 REQUIREMENTS
-• Marstek Venus E 3.0 with Local API turned on
+• Marstek Venus E 3.0 with firmware V150 or newer and Local API turned on
 • iPhone or iPad on the same Wi‑Fi as the battery
 • Away from home, widgets show the last reading
 
@@ -133,7 +133,7 @@ Battery ETA зчитує дані з Marstek Venus E 3.0 через домашн
 Battery ETA лише зчитує стан батареї й ніколи не змінює її налаштувань. Дані з батареї зберігаються на вашому пристрої. Без реклами, аналітики та стеження.
 
 ПОТРІБНО
-• Marstek Venus E 3.0 з увімкненим Local API
+• Marstek Venus E 3.0 з прошивкою V150 або новішою та увімкненим Local API
 • iPhone або iPad у тій самій мережі Wi‑Fi, що й батарея
 • Поза домом віджети показують останні дані
 

@@ -50,7 +50,7 @@ struct SettingsScreen: View {
                         .accessibilityLabel("Battery IP address")
                     FindBatteryRow(port: settings.port) { battery in
                         settings.host = battery.host
-                        settings.gentleHost = battery.resetsUnderLoad ? battery.host : nil
+                        settings.retryHost = battery.takesRetry ? battery.host : nil
                         Task { await save() }
                     }
                     LabeledContent("Port") {
