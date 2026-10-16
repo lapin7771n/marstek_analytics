@@ -23,7 +23,10 @@ export interface Device {
 	close(): void;
 }
 
-type Options = { timeoutMs?: number; gapMs?: number };
+// The firmware echoes only the low 16 bits of the id; MarstekProtocol.newId stays at 32 766 or below too.
+const MAX_ID = 32_766;
+
+type Options = { timeoutMs?: number; gapMs?: number; firstId?: number };
 
 export class MarstekClient implements Device {
 	readonly #timeoutMs: number;
@@ -31,7 +34,7 @@ export class MarstekClient implements Device {
 	#socket?: dgram.Socket;
 	#closed = false;
 	#abort?: (err: DeviceError) => void;
-	#nextId = 1;
+	#nextId: number;
 	#queue: Promise<void> = Promise.resolve();
 
 	constructor(
@@ -41,6 +44,7 @@ export class MarstekClient implements Device {
 	) {
 		this.#timeoutMs = options.timeoutMs ?? 3000;
 		this.#gapMs = options.gapMs ?? 1000;
+		this.#nextId = options.firstId ?? 1;
 	}
 
 	call(method: string): Promise<JsonObject> {
@@ -78,7 +82,8 @@ export class MarstekClient implements Device {
 	#attempt(method: string): Promise<JsonObject> {
 		if (this.#closed) return Promise.reject(closedError());
 		const socket = this.#open();
-		const id = this.#nextId++;
+		const id = this.#nextId;
+		this.#nextId = (id % MAX_ID) + 1;
 
 		return new Promise((resolve, reject) => {
 			let settled = false;

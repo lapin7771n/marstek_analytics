@@ -5,7 +5,7 @@ import { DeviceError, MarstekClient } from "./client";
 
 type Incoming = { id: number; method: string };
 type Fake = { port: number; seen: Incoming[]; arrived: number[]; replied: number[]; close(): void };
-type Options = { timeoutMs?: number; gapMs?: number };
+type Options = { timeoutMs?: number; gapMs?: number; firstId?: number };
 
 const TIMEOUT_MS = 60;
 const TIMER_SLACK_MS = 2;
@@ -79,6 +79,14 @@ test("calls run one at a time", async () => {
 	const [a, b] = await Promise.all([made.call("Bat.GetStatus"), made.call("ES.GetStatus")]);
 	expect([a.n, b.n]).toEqual([1, 2]);
 	expect(device.seen.map((msg) => msg.method)).toEqual(["Bat.GetStatus", "ES.GetStatus"]);
+});
+
+test("the request id wraps to 1 after 32 766", async () => {
+	const device = await fake((msg) => [`{"id":${msg.id},"result":{"n":${msg.id}}}`]);
+	const made = client(device.port, { firstId: 32_766 });
+	await made.call("ES.GetStatus");
+	await made.call("ES.GetStatus");
+	expect(device.seen.map((msg) => msg.id)).toEqual([32_766, 1]);
 });
 
 test("a second call waits until the first reply was sent", async () => {
