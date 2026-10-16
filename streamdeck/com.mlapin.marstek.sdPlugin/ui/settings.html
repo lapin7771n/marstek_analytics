@@ -16,6 +16,14 @@
 		<sdpi-item label="Reserve %">
 			<sdpi-textfield global setting="floorPercent" placeholder="12"></sdpi-textfield>
 		</sdpi-item>
+
+		<sdpi-item label="Refresh">
+			<sdpi-select global setting="pollSeconds" default="60">
+				<option value="60">Fast (1 min)</option>
+				<option value="300">Medium (5 min)</option>
+				<option value="900">Infrequent (15 min)</option>
+			</sdpi-select>
+		</sdpi-item>
 		<sdpi-item>
 			<sdpi-item-label></sdpi-item-label>
 			<small>

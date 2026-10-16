@@ -4,12 +4,10 @@ import { toEsStatus } from "./protocol";
 import { SettingsError } from "./settings";
 import type { PollError, Snapshot } from "./views";
 
-const TICK_MS = 15_000;
-const BACKOFF_MS = 60_000;
 const FAILS_BEFORE_ERROR = 3;
 
 export type PollerDeps = {
-	connect(): Promise<{ device: Device; floorPct: number }>;
+	connect(): Promise<{ device: Device; floorPct: number; pollMs: number }>;
 	now(): number;
 	publish(snapshot: Snapshot): void;
 	warn?(message: string): void;
@@ -23,6 +21,7 @@ export class Poller {
 	#generation = 0;
 	#fails = 0;
 	#floorPct = 0;
+	#pollMs = 60_000;
 	#last: Snapshot = {};
 
 	constructor(private readonly deps: PollerDeps) {}
@@ -64,8 +63,7 @@ export class Poller {
 		} finally {
 			this.#running = undefined;
 			if (!this.#stopped) {
-				const backoff = this.#fails >= FAILS_BEFORE_ERROR ? BACKOFF_MS : TICK_MS;
-				this.#timer = setTimeout(() => void this.kick(), generation === this.#generation ? backoff : 0);
+				this.#timer = setTimeout(() => void this.kick(), generation === this.#generation ? this.#pollMs : 0);
 			}
 		}
 	}
@@ -74,13 +72,14 @@ export class Poller {
 		const stale = () => generation !== this.#generation;
 		try {
 			if (this.#device === undefined) {
-				const { device, floorPct } = await this.deps.connect();
+				const { device, floorPct, pollMs } = await this.deps.connect();
 				if (stale()) {
 					device.close();
 					return;
 				}
 				this.#device = device;
 				this.#floorPct = floorPct;
+				this.#pollMs = pollMs;
 			}
 			const device = this.#device;
 

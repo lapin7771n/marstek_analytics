@@ -11,7 +11,7 @@ const poller = new Poller({
 	now: () => Date.now(),
 	connect: async () => {
 		const settings = resolve(await streamDeck.settings.getGlobalSettings<Settings>());
-		return { device: new MarstekClient(settings.host, settings.port), floorPct: settings.floorPct };
+		return { device: new MarstekClient(settings.host, settings.port), floorPct: settings.floorPct, pollMs: settings.pollMs };
 	},
 	publish: (snapshot) => {
 		if (snapshot.error !== undefined) streamDeck.logger.warn(`poll failed: ${snapshot.error} ${snapshot.message ?? ""}`);

@@ -1,12 +1,30 @@
 import Foundation
 
+enum PollSpeed: String, Codable, CaseIterable {
+    case fast, medium, infrequent
+
+    var interval: Duration {
+        switch self {
+        case .fast: .seconds(60)
+        case .medium: .seconds(300)
+        case .infrequent: .seconds(900)
+        }
+    }
+}
+
 struct BatterySettings: Codable, Equatable {
     var host = ""
     var port = 30000
     var floorPct = 12
     var gentleHost: String?
+    var speed: PollSpeed?
 
-    var pollInterval: Duration { gentleHost == host ? .seconds(60) : .seconds(30) }
+    var chosenSpeed: PollSpeed {
+        get { speed ?? .fast }
+        set { speed = newValue }
+    }
+
+    var pollInterval: Duration { chosenSpeed.interval }
     var retries: Bool { gentleHost != host }
 
     var problem: String? {

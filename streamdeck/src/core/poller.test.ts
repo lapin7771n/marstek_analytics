@@ -37,13 +37,13 @@ class HeldDevice extends FakeDevice {
 	}
 }
 
-type Connect = () => Promise<{ device: Device; floorPct: number }>;
+type Connect = () => Promise<{ device: Device; floorPct: number; pollMs: number }>;
 
-function rig(connect?: Connect) {
+function rig(connect?: Connect, pollMs = 60_000) {
 	const device = new FakeDevice();
 	const published: Snapshot[] = [];
 	const poller = new Poller({
-		connect: connect ?? (() => Promise.resolve({ device, floorPct: 12 })),
+		connect: connect ?? (() => Promise.resolve({ device, floorPct: 12, pollMs })),
 		now: () => Date.now(),
 		publish: (snapshot) => published.push(snapshot),
 	});
@@ -53,7 +53,7 @@ function rig(connect?: Connect) {
 function inTurn(...devices: Device[]): { connect: Connect; count(): number } {
 	let connects = 0;
 	return {
-		connect: () => Promise.resolve({ device: devices[Math.min(connects++, devices.length - 1)], floorPct: 12 }),
+		connect: () => Promise.resolve({ device: devices[Math.min(connects++, devices.length - 1)], floorPct: 12, pollMs: 60_000 }),
 		count: () => connects,
 	};
 }
@@ -71,31 +71,25 @@ test("the first poll sends one ES.GetStatus and publishes the quick estimate", a
 	poller.stop();
 });
 
-test("polls every 15 s and sends nothing but ES.GetStatus", async () => {
+test("polls every 60 s and sends nothing but ES.GetStatus", async () => {
 	const { device, poller } = rig();
 	await poller.kick();
-	await vi.advanceTimersByTimeAsync(585_000);
-	expect(device.calls).toEqual(new Array<string>(40).fill("ES.GetStatus"));
+	await vi.advanceTimersByTimeAsync(570_000);
+	expect(device.calls).toEqual(new Array<string>(10).fill("ES.GetStatus"));
 	poller.stop();
 });
 
-test("two failed polls keep the last reading; the third marks it stale and slows down", async () => {
+test("two failed polls keep the last reading; the third marks it stale", async () => {
 	const { device, published, poller } = rig();
 	await poller.kick();
 	device.fail = new DeviceError("timeout", "No reply");
 
-	await vi.advanceTimersByTimeAsync(15_000);
-	await vi.advanceTimersByTimeAsync(15_000);
+	await vi.advanceTimersByTimeAsync(60_000);
+	await vi.advanceTimersByTimeAsync(60_000);
 	expect(published.at(-1)?.error).toBeUndefined();
 
-	await vi.advanceTimersByTimeAsync(15_000);
+	await vi.advanceTimersByTimeAsync(60_000);
 	expect(published.at(-1)).toMatchObject({ error: "timeout", estimate: { socPct: 82 } });
-
-	const before = device.calls.length;
-	await vi.advanceTimersByTimeAsync(45_000);
-	expect(device.calls.length).toBe(before);
-	await vi.advanceTimersByTimeAsync(15_000);
-	expect(device.calls.length).toBeGreaterThan(before);
 	poller.stop();
 });
 
@@ -126,7 +120,7 @@ test("bad settings show at once and reconfigure reconnects", async () => {
 	const device = new FakeDevice({ ...ES, bat_soc: 50, ongrid_power: 400 });
 	let bad = true;
 	const { published, poller } = rig(() =>
-		bad ? Promise.reject(new SettingsError("Set the battery IP in the key settings")) : Promise.resolve({ device, floorPct: 20 }),
+		bad ? Promise.reject(new SettingsError("Set the battery IP in the key settings")) : Promise.resolve({ device, floorPct: 20, pollMs: 60_000 }),
 	);
 	await poller.kick();
 	expect(published.at(-1)).toMatchObject({ error: "settings", message: "Set the battery IP in the key settings" });
@@ -199,13 +193,13 @@ test("a call that the reconfigure cut off is not a failed poll", async () => {
 
 test("a device that connects after stop is closed unused", async () => {
 	const late = new FakeDevice();
-	let connected: (made: { device: Device; floorPct: number }) => void = () => {};
+	let connected: (made: { device: Device; floorPct: number; pollMs: number }) => void = () => {};
 	const { published, poller } = rig(() => new Promise((resolve) => (connected = resolve)));
 	void poller.kick();
 	await flush();
 
 	poller.stop();
-	connected({ device: late, floorPct: 12 });
+	connected({ device: late, floorPct: 12, pollMs: 60_000 });
 	await flush();
 	expect(late.closed).toBe(true);
 	expect(late.calls).toEqual([]);
@@ -216,5 +210,66 @@ test("overlapping kicks share one poll", async () => {
 	const { device, poller } = rig();
 	await Promise.all([poller.kick(), poller.kick()]);
 	expect(device.calls).toEqual(["ES.GetStatus"]);
+	poller.stop();
+});
+
+test("with pollMs 900 000 the device gets one call by 899 s and two at 900 s", async () => {
+	const { device, poller } = rig(undefined, 900_000);
+	await poller.kick();
+	expect(device.calls).toHaveLength(1);
+	await vi.advanceTimersByTimeAsync(899_000);
+	expect(device.calls).toHaveLength(1);
+	await vi.advanceTimersByTimeAsync(1_000);
+	expect(device.calls).toHaveLength(2);
+	poller.stop();
+});
+
+test("after three failures in Infrequent mode the gap stays 900 s", async () => {
+	const { device, published, poller } = rig(undefined, 900_000);
+	await poller.kick();
+	device.fail = new DeviceError("timeout", "No reply");
+	await vi.advanceTimersByTimeAsync(2_700_000);
+	expect(device.calls).toHaveLength(4);
+	expect(published.at(-1)?.error).toBe("timeout");
+
+	await vi.advanceTimersByTimeAsync(899_000);
+	expect(device.calls).toHaveLength(4);
+	await vi.advanceTimersByTimeAsync(1_000);
+	expect(device.calls).toHaveLength(5);
+	poller.stop();
+});
+
+test("a reconfigure applies the new interval", async () => {
+	const device = new FakeDevice();
+	let pollMs = 900_000;
+	const { poller } = rig(() => Promise.resolve({ device, floorPct: 12, pollMs }));
+	await poller.kick();
+
+	pollMs = 60_000;
+	poller.reconfigure();
+	await flush();
+	expect(device.calls).toHaveLength(2);
+	await vi.advanceTimersByTimeAsync(59_000);
+	expect(device.calls).toHaveLength(2);
+	await vi.advanceTimersByTimeAsync(1_000);
+	expect(device.calls).toHaveLength(3);
+	poller.stop();
+});
+
+test("before a connect has set the interval the poller waits 60 s between polls", async () => {
+	let connects = 0;
+	const poller = new Poller({
+		connect: () => {
+			connects++;
+			return Promise.reject(new SettingsError("Set the battery IP in the key settings"));
+		},
+		now: () => Date.now(),
+		publish: () => {},
+	});
+	await poller.kick();
+	await vi.advanceTimersByTimeAsync(59_000);
+	expect(connects).toBe(1);
+	await vi.advanceTimersByTimeAsync(1_000);
+	expect(connects).toBe(2);
 	poller.stop();
 });

@@ -6,7 +6,7 @@ import { resolve } from "./core/settings";
 const settings = resolve({ host: process.env.MARSTEK_HOST, port: process.env.MARSTEK_PORT });
 
 const poller = new Poller({
-	connect: () => Promise.resolve({ device: new MarstekClient(settings.host, settings.port), floorPct: settings.floorPct }),
+	connect: () => Promise.resolve({ device: new MarstekClient(settings.host, settings.port), floorPct: settings.floorPct, pollMs: settings.pollMs }),
 	now: () => Date.now(),
 	publish: ({ estimate, error, message }) => {
 		const time = new Date().toISOString().slice(11, 19);

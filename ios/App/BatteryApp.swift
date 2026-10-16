@@ -62,6 +62,12 @@ struct SettingsScreen: View {
                     Stepper(value: $settings.floorPct, in: 0...50) {
                         Text("Reserve ") + Text("\(settings.floorPct) %").foregroundStyle(.secondary)
                     }
+                    Picker("Refresh", selection: $settings.chosenSpeed) {
+                        Text("Fast (1 min)").tag(PollSpeed.fast)
+                        Text("Medium (5 min)").tag(PollSpeed.medium)
+                        Text("Infrequent (15 min)").tag(PollSpeed.infrequent)
+                    }
+                    .pickerStyle(.menu)
                 } header: {
                     Text("Battery IP")
                 } footer: {
@@ -330,7 +336,7 @@ struct SettingsScreen: View {
         }
     }
 
-    // Due a fixed interval after the last request, so a newly gentle host waits its 60 s at once.
+    // Due a fixed interval after the last request, so a newly chosen interval applies at once.
     private func poll() async {
         var tried = Date.distantPast
         while !Task.isCancelled {
