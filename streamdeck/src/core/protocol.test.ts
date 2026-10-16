@@ -27,18 +27,29 @@ test("a device error carries its code", () => {
 	expect(() => resultOf(envelope(`{"id":2,"error":{"code":-32601,"message":"Method not found"}}`).body)).toThrow(/-32601/);
 });
 
-test("a missing field is a protocol error, never a zero", () => {
-	expect(() => toEsStatus({ bat_soc: 80, bat_cap: 5120, ongrid_power: -797 }, 0)).toThrow(/offgrid_power/);
+test("a reply without offgrid_power reads 0 W like the iOS app", () => {
+	expect(toEsStatus({ bat_soc: 80, bat_cap: 5120, ongrid_power: -797 }, 0).offgridW).toBe(0);
 });
 
-test.each([0, -5120])("a rated capacity of %d is a protocol error", (rated) => {
+test.each([0, -5120, null])("bat_cap %s with a charge reads as the 5120 Wh Venus rating", (rated) => {
 	const result = { bat_soc: 50, bat_cap: rated, ongrid_power: 0, offgrid_power: 0 };
-	expect(() => toEsStatus(result, 0)).toThrow(ProtocolError);
-	expect(() => toEsStatus(result, 0)).toThrow(/bat_cap/);
+	expect(toEsStatus(result, 0)).toMatchObject({ socPct: 50, ratedWh: 5120 });
 });
 
-test("a reply without bat_cap is a protocol error", () => {
-	expect(() => toEsStatus({ bat_soc: 50, ongrid_power: 0, offgrid_power: 0 }, 0)).toThrow(/bat_cap/);
+test("no bat_cap with a charge reads as the 5120 Wh Venus rating", () => {
+	expect(toEsStatus({ bat_soc: 50, ongrid_power: 0, offgrid_power: 0 }, 0).ratedWh).toBe(5120);
+});
+
+test("bat_soc 0.4 with bat_cap 0 is a charge, read on the raw value", () => {
+	expect(toEsStatus({ bat_soc: 0.4, bat_cap: 0, ongrid_power: 0, offgrid_power: 0 }, 0)).toMatchObject({ socPct: 0, ratedWh: 5120 });
+});
+
+test("bat_cap 0 and bat_soc 0 is a silent battery management system", () => {
+	expect(() => toEsStatus({ bat_soc: 0, bat_cap: 0, ongrid_power: 0, offgrid_power: 0 }, 0)).toThrow(/bat_cap 0/);
+});
+
+test("a missing ongrid_power is still a protocol error", () => {
+	expect(() => toEsStatus({ bat_soc: 80, bat_cap: 5120, offgrid_power: 0 }, 0)).toThrow(/ongrid_power/);
 });
 
 test("non-JSON is a protocol error", () => {
