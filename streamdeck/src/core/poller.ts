@@ -5,6 +5,8 @@ import { SettingsError } from "./settings";
 import type { PollError, Snapshot } from "./views";
 
 const FAILS_BEFORE_ERROR = 3;
+const GAP_MS = 1_000;
+const NUDGE_MIN_MS = 60_000;
 
 export type PollerDeps = {
 	connect(): Promise<{ device: Device; floorPct: number; pollMs: number }>;
@@ -22,6 +24,7 @@ export class Poller {
 	#fails = 0;
 	#floorPct = 0;
 	#pollMs = 60_000;
+	#lastCallEnd = Number.NEGATIVE_INFINITY;
 	#last: Snapshot = {};
 
 	constructor(private readonly deps: PollerDeps) {}
@@ -45,11 +48,19 @@ export class Poller {
 
 	reconfigure(): void {
 		this.#generation++;
-		this.#device?.close();
+		const old = this.#device;
 		this.#device = undefined;
+		// The firmware still answers the call in flight; close after it.
+		void (this.#running ?? Promise.resolve()).then(() => old?.close());
 		this.#fails = 0;
 		this.#stopped = false;
 		void this.kick();
+	}
+
+	// Key press and system wake: a request only when the last one ended a minute ago or more.
+	nudge(): Promise<void> {
+		if (this.deps.now() - this.#lastCallEnd < NUDGE_MIN_MS) return this.#running ?? Promise.resolve();
+		return this.kick();
 	}
 
 	async kick(): Promise<void> {
@@ -80,10 +91,16 @@ export class Poller {
 				this.#device = device;
 				this.#floorPct = floorPct;
 				this.#pollMs = pollMs;
+				// A new client starts with an empty gap queue; keep the old client's gap.
+				const wait = this.#lastCallEnd + GAP_MS - this.deps.now();
+				if (wait > 0) await new Promise((done) => setTimeout(done, wait));
+				if (stale()) return;
 			}
 			const device = this.#device;
 
-			const esReply = await device.call("ES.GetStatus");
+			const esReply = await device.call("ES.GetStatus").finally(() => {
+				this.#lastCallEnd = this.deps.now();
+			});
 			if (stale()) return;
 			const es = toEsStatus(esReply, this.deps.now());
 			this.#fails = 0;

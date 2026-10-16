@@ -17,7 +17,7 @@ export abstract class BatteryKey extends SingletonAction {
 	}
 
 	override async onKeyDown(): Promise<void> {
-		await this.poller.kick();
+		await this.poller.nudge();
 	}
 
 	async repaint(snapshot: Snapshot): Promise<void> {
