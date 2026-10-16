@@ -9,7 +9,8 @@ App Store Connect app 6822926943. First release: version 1.1, build 4. Checked a
 | 1 | Fill the review contact: first name, last name, phone, email. App Store Connect saves none of them without the phone | Version page › App Review Information |
 | 2 | Record the demo video on an iPhone with the battery, attach it | Same section, Attachment |
 | 3 | Press Publish. It attests that Data Not Collected is accurate | App Privacy |
-| 4 | Press Add for Review, then Submit | Version page |
+| 4 | Enroll in the App Store Small Business Program, so Apple keeps 15 % of each sale, not 30 % | developer.apple.com › Small Business Program › Enroll |
+| 5 | Press Add for Review, then Submit | Version page |
 
 ## App information
 
@@ -24,7 +25,7 @@ App Store Connect app 6822926943. First release: version 1.1, build 4. Checked a
 | Secondary category | Lifestyle |
 | Content rights | Contains third-party content (the public YASNO schedule), with the right to use it |
 | Copyright | 2026 Mykyta Lapin |
-| Price | Free, all countries and regions |
+| Price | $2.99 once, US base. Apple sets the rest: €2.99 in Germany, $3.99 in Ukraine |
 | Support URL | https://lapin7771n.github.io/marstek_analytics/support/ |
 | Privacy Policy URL | https://lapin7771n.github.io/marstek_analytics/privacy/ |
 | Marketing URL | empty |
