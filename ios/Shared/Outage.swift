@@ -25,6 +25,17 @@ enum Outage: Equatable {
         return spare > -60 ? .lasts(until: powerBack, spareHours: max(spare, 0) / 3600) : .short(runsOutAt: runsOut, shortHours: -spare / 3600, back: powerBack)
     }
 
+    // Watts to shed so the battery lasts until `back`, rounded up to 10 W; nil when it already lasts.
+    static func cut(_ r: Reading, floorPct: Int, back: Date, now: Date) -> Int? {
+        let est = QuickEstimate.estimate(r, floorPct: Double(floorPct))
+        guard est.mode != .charging, let hours = est.hours else { return nil }
+        let load = r.acW > QuickEstimate.idleW ? r.acW : r.offgridW
+        let usableWh = max(0, r.capacityWh - Double(floorPct) / 100 * r.ratedWh) / QuickEstimate.dischargeRatio
+        let hoursLeft = back.timeIntervalSince(now) / 3600
+        guard hoursLeft > 0, hours < hoursLeft else { return nil }
+        return Int((max(0, load - usableWh / hoursLeft) / 10).rounded(.up)) * 10
+    }
+
     static func nextTime(_ picked: Date, after now: Date, calendar: Calendar = .current) -> Date {
         let time = calendar.dateComponents([.hour, .minute], from: picked)
         return calendar.nextDate(after: now, matching: time, matchingPolicy: .nextTime) ?? picked

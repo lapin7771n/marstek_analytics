@@ -45,6 +45,13 @@ struct OutageTests {
         #expect(Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: back, now: readAt) == .lasts(until: back, spareHours: 0))
     }
 
+    @Test func theCutIsWhatMakesTheBatteryLast() {
+        let r = reading(soc: 64, acW: 820, offgridW: 820, capacityWh: 3276.8)
+        #expect(Outage.cut(r, floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == 140)
+        #expect(Outage.cut(r, floorPct: 12, back: hours(2), now: readAt) == nil)
+        #expect(Outage.cut(reading(soc: 64, acW: -800, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == nil)
+    }
+
     @Test(arguments: [(0.0, "0 min"), (40.0 / 60, "40 min"), (2.05, "2 h 03 min"), (10.0, "10 h 00 min")])
     func spansUseWholeMinutes(hours: Double, text: String) {
         #expect(formatSpan(hours) == text)
