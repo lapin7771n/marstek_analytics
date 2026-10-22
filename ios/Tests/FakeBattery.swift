@@ -55,3 +55,11 @@ final class FakeBattery: @unchecked Sendable {
         }
     }
 }
+
+func tempDirectory() -> URL {
+    URL.temporaryDirectory.appending(path: UUID().uuidString)
+}
+
+func scratchStore() -> Store {
+    Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"), directory: tempDirectory())
+}

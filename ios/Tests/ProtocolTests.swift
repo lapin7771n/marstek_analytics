@@ -119,7 +119,7 @@ struct ProtocolTests {
         let old = #"{"reading":{"time":0,"socPct":80,"acW":400,"offgridW":0,"capacityWh":4121,"ratedWh":5120,"tempC":24},"checkedAt":0}"#
         let defaults = try #require(UserDefaults(suiteName: "test.\(UUID().uuidString)"))
         defaults.set(Data(old.utf8), forKey: "snapshot")
-        #expect(Store(defaults: defaults).snapshot?.reading?.capacityWh == 4121)
+        #expect(Store(defaults: defaults, directory: tempDirectory()).snapshot?.reading?.capacityWh == 4121)
     }
 
     @Test func garbageHasNoId() {

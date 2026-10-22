@@ -108,7 +108,7 @@ actor URLLog {
 
 struct FeedTests {
     private func store() -> Store {
-        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        let store = scratchStore()
         store.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
         store.outageGroup = OutageGroup(group: 19, subgroup: 1, address: "вул. Хрещатик, 1")
         return store

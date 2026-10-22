@@ -79,9 +79,15 @@ struct AlertState: Codable, Equatable {
 
 final class Store {
     private let defaults: UserDefaults
+    private let directory: URL?
 
-    init(defaults: UserDefaults? = UserDefaults(suiteName: AppGroup.id)) {
+    static var groupDirectory: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.id)
+    }
+
+    init(defaults: UserDefaults? = UserDefaults(suiteName: AppGroup.id), directory: URL? = Store.groupDirectory) {
         self.defaults = defaults ?? .standard
+        self.directory = directory
     }
 
     var settings: BatterySettings {
@@ -100,8 +106,8 @@ final class Store {
     }
 
     var history: History {
-        get { load("history") ?? History() }
-        set { save(newValue, "history") }
+        get { loadHistory() }
+        set { saveHistory(newValue) }
     }
 
     var log: DebugLog {
@@ -132,6 +138,30 @@ final class Store {
     var searchUntil: Date? {
         get { load("searchUntil") }
         set { save(newValue, "searchUntil") }
+    }
+
+    // 28 days outgrow UserDefaults, so history lives in a file; a 1.2 history in UserDefaults moves over on the first save.
+    private var historyFile: URL? { directory?.appending(path: "history.json") }
+
+    private func loadHistory() -> History {
+        if let file = historyFile, let data = try? Data(contentsOf: file) {
+            return (try? JSONDecoder().decode(History.self, from: data)) ?? History()
+        }
+        return load("history") ?? History()
+    }
+
+    private func saveHistory(_ history: History) {
+        guard let directory, let file = historyFile, let data = try? JSONEncoder().encode(history) else {
+            save(history, "history")
+            return
+        }
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try data.write(to: file, options: .atomic)
+            defaults.removeObject(forKey: "history")
+        } catch {
+            save(history, "history")
+        }
     }
 
     private func load<T: Decodable>(_ key: String) -> T? {

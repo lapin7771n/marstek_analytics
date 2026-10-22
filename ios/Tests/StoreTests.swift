@@ -4,7 +4,7 @@ import Testing
 
 struct StoreTests {
     private func store(host: String = "192.168.68.50") -> Store {
-        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        let store = scratchStore()
         store.settings = BatterySettings(host: host, port: 30000, floorPct: 12)
         return store
     }
@@ -101,7 +101,7 @@ struct StoreTests {
     }
 
     @Test func aFreshStoreHasDefaults() {
-        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        let store = scratchStore()
         #expect(store.settings == BatterySettings())
         #expect(store.snapshot == nil)
     }
