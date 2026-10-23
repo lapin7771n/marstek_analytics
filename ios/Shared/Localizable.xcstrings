@@ -991,6 +991,16 @@
         }
       }
     },
+    "Range": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Період"
+          }
+        }
+      }
+    },
     "Recent events": {
       "localizations": {
         "uk": {
@@ -1347,6 +1357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Попереджає за 30 хв до відключення за YASNO, якщо батареї не вистачить."
+          }
+        }
+      }
+    },
+    "Week": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тиждень"
           }
         }
       }

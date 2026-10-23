@@ -28,6 +28,8 @@ struct HomeScreen: View {
     @State private var snapshot = Store().snapshot
     @State private var history = Store().history
     @State private var day = Store().history.day(now: .now, latest: Store().snapshot?.reading)
+    @State private var week = Store().history.week(now: .now)
+    @State private var range = HomeRange.today
     @State private var powerBack = Store().powerBack
     @State private var fromSchedule = Store().powerBackFromSchedule
     @State private var outageGroup = Store().outageGroup
@@ -101,10 +103,13 @@ struct HomeScreen: View {
                     }
                     .card()
 
-                    TodayCard(day: day)
+                    TodayCard(day: day, week: week, range: $range)
 
-                    if !day.isEmpty {
+                    if range == .today, !day.isEmpty {
                         TodayNumbers(day: day)
+                            .background(Color(hex: 0x1C1C1E), in: RoundedRectangle(cornerRadius: 18))
+                    } else if range == .week, week.contains(where: { $0.chargedWh > 0 || $0.usedWh > 0 }) {
+                        TodayNumbers(week: week)
                             .background(Color(hex: 0x1C1C1E), in: RoundedRectangle(cornerRadius: 18))
                     }
 
@@ -278,6 +283,7 @@ struct HomeScreen: View {
         snapshot = await Refresher.refresh(store)
         history = store.history
         day = history.day(now: .now, latest: snapshot?.reading)
+        week = history.week(now: .now)
         await BatteryLine.shared.release()
         checking = false
         if reloadAfterCheck {

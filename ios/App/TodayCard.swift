@@ -1,8 +1,14 @@
 import Charts
 import SwiftUI
 
+enum HomeRange: Hashable {
+    case today, week
+}
+
 struct TodayCard: View {
     let day: DaySummary
+    let week: [DayTotal]
+    @Binding var range: HomeRange
 
     private var domain: ClosedRange<Date> { day.start...max(day.now, day.start.addingTimeInterval(3 * 3600)) }
 
@@ -16,20 +22,31 @@ struct TodayCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if day.isEmpty {
-                Text("No readings yet today.").font(.subheadline).foregroundStyle(Palette.label)
-            } else {
-                header("CHARGE") {
-                    if let low = day.low, let high = day.high {
-                        Text("low \("\(low) %") · high \("\(high) %")")
+            Picker("Range", selection: $range) {
+                Text("Today").tag(HomeRange.today)
+                Text("Week").tag(HomeRange.week)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            switch range {
+            case .week:
+                WeekCard(week: week)
+            case .today:
+                if day.isEmpty {
+                    Text("No readings yet today.").font(.subheadline).foregroundStyle(Palette.label)
+                } else {
+                    header("CHARGE") {
+                        if let low = day.low, let high = day.high {
+                            Text("low \("\(low) %") · high \("\(high) %")")
+                        }
                     }
+                    charge
+                    header("POWER") {
+                        Text("charge").foregroundStyle(Palette.good) + Text(verbatim: " · ") + Text("discharge").foregroundStyle(Palette.warn)
+                    }
+                    .padding(.top, 6)
+                    power
                 }
-                charge
-                header("POWER") {
-                    Text("charge").foregroundStyle(Palette.good) + Text(verbatim: " · ") + Text("discharge").foregroundStyle(Palette.warn)
-                }
-                .padding(.top, 6)
-                power
             }
         }
         .padding(EdgeInsets(top: 16, leading: 16, bottom: 14, trailing: 16))
@@ -104,16 +121,68 @@ struct TodayCard: View {
     }
 }
 
+struct WeekCard: View {
+    let week: [DayTotal]
+
+    private var peak: Double { max(0.1, (week.map { max($0.chargedWh, $0.usedWh) }.max() ?? 0) / 1000) }
+
+    var body: some View {
+        Chart {
+            ForEach(week, id: \.day) { total in
+                BarMark(x: .value("Day", total.day, unit: .day), y: .value("Charged", total.chargedWh / 1000))
+                    .foregroundStyle(Palette.good)
+                    .cornerRadius(3)
+                BarMark(x: .value("Day", total.day, unit: .day), y: .value("Used", -total.usedWh / 1000))
+                    .foregroundStyle(Palette.warn)
+                    .cornerRadius(3)
+            }
+            RuleMark(y: .value("Zero", 0)).foregroundStyle(Color(hex: 0x38383A))
+        }
+        .chartYScale(domain: -peak...peak)
+        .chartYAxis(.hidden)
+        .chartXAxis {
+            AxisMarks(values: week.map(\.day)) { value in
+                AxisValueLabel {
+                    if let date = value.as(Date.self) {
+                        if Calendar.current.isDateInToday(date) {
+                            Text("Today")
+                        } else {
+                            Text(date, format: .dateTime.weekday(.abbreviated))
+                        }
+                    }
+                }
+            }
+        }
+        .frame(height: 160)
+    }
+}
+
 struct TodayNumbers: View {
-    let day: DaySummary
+    let chargedWh: Double
+    let usedWh: Double
+    let onBattery: TimeInterval
+
+    init(day: DaySummary) {
+        self.init(chargedWh: day.chargedWh, usedWh: day.usedWh, onBattery: day.onBattery)
+    }
+
+    init(week: [DayTotal]) {
+        self.init(chargedWh: week.map(\.chargedWh).reduce(0, +), usedWh: week.map(\.usedWh).reduce(0, +), onBattery: week.map(\.onBattery).reduce(0, +))
+    }
+
+    init(chargedWh: Double, usedWh: Double, onBattery: TimeInterval) {
+        self.chargedWh = chargedWh
+        self.usedWh = usedWh
+        self.onBattery = onBattery
+    }
 
     var body: some View {
         HStack(spacing: 0) {
-            cell("Charged", kWh(day.chargedWh))
+            cell("Charged", kWh(chargedWh))
             Divider()
-            cell("Used", kWh(day.usedWh))
+            cell("Used", kWh(usedWh))
             Divider()
-            cell("On battery", formatDuration(day.onBattery / 3600))
+            cell("On battery", formatDuration(onBattery / 3600))
         }
         .listRowInsets(EdgeInsets())
     }
