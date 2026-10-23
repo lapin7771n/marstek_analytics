@@ -52,11 +52,13 @@ struct OutageAheadTests {
     @Test func theNoticeFollowsTheWarning() throws {
         let warning = try #require(check())
         let early = kyiv("2026-10-15 10:00"), late = kyiv("2026-10-15 11:45"), started = kyiv("2026-10-15 12:00")
-        #expect(OutageNotice.action(for: nil, now: early, delivered: false) == .remove)
-        #expect(OutageNotice.action(for: warning, now: early, delivered: false) == .schedule(at: kyiv("2026-10-15 11:30")))
-        #expect(OutageNotice.action(for: warning, now: late, delivered: false) == .deliverNow)
-        #expect(OutageNotice.action(for: warning, now: late, delivered: true) == .nothing)
-        #expect(OutageNotice.action(for: warning, now: started, delivered: false) == .nothing)
+        let other = kyiv("2026-10-14 12:00")
+        #expect(OutageNotice.action(for: nil, now: early, notified: nil) == .remove)
+        #expect(OutageNotice.action(for: warning, now: early, notified: nil) == .schedule(at: kyiv("2026-10-15 11:30")))
+        #expect(OutageNotice.action(for: warning, now: late, notified: nil) == .deliverNow)
+        #expect(OutageNotice.action(for: warning, now: late, notified: other) == .deliverNow)
+        #expect(OutageNotice.action(for: warning, now: late, notified: warning.start) == .nothing)
+        #expect(OutageNotice.action(for: warning, now: started, notified: nil) == .nothing)
     }
 
     @Test func theTextFollowsTheSourceOfTheLoad() throws {

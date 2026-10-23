@@ -140,6 +140,11 @@ final class Store {
         set { save(newValue, "outageAhead") }
     }
 
+    var outageAheadNotified: Date? {
+        get { load("outageAheadNotified") }
+        set { save(newValue, "outageAheadNotified") }
+    }
+
     var loadModel: LoadModel? {
         get { load("loadModel") }
         set { save(newValue, "loadModel") }

@@ -11,27 +11,40 @@ enum OutageAheadTask {
         if store.loadModel.map({ !Calendar.current.isDate($0.fittedAt, inSameDayAs: now) }) ?? true {
             store.loadModel = LoadModel.fit(store.history.samples, now: now)
         }
-        guard let r = store.snapshot?.reading, now.timeIntervalSince(r.time) < Face.staleAfter else { return }
-        let center = UNUserNotificationCenter.current()
-        guard await center.notificationSettings().authorizationStatus == .authorized else { return }
-
-        let recent = store.history.samples.filter { (0...recentSpan).contains(now.timeIntervalSince($0.time)) }.compactMap(\.offgridW)
-        let recentW = recent.isEmpty ? r.offgridW : Double(recent.reduce(0, +)) / Double(recent.count)
         var answer = ScheduleAnswer.clear
         if let group = store.outageGroup, let state = store.schedule, state.key == group.key, let days = state.days {
             answer = Schedule.answer(days, now: now)
         }
+        let center = UNUserNotificationCenter.current()
+        guard case let .off(start, _) = answer, start > now else {
+            await removePending(store)
+            return
+        }
+        guard let r = store.snapshot?.reading, now.timeIntervalSince(r.time) < Face.staleAfter else { return }
+        guard await center.notificationSettings().authorizationStatus == .authorized else { return }
+
+        let recent = store.history.samples.filter { (0...recentSpan).contains(now.timeIntervalSince($0.time)) }.compactMap(\.offgridW)
+        let recentW = recent.isEmpty ? r.offgridW : Double(recent.reduce(0, +)) / Double(recent.count)
         let warning = OutageAhead.check(r, floorPct: store.settings.floorPct, answer: answer, model: store.loadModel, recentW: recentW, now: now)
 
-        let delivered = await center.deliveredNotifications().contains {
-            $0.request.identifier == id && $0.request.content.userInfo["start"] as? Double == warning?.start.timeIntervalSince1970
-        }
-        switch OutageNotice.action(for: warning, now: now, delivered: delivered) {
-        case .remove: center.removePendingNotificationRequests(withIdentifiers: [id])
-        case let .schedule(at): await add(warning, trigger: UNCalendarNotificationTrigger(dateMatching: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: at), repeats: false))
-        case .deliverNow: await add(warning, trigger: nil)
+        switch OutageNotice.action(for: warning, now: now, notified: store.outageAheadNotified) {
+        case .remove: await removePending(store)
+        case let .schedule(at):
+            store.outageAheadNotified = warning?.start
+            await add(warning, trigger: UNCalendarNotificationTrigger(dateMatching: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: at), repeats: false))
+        case .deliverNow:
+            store.outageAheadNotified = warning?.start
+            await add(warning, trigger: nil)
         case .nothing: break
         }
+    }
+
+    // A pending request that never fired was not delivered, so the same outage can be announced again.
+    private static func removePending(_ store: Store) async {
+        let center = UNUserNotificationCenter.current()
+        guard await center.pendingNotificationRequests().contains(where: { $0.identifier == id }) else { return }
+        center.removePendingNotificationRequests(withIdentifiers: [id])
+        store.outageAheadNotified = nil
     }
 
     static func remove() {

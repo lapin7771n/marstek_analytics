@@ -264,7 +264,7 @@ struct HomeScreen: View {
     }
 
     private func save() async {
-        if settings.host != store.settings.host { store.snapshot = nil; store.history = History() }
+        if settings.host != store.settings.host { store.snapshot = nil; store.history = History(); store.loadModel = nil }
         store.settings = settings
         store.log("Saved \(settings.host):\(settings.port)")
         await refresh(waiting: true)

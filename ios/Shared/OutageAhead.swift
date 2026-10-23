@@ -31,10 +31,11 @@ struct OutageWarning: Equatable {
 enum OutageNotice: Equatable {
     case remove, schedule(at: Date), deliverNow, nothing
 
-    static func action(for warning: OutageWarning?, now: Date, delivered: Bool) -> OutageNotice {
+    // `notified` is the start of the outage the user was last told about, whether delivered or scheduled.
+    static func action(for warning: OutageWarning?, now: Date, notified: Date?) -> OutageNotice {
         guard let warning else { return .remove }
         if warning.fireAt > now { return .schedule(at: warning.fireAt) }
-        return now < warning.start && !delivered ? .deliverNow : .nothing
+        return now < warning.start && notified != warning.start ? .deliverNow : .nothing
     }
 }
 

@@ -52,7 +52,7 @@ struct LoadModel: Codable, Equatable {
         x[calendar.component(.hour, from: time)] = 1
         let weekday = calendar.component(.weekday, from: time)
         x[24] = weekday == 1 || weekday == 7 ? 1 : 0
-        x[25] = recentW
+        x[25] = recentW / 1000
         return x
     }
 
