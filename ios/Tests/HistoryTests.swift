@@ -208,16 +208,18 @@ struct HistoryTests {
         let now = kyivDay(27, 15)
         let history = History(samples: [
             sample(19, 12, acW: 600), sample(19, 12.5, acW: 600),
+            sample(21, 0, acW: 200), sample(21, 1, acW: 200),
             sample(24, 10, acW: -1200), sample(24, 10.5, acW: 600), sample(24, 11, acW: 600),
             sample(27, 8, acW: 400), sample(27, 9, acW: 400),
             sample(27, 14.5, acW: 400), sample(27, 15.5, acW: 400),
         ])
         let week = history.week(now: now, calendar: kyiv)
         #expect(week.map(\.day) == (21...27).map { kyivDay($0) })
+        #expect(week[0] == DayTotal(day: kyivDay(21), chargedWh: 0, usedWh: 200, onBattery: 3600))
         #expect(week[3] == DayTotal(day: kyivDay(24), chargedWh: 600, usedWh: 300, onBattery: 1800))
         #expect(week[1] == DayTotal(day: kyivDay(22), chargedWh: 0, usedWh: 0, onBattery: 0))
         #expect(week[6] == DayTotal(day: kyivDay(27), chargedWh: 0, usedWh: 400, onBattery: 3600))
-        #expect(week.map(\.usedWh).reduce(0, +) == 700)
+        #expect(week.map(\.usedWh).reduce(0, +) == 900)
         #expect(history.day(now: now, latest: nil, calendar: kyiv).usedWh == week[6].usedWh)
     }
 

@@ -124,7 +124,7 @@ struct TodayCard: View {
 struct WeekCard: View {
     let week: [DayTotal]
 
-    private var peak: Double { max(0.1, week.map { max($0.chargedWh, $0.usedWh) }.max() ?? 0) / 1000 }
+    private var peak: Double { max(0.1, (week.map { max($0.chargedWh, $0.usedWh) }.max() ?? 0) / 1000) }
 
     var body: some View {
         Chart {

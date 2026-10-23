@@ -971,6 +971,16 @@
         }
       }
     },
+    "Range": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Період"
+          }
+        }
+      }
+    },
     "Recent events": {
       "localizations": {
         "uk": {
