@@ -13,7 +13,10 @@ struct BatteryApp: App {
                 .tint(Palette.good)
         }
         .onChange(of: phase) { _, phase in
-            if phase == .background, Store().alert.on { AlertTask.schedule() }
+            guard phase == .background else { return }
+            let store = Store()
+            if store.alert.on || store.outageAhead { AlertTask.schedule() }
+            if store.outageAhead { Task { await OutageAheadTask.update(store) } }
         }
         .backgroundTask(.appRefresh(AlertTask.id)) { await AlertTask.run() }
     }
@@ -31,6 +34,7 @@ struct HomeScreen: View {
     @State private var schedule = Store().schedule
     @State private var checking = false
     @State private var alertOn = Store().alert.on
+    @State private var outageAheadOn = Store().outageAhead
     @State private var alertDenied = false
     @State private var reloadAfterCheck = false
     @State private var ticking = false
@@ -148,8 +152,8 @@ struct HomeScreen: View {
             .sheet(isPresented: $guide, onDismiss: { if settings.host.isEmpty { showSettings = true } }) { GuideSheet() }
             .sheet(isPresented: $showSettings) {
                 SettingsSheet(
-                    settings: $settings, checking: checking, alertOn: alertOn, alertDenied: alertDenied,
-                    outageGroup: outageGroup, save: save, setAlert: setAlert, saveGroup: saveGroup
+                    settings: $settings, checking: checking, alertOn: alertOn, outageAheadOn: outageAheadOn, alertDenied: alertDenied,
+                    outageGroup: outageGroup, save: save, setAlert: setAlert, setOutageAhead: setOutageAhead, saveGroup: saveGroup
                 )
             }
         }
@@ -234,7 +238,18 @@ struct HomeScreen: View {
             alertDenied = !alertOn
         } else {
             store.alert = AlertState()
-            AlertTask.cancel()
+            if !store.outageAhead { AlertTask.cancel() }
+            alertDenied = false
+        }
+    }
+
+    private func setOutageAhead(_ on: Bool) async {
+        outageAheadOn = on
+        if on {
+            outageAheadOn = await AlertTask.turnOnOutageAhead()
+            alertDenied = !outageAheadOn
+        } else {
+            AlertTask.turnOffOutageAhead()
             alertDenied = false
         }
     }

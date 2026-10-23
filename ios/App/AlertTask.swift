@@ -14,11 +14,31 @@ enum AlertTask {
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: id)
     }
 
+    private static func allow() async -> Bool {
+        (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
+    }
+
     static func turnOn() async -> Bool {
-        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
+        let granted = await allow()
         Store().alert = AlertState(on: granted)
         if granted { schedule() }
         return granted
+    }
+
+    static func turnOnOutageAhead() async -> Bool {
+        let granted = await allow()
+        Store().outageAhead = granted
+        if granted {
+            schedule()
+            await OutageAheadTask.update(Store())
+        }
+        return granted
+    }
+
+    static func turnOffOutageAhead() {
+        Store().outageAhead = false
+        OutageAheadTask.remove()
+        if !Store().alert.on { cancel() }
     }
 
     // One ES.GetStatus at most, no retry: a failed read waits for the next run.
@@ -40,14 +60,17 @@ enum AlertTask {
     }
 
     static func run() async {
-        guard Store().alert.on,
+        let store = Store()
+        guard store.alert.on || store.outageAhead,
               await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .authorized else { return }
         schedule()
-        guard let low = await evaluate() else { return }
-        let content = UNMutableNotificationContent()
-        content.title = low.title
-        content.body = low.body
-        content.sound = .default
-        try? await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "low-battery", content: content, trigger: nil))
+        if let low = await evaluate(store) {
+            let content = UNMutableNotificationContent()
+            content.title = low.title
+            content.body = low.body
+            content.sound = .default
+            try? await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "low-battery", content: content, trigger: nil))
+        }
+        await OutageAheadTask.update(store)
     }
 }

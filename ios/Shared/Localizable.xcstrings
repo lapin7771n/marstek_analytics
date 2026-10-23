@@ -861,6 +861,26 @@
         }
       }
     },
+    "Outage ahead": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попередження про відключення"
+          }
+        }
+      }
+    },
+    "Outage at %@, %lld min short": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відключення о %1$@, не вистачить %2$lld хв"
+          }
+        }
+      }
+    },
     "Outage schedule": {
       "localizations": {
         "uk": {
@@ -1321,6 +1341,16 @@
         }
       }
     },
+    "Warns 30 min before a YASNO outage the battery will not last through.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попереджає за 30 хв до відключення за YASNO, якщо батареї не вистачить."
+          }
+        }
+      }
+    },
     "When the app asks to find devices on your local network, tap Allow.": {
       "localizations": {
         "uk": {
@@ -1367,6 +1397,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "YASNO, група %1$@: без світла %2$@–%3$@."
+          }
+        }
+      }
+    },
+    "YASNO: off %@–%@. At the current %lld W the battery runs out near %@. Cut about %lld W to last.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO: без світла %1$@–%2$@. За поточних %3$lld Вт батарея сяде близько %4$@. Зменште навантаження приблизно на %5$lld Вт."
+          }
+        }
+      }
+    },
+    "YASNO: off %@–%@. You usually use about %lld W at those hours, so the battery runs out near %@. Cut about %lld W to last. Forecast from your usage.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YASNO: без світла %1$@–%2$@. Зазвичай у ці години ви споживаєте близько %3$lld Вт, тож батарея сяде близько %4$@. Зменште навантаження приблизно на %5$lld Вт. Прогноз за вашим споживанням."
           }
         }
       }

@@ -4,10 +4,12 @@ struct SettingsSheet: View {
     @Binding var settings: BatterySettings
     let checking: Bool
     let alertOn: Bool
+    let outageAheadOn: Bool
     let alertDenied: Bool
     let outageGroup: OutageGroup?
     let save: () async -> Void
     let setAlert: (Bool) async -> Void
+    let setOutageAhead: (Bool) async -> Void
     let saveGroup: (OutageGroup?) -> Void
     @State private var guide = false
     @Environment(\.dismiss) private var dismiss
@@ -66,10 +68,14 @@ struct SettingsSheet: View {
 
                 Section {
                     Toggle("Low-battery alert", isOn: Binding(get: { alertOn }, set: { on in Task { await setAlert(on) } }))
+                    Toggle("Outage ahead", isOn: Binding(get: { outageAheadOn }, set: { on in Task { await setOutageAhead(on) } }))
                 } header: {
                     Text("Alerts")
                 } footer: {
-                    Text(alertFooter)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(alertFooter)
+                        if !alertDenied { Text("Warns 30 min before a YASNO outage the battery will not last through.") }
+                    }
                 }
 
                 Section("Outage schedule") {

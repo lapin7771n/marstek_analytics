@@ -135,6 +135,16 @@ final class Store {
         set { save(newValue, "schedule") }
     }
 
+    var outageAhead: Bool {
+        get { load("outageAhead") ?? false }
+        set { save(newValue, "outageAhead") }
+    }
+
+    var loadModel: LoadModel? {
+        get { load("loadModel") }
+        set { save(newValue, "loadModel") }
+    }
+
     var searchUntil: Date? {
         get { load("searchUntil") }
         set { save(newValue, "searchUntil") }
