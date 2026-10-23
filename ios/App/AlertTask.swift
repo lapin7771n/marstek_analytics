@@ -72,5 +72,6 @@ enum AlertTask {
             try? await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "low-battery", content: content, trigger: nil))
         }
         await OutageAheadTask.update(store)
+        await OutageActivityController.sync(store, canStart: false)
     }
 }

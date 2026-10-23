@@ -285,6 +285,7 @@ struct HomeScreen: View {
         day = history.day(now: .now, latest: snapshot?.reading)
         week = history.week(now: .now)
         await BatteryLine.shared.release()
+        await OutageActivityController.sync(store, canStart: true)
         checking = false
         if reloadAfterCheck {
             reloadAfterCheck = false

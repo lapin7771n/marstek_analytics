@@ -42,6 +42,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UIBackgroundModes: [fetch]
+        NSSupportsLiveActivities: true
         BGTaskSchedulerPermittedIdentifiers: [com.mlapin.marstek.battery.alert]
         CFBundleURLTypes:
           - CFBundleURLName: com.mlapin.marstek.battery
