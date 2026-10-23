@@ -15,7 +15,7 @@ struct BatteryApp: App {
         .onChange(of: phase) { _, phase in
             guard phase == .background else { return }
             let store = Store()
-            if store.alert.on || store.outageAhead { AlertTask.schedule() }
+            if store.alert.on || store.outageAhead || OutageActivityController.isRunning { AlertTask.schedule() }
             if store.outageAhead { Task { await OutageAheadTask.update(store) } }
         }
         .backgroundTask(.appRefresh(AlertTask.id)) { await AlertTask.run() }

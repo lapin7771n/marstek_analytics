@@ -61,6 +61,12 @@ enum AlertTask {
 
     static func run() async {
         let store = Store()
+        await check(store)
+        await OutageActivityController.sync(store, canStart: false)
+        if OutageActivityController.isRunning { schedule() }
+    }
+
+    private static func check(_ store: Store) async {
         guard store.alert.on || store.outageAhead,
               await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .authorized else { return }
         schedule()
@@ -72,6 +78,5 @@ enum AlertTask {
             try? await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "low-battery", content: content, trigger: nil))
         }
         await OutageAheadTask.update(store)
-        await OutageActivityController.sync(store, canStart: false)
     }
 }

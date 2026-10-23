@@ -22,7 +22,8 @@ struct OutageActivityTests {
         let lasts = try #require(OutageActivityAttributes.state(snapshot(load), floorPct: 12, powerBack: spare, now: readAt))
         #expect(lasts.lasts)
         #expect(lasts.back == spare)
-        #expect(lasts.runsOutAt != nil)
+        let hours = try #require(QuickEstimate.estimate(load, floorPct: 12).hours)
+        #expect(lasts.runsOutAt == readAt.addingTimeInterval(hours * 3600))
 
         let noLoad = reading(soc: 64, acW: 20, offgridW: 0, capacityWh: 3276.8)
         let unbounded = try #require(OutageActivityAttributes.state(snapshot(noLoad), floorPct: 12, powerBack: spare, now: readAt))
