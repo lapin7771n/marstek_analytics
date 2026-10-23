@@ -16,7 +16,7 @@ private final class Clock: @unchecked Sendable {
 }
 
 private func testStore() -> Store {
-    Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+    scratchStore()
 }
 
 @MainActor

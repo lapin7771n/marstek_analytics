@@ -13,7 +13,7 @@ struct HistoryTests {
     }
 
     private func store() -> Store {
-        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        let store = scratchStore()
         store.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
         return store
     }
@@ -21,7 +21,7 @@ struct HistoryTests {
     @Test func aGoodFetchAddsASample() async {
         let store = store()
         _ = await Refresher.refresh(store, now: start) { _ in at(0) }
-        #expect(store.history.samples == [Sample(time: start, socPct: 80, acW: 400)])
+        #expect(store.history.samples == [Sample(time: start, socPct: 80, acW: 400, offgridW: 0)])
     }
 
     @Test func aFailedFetchAddsNothing() async {
@@ -44,13 +44,39 @@ struct HistoryTests {
         #expect(history.samples.map(\.time) == [0.0, 5, 10].map { start.addingTimeInterval($0 * 60) })
     }
 
-    @Test func fortyNineHoursOfPollingKeepFortyEight() throws {
+    @Test func twentyNineDaysOfPollingKeepTwentyEight() throws {
         var history = History()
-        for minute in stride(from: 0.0, through: 49 * 60, by: 0.5) { history.add(at(minute)) }
+        for minute in stride(from: 0.0, through: 29 * 24 * 60, by: 5) { history.add(at(minute)) }
         let last = try #require(history.samples.last).time
-        #expect(history.samples.count <= 577)
-        #expect(history.samples.allSatisfy { last.timeIntervalSince($0.time) <= 48 * 3600 })
-        #expect(try JSONEncoder().encode(history).count < 32_000)
+        #expect(history.samples.count == 8065)
+        #expect(history.samples.allSatisfy { last.timeIntervalSince($0.time) <= 28 * 24 * 3600 })
+        #expect(try JSONEncoder().encode(history).count < 600_000)
+    }
+
+    @Test func historySurvivesANewStore() async {
+        let dir = tempDirectory()
+        let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")
+        let first = Store(defaults: defaults, directory: dir)
+        first.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
+        _ = await Refresher.refresh(first, now: start) { _ in at(0) }
+        #expect(Store(defaults: defaults, directory: dir).history.samples.count == 1)
+    }
+
+    @Test func historySavedBy12MovesToTheFile() throws {
+        let dir = tempDirectory()
+        let defaults = try #require(UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        defaults.set(Data(#"{"samples":[{"t":781000000,"s":64,"w":0}]}"#.utf8), forKey: "history")
+        let store = Store(defaults: defaults, directory: dir)
+        #expect(store.history.samples.count == 1)
+        #expect(store.history.samples.first?.offgridW == nil)
+        store.history = store.history
+        #expect(defaults.data(forKey: "history") == nil)
+        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "history.json").path))
+        #expect(Store(defaults: defaults, directory: dir).history.samples.count == 1)
+    }
+
+    @Test func aSampleKeepsTheBackupLoad() {
+        #expect(Sample(reading(acW: 820, offgridW: 640)).offgridW == 640)
     }
 
     @Test func aClockMovedBackDropsTheFutureSamples() {
@@ -88,7 +114,7 @@ struct HistoryTests {
         let defaults = try #require(UserDefaults(suiteName: "test.\(UUID().uuidString)"))
         let old = #"{"reading":{"time":782000000,"socPct":80,"acW":400,"offgridW":0,"capacityWh":4121,"ratedWh":5120},"checkedAt":782000000}"#
         defaults.set(Data(old.utf8), forKey: "snapshot")
-        let store = Store(defaults: defaults)
+        let store = Store(defaults: defaults, directory: tempDirectory())
         #expect(store.snapshot?.reading?.socPct == 80)
         #expect(store.history.samples.isEmpty)
     }

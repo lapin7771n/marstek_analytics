@@ -4,18 +4,19 @@ struct Sample: Codable, Equatable {
     var time: Date
     var socPct: Int
     var acW: Int
+    var offgridW: Int?
 
-    enum CodingKeys: String, CodingKey { case time = "t", socPct = "s", acW = "w" }
+    enum CodingKeys: String, CodingKey { case time = "t", socPct = "s", acW = "w", offgridW = "o" }
 }
 
 extension Sample {
     init(_ r: Reading) {
-        self.init(time: r.time, socPct: r.socPct, acW: Int(r.acW.rounded()))
+        self.init(time: r.time, socPct: r.socPct, acW: Int(r.acW.rounded()), offgridW: Int(r.offgridW.rounded()))
     }
 }
 
 struct History: Codable, Equatable {
-    static let keep: TimeInterval = 48 * 3600
+    static let keep: TimeInterval = 28 * 24 * 3600
     static let spacing: TimeInterval = 5 * 60
     static let gap: TimeInterval = 3600
 

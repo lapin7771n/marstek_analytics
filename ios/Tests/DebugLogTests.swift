@@ -6,7 +6,7 @@ struct DebugLogTests {
     private let start = Date(timeIntervalSince1970: 1_760_000_000)
 
     private func store() -> Store {
-        Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"))
+        scratchStore()
     }
 
     @Test func itKeepsOnlyTheNewestLines() {
@@ -19,9 +19,10 @@ struct DebugLogTests {
 
     @Test func itSurvivesAReloadFromTheStore() {
         let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")
-        Store(defaults: defaults).log("saved 10.255.255.1:30000", at: start)
-        Store(defaults: defaults).log("widget reload", at: start.addingTimeInterval(1))
-        #expect(Store(defaults: defaults).log.lines.map(\.text) == ["saved 10.255.255.1:30000", "widget reload"])
+        let dir = tempDirectory()
+        Store(defaults: defaults, directory: dir).log("saved 10.255.255.1:30000", at: start)
+        Store(defaults: defaults, directory: dir).log("widget reload", at: start.addingTimeInterval(1))
+        #expect(Store(defaults: defaults, directory: dir).log.lines.map(\.text) == ["saved 10.255.255.1:30000", "widget reload"])
     }
 
     @Test func itsTextHoldsTheInfoAndTheLinesNewestFirst() throws {
