@@ -17,6 +17,7 @@ struct Face: Equatable {
     var blocked = false
     var updated: Date?
     var outage: Outage?
+    var fixes = false
 }
 
 extension Face {
@@ -26,6 +27,7 @@ extension Face {
         self.init()
         problem = snapshot?.error?.text
         blocked = snapshot?.error == .blocked
+        fixes = snapshot?.error.map { [.noLink, .blocked, .badReply].contains($0) } ?? false
         guard let r = snapshot?.reading else {
             eta = problem ?? "··"
             return

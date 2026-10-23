@@ -7,7 +7,7 @@ struct BatteryApp: App {
 
     var body: some Scene {
         WindowGroup {
-            SettingsScreen()
+            HomeScreen()
                 .preferredColorScheme(.dark)
                 .fontDesign(.rounded)
                 .tint(Palette.good)
@@ -19,7 +19,7 @@ struct BatteryApp: App {
     }
 }
 
-struct SettingsScreen: View {
+struct HomeScreen: View {
     private let store = Store()
     @State private var settings = Store().settings
     @State private var snapshot = Store().snapshot
@@ -35,163 +35,123 @@ struct SettingsScreen: View {
     @State private var reloadAfterCheck = false
     @State private var ticking = false
     @State private var guide = GuideSheet.showsAtLaunch(Store().settings)
+    @State private var showSettings = false
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var phase
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("192.168.1.50", text: $settings.host)
-                        .keyboardType(.numbersAndPunctuation)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .monospacedDigit()
-                        .accessibilityLabel("Battery IP address")
-                    FindBatteryRow(port: settings.port) { battery in
-                        settings.host = battery.host
-                        settings.retryHost = battery.takesRetry ? battery.host : nil
-                        Task { await save() }
+            ScrollView {
+                VStack(spacing: 16) {
+                    VStack(spacing: 12) {
+                        MediumFace(face: Face(snapshot, floorPct: settings.floorPct))
+                            .frame(height: 158)
+                            .background(Palette.bg, in: RoundedRectangle(cornerRadius: 22))
+                            .onTapGesture { if Face(snapshot, floorPct: settings.floorPct).blocked { openSettings() } }
+                        if settings.problem != nil {
+                            Button { showSettings = true } label: {
+                                Text("Set up the battery")
+                                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(Color(hex: 0x08150F))
+                                    .frame(maxWidth: .infinity, minHeight: 50)
+                                    .background(Palette.good, in: RoundedRectangle(cornerRadius: 12))
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    LabeledContent("Port") {
-                        TextField("30000", value: $settings.port, format: .number.grouping(.never))
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        LabeledContent("Grid returns") {
+                            if let back = powerBack, back > .now {
+                                HStack(spacing: 6) {
+                                    Menu {
+                                        if Calendar.current.isDateInToday(back) || Outage.moved(back, tomorrow: false, now: .now) != back {
+                                            Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
+                                        }
+                                        Button("Tomorrow") { setPowerBack(Outage.moved(back, tomorrow: true, now: .now)) }
+                                        if !fromSchedule {
+                                            if offersSchedule { Button("Use YASNO") { useSchedule() } }
+                                            Button("Clear", role: .destructive) { setPowerBack(nil) }
+                                        }
+                                    } label: {
+                                        Text(Calendar.current.isDateInToday(back) ? "Today" : "Tomorrow")
+                                            .padding(.horizontal, 11).frame(height: 34)
+                                            .background(Color(hex: 0x2C2C2E), in: RoundedRectangle(cornerRadius: 8))
+                                    }
+                                    .foregroundStyle(.white)
+                                    DatePicker("Time", selection: backTime, displayedComponents: .hourAndMinute).labelsHidden()
+                                }
+                            } else {
+                                Button("Set") { setPowerBack(Calendar.current.nextDate(after: .now.addingTimeInterval(3600), matching: DateComponents(minute: 0), matchingPolicy: .nextTime)) }
+                            }
+                        }
+                        if let outageGroup {
+                            ScheduleNote(group: outageGroup, state: schedule, now: .now)
+                        }
+                        if let outage = face.outage {
+                            OutageRow(outage: outage, stale: face.stale, cut: cut)
+                        }
+                        Text("Uses the current load. The answer changes as the load changes.")
+                            .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
-                    Stepper(value: $settings.floorPct, in: 0...50) {
-                        Text("Reserve ") + Text("\(settings.floorPct) %").foregroundStyle(.secondary)
-                    }
-                    Picker("Refresh", selection: $settings.chosenSpeed) {
-                        Text("Fast (1 min)").tag(PollSpeed.fast)
-                        Text("Medium (5 min)").tag(PollSpeed.medium)
-                        Text("Infrequent (15 min)").tag(PollSpeed.infrequent)
-                    }
-                    .pickerStyle(.menu)
-                } header: {
-                    Text("Battery IP")
-                } footer: {
-                    Text(settings.problem ?? String(localized: "The reserve is the charge the battery keeps back. EMPTY IN counts down to it."))
-                }
+                    .card()
 
-                Section {
-                    Button {
-                        Task { await save() }
-                    } label: {
-                        Text(checking ? "Checking…" : "Save and check")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color(hex: 0x08150F))
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(Palette.good.opacity(saveDisabled ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(saveDisabled)
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                }
-
-                Section("Now") {
-                    MediumFace(face: Face(snapshot, floorPct: settings.floorPct))
-                        .frame(height: 158)
-                        .background(Palette.bg, in: RoundedRectangle(cornerRadius: 22))
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                        .onTapGesture { if Face(snapshot, floorPct: settings.floorPct).blocked { openSettings() } }
-                }
-
-                Section {
-                    NavigationLink {
-                        AddressScreen(group: outageGroup, onSave: saveGroup)
-                    } label: {
-                        LabeledContent("Address", value: outageGroup?.address ?? String(localized: "Not set"))
-                    }
-                    LabeledContent("Grid returns") {
-                        if let back = powerBack, back > .now {
-                            HStack(spacing: 6) {
-                                Menu {
-                                    if Calendar.current.isDateInToday(back) || Outage.moved(back, tomorrow: false, now: .now) != back {
-                                        Button("Today") { setPowerBack(Outage.moved(back, tomorrow: false, now: .now)) }
-                                    }
-                                    Button("Tomorrow") { setPowerBack(Outage.moved(back, tomorrow: true, now: .now)) }
-                                    if !fromSchedule {
-                                        if offersSchedule { Button("Use YASNO") { useSchedule() } }
-                                        Button("Clear", role: .destructive) { setPowerBack(nil) }
-                                    }
-                                } label: {
-                                    Text(Calendar.current.isDateInToday(back) ? "Today" : "Tomorrow")
-                                        .padding(.horizontal, 11).frame(height: 34)
-                                        .background(Color(hex: 0x2C2C2E), in: RoundedRectangle(cornerRadius: 8))
-                                }
-                                .foregroundStyle(.white)
-                                DatePicker("Time", selection: backTime, displayedComponents: .hourAndMinute).labelsHidden()
-                            }
-                        } else {
-                            Button("Set") { setPowerBack(Calendar.current.nextDate(after: .now.addingTimeInterval(3600), matching: DateComponents(minute: 0), matchingPolicy: .nextTime)) }
-                        }
-                    }
-                    if let outageGroup {
-                        ScheduleNote(group: outageGroup, state: schedule, now: .now)
-                    }
-                    if let outage = face.outage {
-                        OutageRow(outage: outage, stale: face.stale)
-                    }
-                } header: {
-                    Text("Power back at")
-                } footer: {
-                    Text("Uses the current load. The answer changes as the load changes.")
-                }
-
-                Section {
                     TodayCard(day: day)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                } header: {
-                    Text("Today")
-                } footer: {
-                    Text("Built from readings the app and widgets already take. Dotted: no reading, the line joins the gap.")
-                }
 
-                if !day.isEmpty {
-                    Section("Today in numbers") { TodayNumbers(day: day) }
-                }
+                    if !day.isEmpty {
+                        TodayNumbers(day: day)
+                            .background(Color(hex: 0x1C1C1E), in: RoundedRectangle(cornerRadius: 18))
+                    }
 
-                Section {
-                    Toggle("Low-battery alert", isOn: Binding(get: { alertOn }, set: { on in Task { await setAlert(on) } }))
-                } header: {
-                    Text("Alerts")
-                } footer: {
-                    Text(alertFooter)
-                }
-
-                Section("If it fails") {
-                    Button(action: openSettings) {
-                        HStack {
-                            hint("ALLOW LAN", "Tap to open Settings and turn on Local Network. If it is not there: Privacy & Security › Local Network.")
-                            Spacer(minLength: 8)
-                            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary)
+                    if face.fixes {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Can't reach the battery").font(.system(size: 17, weight: .bold, design: .rounded))
+                            Button(action: openSettings) {
+                                HStack {
+                                    Hint(code: "ALLOW LAN", text: "Tap to open Settings and turn on Local Network. If it is not there: Privacy & Security › Local Network.")
+                                    Spacer(minLength: 8)
+                                    Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            Hint(code: "NO LINK", text: "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.")
+                            TimelineView(.periodic(from: .now, by: 1)) { timeline in
+                                let enabled = !checking && Refresher.retryAllowed(snapshot, now: timeline.date)
+                                Button { Task { await refresh(waiting: true) } } label: {
+                                    Text("Try again")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(Color(hex: 0x08150F))
+                                        .frame(maxWidth: .infinity, minHeight: 46)
+                                        .background(Palette.good.opacity(enabled ? 1 : 0.4), in: RoundedRectangle(cornerRadius: 12))
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(!enabled)
+                            }
                         }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    hint("NO LINK", "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.")
-                    NavigationLink {
-                        DebugLogScreen()
-                    } label: {
-                        hint("LOGS", "Open the app's recent log and debug info to send with a bug report.")
+                        .card()
                     }
                 }
-
-                Section("About") {
-                    link("Support", AppLinks.support)
-                    link("Privacy policy", AppLinks.privacy)
-                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             }
             .navigationTitle("Battery ETA")
             .toolbar {
-                Button { guide = true } label: { Image(systemName: "questionmark.circle") }
-                    .accessibilityLabel("How to connect")
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button { guide = true } label: { Image(systemName: "questionmark.circle") }
+                        .accessibilityLabel("How to connect")
+                    Button { showSettings = true } label: { Image(systemName: "gearshape") }
+                        .accessibilityLabel("Settings")
+                }
             }
-            .sheet(isPresented: $guide) { GuideSheet() }
+            .sheet(isPresented: $guide, onDismiss: { if settings.host.isEmpty { showSettings = true } }) { GuideSheet() }
+            .sheet(isPresented: $showSettings) {
+                SettingsSheet(
+                    settings: $settings, checking: checking, alertOn: alertOn, alertDenied: alertDenied,
+                    outageGroup: outageGroup, save: save, setAlert: setAlert, saveGroup: saveGroup
+                )
+            }
         }
         // A background alert run wakes the app; the poll must not wake with it.
         .task(id: phase) { if phase == .active { await poll() } }
@@ -205,6 +165,11 @@ struct SettingsScreen: View {
 
     private var backTime: Binding<Date> {
         Binding(get: { powerBack ?? .now }, set: { setPowerBack(Outage.retimed(powerBack, to: $0, now: .now)) })
+    }
+
+    private var cut: Int? {
+        guard let r = snapshot?.reading, let powerBack else { return nil }
+        return Outage.cut(r, floorPct: settings.floorPct, back: powerBack, now: .now)
     }
 
     private func setPowerBack(_ date: Date?) {
@@ -262,16 +227,6 @@ struct SettingsScreen: View {
         }
     }
 
-    private var saveDisabled: Bool {
-        checking || settings.problem != nil
-    }
-
-    private var alertFooter: String {
-        alertDenied
-            ? String(localized: "Notifications are off. Turn them on for Battery ETA in Settings.")
-            : String(localized: "Alerts once when the charge reaches the \(LowBattery.percent(settings.floorPct)) reserve, and once when less than 30 min is left. iOS checks about every 15–30 min, so an alert can come late.")
-    }
-
     private func setAlert(_ on: Bool) async {
         alertOn = on
         if on {
@@ -282,26 +237,6 @@ struct SettingsScreen: View {
             AlertTask.cancel()
             alertDenied = false
         }
-    }
-
-    private func hint(_ code: LocalizedStringKey, _ text: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(code).font(.system(size: 13, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(Palette.bad)
-            Text(text).font(.subheadline)
-        }
-        .padding(.vertical, 2)
-    }
-
-    private func link(_ title: LocalizedStringKey, _ url: URL) -> some View {
-        Link(destination: url) {
-            HStack {
-                Text(title)
-                Spacer(minLength: 8)
-                Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary)
-            }
-            .contentShape(Rectangle())
-        }
-        .foregroundStyle(.primary)
     }
 
     private func openSettings() {
@@ -350,5 +285,27 @@ struct SettingsScreen: View {
                 try? await Task.sleep(for: .seconds(min(due.timeIntervalSince(now), 5)))
             }
         }
+    }
+}
+
+struct Hint: View {
+    let code: LocalizedStringKey
+    let text: LocalizedStringKey
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(code).font(.system(size: 13, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(Palette.bad)
+            Text(text).font(.subheadline)
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+private extension View {
+    func card() -> some View {
+        padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(hex: 0x1C1C1E), in: RoundedRectangle(cornerRadius: 18))
     }
 }

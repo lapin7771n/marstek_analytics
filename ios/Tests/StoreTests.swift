@@ -255,6 +255,16 @@ struct StoreTests {
         #expect(!Refresher.widgetCanReuse(nil, now: now))
     }
 
+    @Test func aRetryWaitsForTheSixtySecondFloor() {
+        let now = Date(timeIntervalSince1970: 1_760_000_000)
+        func snapshot(_ age: TimeInterval) -> Snapshot { Snapshot(reading: nil, error: .noLink, checkedAt: now.addingTimeInterval(-age)) }
+        #expect(!Refresher.retryAllowed(snapshot(0), now: now))
+        #expect(!Refresher.retryAllowed(snapshot(59), now: now))
+        #expect(Refresher.retryAllowed(snapshot(60), now: now))
+        #expect(Refresher.retryAllowed(snapshot(-30), now: now))
+        #expect(Refresher.retryAllowed(nil, now: now))
+    }
+
     @Test func aSearchSkipsTheFetch() async {
         let store = store()
         let now = Date(timeIntervalSince1970: 1000)

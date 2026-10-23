@@ -210,6 +210,12 @@ enum Refresher {
         return next
     }
 
+    // A tap that retries counts as a key press: it waits for the 60 s floor, as the timer does.
+    static func retryAllowed(_ snapshot: Snapshot?, now: Date = .now) -> Bool {
+        guard let checked = snapshot?.checkedAt, checked <= now else { return true }
+        return now.timeIntervalSince(checked) >= 60
+    }
+
     static func widgetCanReuse(_ snapshot: Snapshot?, now: Date = .now) -> Bool {
         guard let snapshot, snapshot.error != .settings else { return false }
         return (0..<60).contains(now.timeIntervalSince(snapshot.checkedAt))

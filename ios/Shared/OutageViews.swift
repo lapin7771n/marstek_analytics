@@ -3,19 +3,30 @@ import SwiftUI
 struct OutageRow: View {
     let outage: Outage
     let stale: Bool
+    let cut: Int?
 
     private var color: Color { stale ? Palette.stale : outage.lasts ? Palette.good : Palette.bad }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: outage.lasts ? "checkmark" : "exclamationmark")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(color)
-                .frame(width: 36, height: 36)
-                .background(color.opacity(0.16), in: Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                code.font(.system(size: 13, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(color)
-                sentence.font(.system(size: 15, design: .rounded))
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Image(systemName: outage.lasts ? "checkmark" : "exclamationmark")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(color)
+                    .frame(width: 36, height: 36)
+                    .background(color.opacity(0.16), in: Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    code.font(.system(size: 13, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(color)
+                    sentence.font(.system(size: 15, design: .rounded))
+                }
+            }
+            if case .short = outage, let cut, !stale {
+                Text("Cut about \(cut) W to last until \(Text(outage.back, style: .time)).")
+                    .font(.system(size: 14, design: .rounded))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(hex: 0x2C2C2E), in: RoundedRectangle(cornerRadius: 12))
             }
         }
         .padding(.vertical, 5)

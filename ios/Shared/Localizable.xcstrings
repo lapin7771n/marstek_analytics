@@ -241,6 +241,16 @@
         }
       }
     },
+    "Can't reach the battery": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Немає звʼязку з батареєю"
+          }
+        }
+      }
+    },
     "Charge": {
       "localizations": {
         "uk": {
@@ -347,6 +357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося визначити вулицю. Введіть її."
+          }
+        }
+      }
+    },
+    "Cut about %lld W to last until %@.": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зменште навантаження приблизно на %1$lld Вт, щоб вистачило до %2$@."
           }
         }
       }
@@ -487,6 +507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Світло дадуть"
+          }
+        }
+      }
+    },
+    "Help": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Допомога"
           }
         }
       }
@@ -831,6 +861,16 @@
         }
       }
     },
+    "Outage schedule": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Графік відключень"
+          }
+        }
+      }
+    },
     "POWER": {
       "localizations": {
         "uk": {
@@ -1061,6 +1101,26 @@
         }
       }
     },
+    "Set up the battery": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Налаштувати батарею"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Налаштування"
+          }
+        }
+      }
+    },
     "State": {
       "localizations": {
         "uk": {
@@ -1177,6 +1237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Завтра"
+          }
+        }
+      }
+    },
+    "Try again": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Спробувати ще раз"
           }
         }
       }

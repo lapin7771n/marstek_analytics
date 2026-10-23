@@ -60,6 +60,14 @@ struct FaceTests {
         #expect(!Face(snap(reading(acW: 400)), floorPct: 12).blocked)
     }
 
+    @Test func onlyALinkProblemShowsTheFixes() {
+        #expect(!Face(snap(reading(acW: 400)), floorPct: 12).fixes)
+        #expect(!Face(snap(nil, .settings), floorPct: 12).fixes)
+        #expect(Face(snap(reading(acW: 400), .noLink), floorPct: 12).fixes)
+        #expect(Face(snap(nil, .blocked), floorPct: 12).fixes)
+        #expect(Face(snap(reading(acW: 400), .badReply), floorPct: 12).fixes)
+    }
+
     @Test func aReadingUnderHalfAnHourOldIsFresh() {
         #expect(!Face(snap(reading(acW: 400)), floorPct: 12, now: readAt.addingTimeInterval(29 * 60)).stale)
     }
