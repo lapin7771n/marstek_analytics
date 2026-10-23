@@ -48,6 +48,8 @@ struct OutageTests {
     @Test func theCutIsWhatMakesTheBatteryLast() {
         let r = reading(soc: 64, acW: 820, offgridW: 820, capacityWh: 3276.8)
         #expect(Outage.cut(r, floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == 140)
+        #expect(Outage.cut(r, floorPct: 12, back: hours(3 + 35.0 / 60), now: hours(1)) == 140)
+        #expect(Outage.cut(reading(soc: 64, acW: 0, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == 140)
         #expect(Outage.cut(r, floorPct: 12, back: hours(2), now: readAt) == nil)
         #expect(Outage.cut(reading(soc: 64, acW: -800, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == nil)
     }

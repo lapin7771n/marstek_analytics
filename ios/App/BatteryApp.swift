@@ -117,15 +117,18 @@ struct HomeScreen: View {
                             }
                             .buttonStyle(.plain)
                             Hint(code: "NO LINK", text: "Join the battery's Wi‑Fi, and turn on Open API for the battery in the Marstek app.")
-                            Button { Task { await refresh(waiting: true) } } label: {
-                                Text("Try again")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(Color(hex: 0x08150F))
-                                    .frame(maxWidth: .infinity, minHeight: 46)
-                                    .background(Palette.good.opacity(checking ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 12))
+                            TimelineView(.periodic(from: .now, by: 1)) { timeline in
+                                let enabled = !checking && Refresher.retryAllowed(snapshot, now: timeline.date)
+                                Button { Task { await refresh(waiting: true) } } label: {
+                                    Text("Try again")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(Color(hex: 0x08150F))
+                                        .frame(maxWidth: .infinity, minHeight: 46)
+                                        .background(Palette.good.opacity(enabled ? 1 : 0.4), in: RoundedRectangle(cornerRadius: 12))
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(!enabled)
                             }
-                            .buttonStyle(.plain)
-                            .disabled(checking)
                         }
                         .card()
                     }

@@ -20,7 +20,7 @@ struct OutageRow: View {
                     sentence.font(.system(size: 15, design: .rounded))
                 }
             }
-            if case .short = outage, let cut {
+            if case .short = outage, let cut, !stale {
                 Text("Cut about \(cut) W to last until \(Text(outage.back, style: .time)).")
                     .font(.system(size: 14, design: .rounded))
                     .padding(.horizontal, 12)

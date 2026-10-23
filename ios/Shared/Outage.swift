@@ -30,10 +30,9 @@ enum Outage: Equatable {
         let est = QuickEstimate.estimate(r, floorPct: Double(floorPct))
         guard est.mode != .charging, let hours = est.hours else { return nil }
         let load = r.acW > QuickEstimate.idleW ? r.acW : r.offgridW
-        let usableWh = max(0, r.capacityWh - Double(floorPct) / 100 * r.ratedWh) / QuickEstimate.dischargeRatio
-        let hoursLeft = back.timeIntervalSince(now) / 3600
-        guard hoursLeft > 0, hours < hoursLeft else { return nil }
-        return Int((max(0, load - usableWh / hoursLeft) / 10).rounded(.up)) * 10
+        let hoursLeft = back.timeIntervalSince(r.time) / 3600
+        guard back > now, hours < hoursLeft else { return nil }
+        return Int((max(0, load - QuickEstimate.usableWh(r, floorPct: Double(floorPct)) / hoursLeft) / 10).rounded(.up)) * 10
     }
 
     static func nextTime(_ picked: Date, after now: Date, calendar: Calendar = .current) -> Date {
