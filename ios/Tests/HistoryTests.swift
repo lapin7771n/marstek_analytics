@@ -187,6 +187,49 @@ struct HistoryTests {
     @Test func oneReadingIsEmpty() {
         #expect(history(at(0)).day(now: start.addingTimeInterval(60), latest: nil, calendar: utc).isEmpty)
     }
+
+    // Kyiv leaves summer time on 25 Oct 2026, so the week below holds a 25-hour day.
+    private var kyiv: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Kyiv")!
+        return calendar
+    }
+
+    private func kyivDay(_ day: Int, _ hour: Double = 0) -> Date {
+        let midnight = kyiv.date(from: DateComponents(year: 2026, month: 10, day: day))!
+        return midnight.addingTimeInterval(hour * 3600)
+    }
+
+    private func sample(_ day: Int, _ hour: Double, acW: Int) -> Sample {
+        Sample(time: kyivDay(day, hour), socPct: 50, acW: acW, offgridW: 0)
+    }
+
+    @Test func theWeekIsSevenDaysEndingToday() {
+        let now = kyivDay(27, 15)
+        let history = History(samples: [
+            sample(19, 12, acW: 600), sample(19, 12.5, acW: 600),
+            sample(24, 10, acW: -1200), sample(24, 10.5, acW: 600), sample(24, 11, acW: 600),
+            sample(27, 8, acW: 400), sample(27, 9, acW: 400),
+            sample(27, 14.5, acW: 400), sample(27, 15.5, acW: 400),
+        ])
+        let week = history.week(now: now, calendar: kyiv)
+        #expect(week.map(\.day) == (21...27).map { kyivDay($0) })
+        #expect(week[3] == DayTotal(day: kyivDay(24), chargedWh: 600, usedWh: 300, onBattery: 1800))
+        #expect(week[1] == DayTotal(day: kyivDay(22), chargedWh: 0, usedWh: 0, onBattery: 0))
+        #expect(week[6] == DayTotal(day: kyivDay(27), chargedWh: 0, usedWh: 400, onBattery: 3600))
+        #expect(week.map(\.usedWh).reduce(0, +) == 700)
+        #expect(history.day(now: now, latest: nil, calendar: kyiv).usedWh == week[6].usedWh)
+    }
+
+    @Test func eachDayIntegratesOnlyItsOwnSamples() {
+        let history = History(samples: [
+            sample(26, 22.5, acW: 600), sample(26, 23.5, acW: 600),
+            sample(27, 0.5, acW: 600), sample(27, 1.5, acW: 600),
+        ])
+        let week = history.week(now: kyivDay(27, 3), calendar: kyiv)
+        #expect(week[5].usedWh == 600)
+        #expect(week[6].usedWh == 600)
+    }
 }
 
 actor ReadingCounter {

@@ -1321,6 +1321,16 @@
         }
       }
     },
+    "Week": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тиждень"
+          }
+        }
+      }
+    },
     "When the app asks to find devices on your local network, tap Allow.": {
       "localizations": {
         "uk": {
