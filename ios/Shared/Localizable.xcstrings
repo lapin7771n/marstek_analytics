@@ -971,6 +971,16 @@
         }
       }
     },
+    "Range": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Період"
+          }
+        }
+      }
+    },
     "Recent events": {
       "localizations": {
         "uk": {
@@ -1317,6 +1327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Розраховано за поточним навантаженням. Якщо воно зміниться, зміниться й відповідь."
+          }
+        }
+      }
+    },
+    "Week": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тиждень"
           }
         }
       }
