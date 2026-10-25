@@ -181,6 +181,16 @@
         }
       }
     },
+    "Battery ETA · outage": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery ETA · відключення"
+          }
+        }
+      }
+    },
     "Battery IP": {
       "localizations": {
         "uk": {
@@ -431,6 +441,16 @@
         }
       }
     },
+    "Empty %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сяде о %@"
+          }
+        }
+      }
+    },
     "Empty in %lld min at %@. Turn off heavy loads.": {
       "localizations": {
         "uk": {
@@ -497,6 +517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Прошивка V%lld може вимикати Open API за частих запитів. Оновіть її в застосунку Marstek."
+          }
+        }
+      }
+    },
+    "Grid %@": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світло о %@"
           }
         }
       }
@@ -1468,6 +1498,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "год"
+          }
+        }
+      }
+    },
+    "left": {
+      "localizations": {
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "залишилось"
           }
         }
       }

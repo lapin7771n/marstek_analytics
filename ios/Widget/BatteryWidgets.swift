@@ -7,6 +7,7 @@ struct BatteryWidgets: WidgetBundle {
         RingWidget()
         EtaWidget()
         LockWidget()
+        OutageLiveActivity()
     }
 }
 

@@ -46,6 +46,8 @@
 	<string>Battery ETA reads your Marstek battery over your home Wi-Fi.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Battery ETA finds your street once to look up your outage group.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

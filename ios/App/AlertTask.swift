@@ -61,6 +61,12 @@ enum AlertTask {
 
     static func run() async {
         let store = Store()
+        await check(store)
+        await OutageActivityController.sync(store, canStart: false)
+        if OutageActivityController.isRunning { schedule() }
+    }
+
+    private static func check(_ store: Store) async {
         guard store.alert.on || store.outageAhead,
               await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .authorized else { return }
         schedule()
