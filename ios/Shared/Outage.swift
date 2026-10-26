@@ -22,9 +22,9 @@ enum Outage: Equatable {
         return start.addingTimeInterval(hours * 3600)
     }
 
-    // nil when the battery lasts from `start` to `back`. The cut is the watts to shed to last, rounded up to 10 W.
+    // nil when the battery lasts from `start` to `back`, or falls short by under a minute, as in `verdict`. The cut is the watts to shed to last, rounded up to 10 W.
     static func shortfall(_ r: Reading, floorPct: Int, load: Double, from start: Date, back: Date) -> (runsOutAt: Date, cutW: Int)? {
-        guard let runsOut = runsOutAt(r, floorPct: floorPct, load: load, from: start), runsOut < back else { return nil }
+        guard let runsOut = runsOutAt(r, floorPct: floorPct, load: load, from: start), back.timeIntervalSince(runsOut) >= 60 else { return nil }
         let hours = back.timeIntervalSince(start) / 3600
         let usable = QuickEstimate.usableWh(r, floorPct: Double(floorPct))
         let cut = max(0, load - usable / OutageAhead.margin / hours)

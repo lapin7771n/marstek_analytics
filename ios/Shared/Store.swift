@@ -166,7 +166,9 @@ final class Store {
     }
 
     private func saveHistory(_ history: History) {
-        guard let directory, let file = historyFile, let data = try? JSONEncoder().encode(history) else {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        guard let directory, let file = historyFile, let data = try? encoder.encode(history) else {
             save(history, "history")
             return
         }

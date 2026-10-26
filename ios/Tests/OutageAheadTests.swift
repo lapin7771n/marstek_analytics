@@ -34,6 +34,9 @@ struct OutageAheadTests {
         // 4212 Wh leaves 3300.2 Wh usable; 600 W with the margin is 660 W, which lasts the 5 h with 3 s to spare.
         let lastsToTheMinute = Reading(time: now, socPct: 82, acW: 600, offgridW: 600, capacityWh: 4212, ratedWh: 5120)
         #expect(check(lastsToTheMinute) == nil)
+        // 4205.4 Wh leaves 3294.5 Wh usable: 30 s short of the 5 h, under the minute `verdict` also forgives.
+        let thirtySecondsShort = Reading(time: now, socPct: 82, acW: 600, offgridW: 600, capacityWh: 4205.4, ratedWh: 5120)
+        #expect(check(thirtySecondsShort) == nil)
     }
 
     @Test func onlyAnOutageAheadWithinSixHoursWarns() {
