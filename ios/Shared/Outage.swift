@@ -15,24 +15,34 @@ enum Outage: Equatable {
         }
     }
 
+    // When the battery runs dry at a constant `load` on the backup socket, counted from `start`, with OutageAhead.margin on top.
+    static func runsOutAt(_ r: Reading, floorPct: Int, load: Double, from start: Date) -> Date? {
+        guard load > QuickEstimate.idleW else { return nil }
+        let hours = QuickEstimate.usableWh(r, floorPct: Double(floorPct)) / (load * OutageAhead.margin)
+        return start.addingTimeInterval(hours * 3600)
+    }
+
+    // nil when the battery lasts from `start` to `back`. The cut is the watts to shed to last, rounded up to 10 W.
+    static func shortfall(_ r: Reading, floorPct: Int, load: Double, from start: Date, back: Date) -> (runsOutAt: Date, cutW: Int)? {
+        guard let runsOut = runsOutAt(r, floorPct: floorPct, load: load, from: start), runsOut < back else { return nil }
+        let hours = back.timeIntervalSince(start) / 3600
+        let usable = QuickEstimate.usableWh(r, floorPct: Double(floorPct))
+        let cut = max(0, load - usable / OutageAhead.margin / hours)
+        return (runsOut, Int((cut / 10).rounded(.up)) * 10)
+    }
+
     static func verdict(_ r: Reading, floorPct: Int, powerBack: Date, now: Date) -> Outage? {
         guard powerBack > now else { return nil }
-        let est = QuickEstimate.estimate(r, floorPct: Double(floorPct))
-        if est.mode == .charging { return nil }
-        guard let hours = est.hours else { return .lasts(until: powerBack, spareHours: nil) }
-        let runsOut = r.time.addingTimeInterval(hours * 3600)
+        if QuickEstimate.estimate(r, floorPct: Double(floorPct)).mode == .charging { return nil }
+        guard let runsOut = runsOutAt(r, floorPct: floorPct, load: r.offgridW, from: r.time) else { return .lasts(until: powerBack, spareHours: nil) }
         let spare = runsOut.timeIntervalSince(powerBack)
         return spare > -60 ? .lasts(until: powerBack, spareHours: max(spare, 0) / 3600) : .short(runsOutAt: runsOut, shortHours: -spare / 3600, back: powerBack)
     }
 
     // Watts to shed so the battery lasts until `back`, rounded up to 10 W; nil when it already lasts.
     static func cut(_ r: Reading, floorPct: Int, back: Date, now: Date) -> Int? {
-        let est = QuickEstimate.estimate(r, floorPct: Double(floorPct))
-        guard est.mode != .charging, let hours = est.hours else { return nil }
-        let load = r.acW > QuickEstimate.idleW ? r.acW : r.offgridW
-        let hoursLeft = back.timeIntervalSince(r.time) / 3600
-        guard back > now, hours < hoursLeft else { return nil }
-        return Int((max(0, load - QuickEstimate.usableWh(r, floorPct: Double(floorPct)) / hoursLeft) / 10).rounded(.up)) * 10
+        guard back > now, QuickEstimate.estimate(r, floorPct: Double(floorPct)).mode != .charging else { return nil }
+        return shortfall(r, floorPct: floorPct, load: r.offgridW, from: r.time, back: back)?.cutW
     }
 
     static func nextTime(_ picked: Date, after now: Date, calendar: Calendar = .current) -> Date {

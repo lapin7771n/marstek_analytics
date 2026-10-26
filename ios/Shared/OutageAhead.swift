@@ -48,27 +48,39 @@ enum OutageAhead {
     // The charge is assumed unchanged until the outage starts. nil when the battery lasts or no outage is near.
     static func check(_ r: Reading, floorPct: Int, answer: ScheduleAnswer, model: LoadModel?, recentW: Double, now: Date, calendar: Calendar = .current) -> OutageWarning? {
         guard case let .off(start, back) = answer, start > now, start.timeIntervalSince(now) <= horizon, back > start else { return nil }
+        let found: (runsOutAt: Date, loadW: Double, cutW: Int)?
+        if let model {
+            found = walk(r, floorPct: floorPct, start: start, back: back, model: model, recentW: recentW, calendar: calendar)
+        } else {
+            found = Outage.shortfall(r, floorPct: floorPct, load: r.offgridW, from: start, back: back).map { ($0.runsOutAt, r.offgridW, $0.cutW) }
+        }
+        guard let (runsOutAt, loadW, cutW) = found else { return nil }
+        return OutageWarning(
+            start: start, back: back, runsOutAt: runsOutAt,
+            shortMinutes: Int((back.timeIntervalSince(runsOutAt) / 60).rounded()),
+            loadW: Int(loadW.rounded()), cutW: cutW,
+            socPct: r.socPct, fromModel: model != nil
+        )
+    }
+
+    // The model gives a load per 5 min step, so the run-out time is a step end.
+    private static func walk(_ r: Reading, floorPct: Int, start: Date, back: Date, model: LoadModel, recentW: Double, calendar: Calendar) -> (runsOutAt: Date, loadW: Double, cutW: Int)? {
         let usable = QuickEstimate.usableWh(r, floorPct: Double(floorPct))
         var used = 0.0, loadSum = 0.0, runsOutAt: Date?
         var t = start
         while t < back {
             let end = min(t.addingTimeInterval(step), back)
             let seconds = end.timeIntervalSince(t)
-            let load = model?.watts(at: t, recentW: recentW, calendar: calendar) ?? r.offgridW
+            let load = model.watts(at: t, recentW: recentW, calendar: calendar)
             loadSum += load * seconds
             used += load * seconds / 3600 * margin
             if runsOutAt == nil, used >= usable { runsOutAt = end }
             t = end
         }
         guard let runsOutAt, runsOutAt < back else { return nil }
-        let windowHours = back.timeIntervalSince(start) / 3600
-        let loadW = loadSum / back.timeIntervalSince(start)
-        let cut = max(0, loadW - usable / margin / windowHours)
-        return OutageWarning(
-            start: start, back: back, runsOutAt: runsOutAt,
-            shortMinutes: Int((back.timeIntervalSince(runsOutAt) / 60).rounded()),
-            loadW: Int(loadW.rounded()), cutW: Int((cut / 10).rounded(.up)) * 10,
-            socPct: r.socPct, fromModel: model != nil
-        )
+        let window = back.timeIntervalSince(start)
+        let loadW = loadSum / window
+        let cut = max(0, loadW - usable / margin / (window / 3600))
+        return (runsOutAt, loadW, Int((cut / 10).rounded(.up)) * 10)
     }
 }

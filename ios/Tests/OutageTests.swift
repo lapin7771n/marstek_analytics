@@ -7,51 +7,64 @@ struct OutageTests {
 
     private func hours(_ h: Double) -> Date { readAt.addingTimeInterval(h * 3600) }
 
+    // 4121 Wh, 12 % reserve: usable (4121 - 614.4) / 1.09 = 3217.06 Wh. At 400 W with the 1.1 margin it runs out after 7.3115 h.
+    private func backup(_ w: Double) -> Reading { reading(acW: w, offgridW: w) }
+
     @Test func lastsWithSpare() throws {
-        let verdict = Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: hours(6), now: readAt)
+        let verdict = Outage.verdict(backup(400), floorPct: 12, powerBack: hours(6), now: readAt)
         guard case let .lasts(until, spare) = verdict else { Issue.record("\(String(describing: verdict))"); return }
         #expect(until == hours(6))
-        #expect(abs(try #require(spare) - 2.0427) < 0.001)
+        #expect(abs(try #require(spare) - 1.3115) < 0.001)
     }
 
     @Test func runsOutBeforePowerReturns() {
-        let verdict = Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: hours(10), now: readAt)
+        let verdict = Outage.verdict(backup(400), floorPct: 12, powerBack: hours(10), now: readAt)
         guard case let .short(runsOut, short, _) = verdict else { Issue.record("\(String(describing: verdict))"); return }
-        #expect(abs(runsOut.timeIntervalSince(hours(8.0427))) < 5)
-        #expect(abs(short - 1.9573) < 0.001)
+        #expect(abs(runsOut.timeIntervalSince(hours(7.3115))) < 5)
+        #expect(abs(short - 2.6885) < 0.001)
     }
 
     @Test func countsFromTheReadingNotFromNow() {
-        let verdict = Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: hours(10), now: hours(1))
+        let verdict = Outage.verdict(backup(400), floorPct: 12, powerBack: hours(10), now: hours(1))
         guard case let .short(_, short, _) = verdict else { Issue.record("\(String(describing: verdict))"); return }
-        #expect(abs(short - 1.9573) < 0.001)
+        #expect(abs(short - 2.6885) < 0.001)
+    }
+
+    @Test func theBackupSocketSetsTheLoadNotTheAcFigure() {
+        let verdict = Outage.verdict(reading(acW: 900, offgridW: 400), floorPct: 12, powerBack: hours(10), now: readAt)
+        guard case let .short(runsOut, _, _) = verdict else { Issue.record("\(String(describing: verdict))"); return }
+        #expect(abs(runsOut.timeIntervalSince(hours(7.3115))) < 5)
     }
 
     @Test func nothingOncePowerIsBack() {
-        #expect(Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: hours(6), now: hours(6)) == nil)
+        #expect(Outage.verdict(backup(400), floorPct: 12, powerBack: hours(6), now: hours(6)) == nil)
     }
 
     @Test func nothingWhileCharging() {
-        #expect(Outage.verdict(reading(acW: -500), floorPct: 12, powerBack: hours(6), now: readAt) == nil)
+        #expect(Outage.verdict(reading(acW: -500, offgridW: 400), floorPct: 12, powerBack: hours(6), now: readAt) == nil)
     }
 
     @Test func idleWithoutLoadLasts() {
         #expect(Outage.verdict(reading(soc: 60, acW: 0), floorPct: 12, powerBack: hours(6), now: readAt) == .lasts(until: hours(6), spareHours: nil))
     }
 
-    @Test func underAMinuteShortStillLasts() throws {
-        let runsOut = try #require(QuickEstimate.estimate(reading(acW: 400), floorPct: 12).hours) * 3600
+    @Test func underAMinuteShortStillLasts() {
+        let runsOut = 3217.0642 / 440 * 3600
         let back = readAt.addingTimeInterval(runsOut + 30)
-        #expect(Outage.verdict(reading(acW: 400), floorPct: 12, powerBack: back, now: readAt) == .lasts(until: back, spareHours: 0))
+        #expect(Outage.verdict(backup(400), floorPct: 12, powerBack: back, now: readAt) == .lasts(until: back, spareHours: 0))
     }
 
+    // 3276.8 Wh at 64 %: usable (3276.8 - 614.4) / 1.09 = 2442.57 Wh. Over 3 h 35 min the load may be 2442.57 / 1.1 / 3.5833 = 619.68 W, so 820 W needs a cut of 200.3 W, rounded up to 210.
     @Test func theCutIsWhatMakesTheBatteryLast() {
         let r = reading(soc: 64, acW: 820, offgridW: 820, capacityWh: 3276.8)
-        #expect(Outage.cut(r, floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == 140)
-        #expect(Outage.cut(r, floorPct: 12, back: hours(3 + 35.0 / 60), now: hours(1)) == 140)
-        #expect(Outage.cut(reading(soc: 64, acW: 0, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == 140)
+        let back = hours(3 + 35.0 / 60)
+        #expect(Outage.cut(r, floorPct: 12, back: back, now: readAt) == 210)
+        #expect(Outage.cut(r, floorPct: 12, back: back, now: hours(1)) == 210)
+        #expect(Outage.cut(reading(soc: 64, acW: 0, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: back, now: readAt) == 210)
+        #expect(Outage.cut(reading(soc: 64, acW: 100, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: back, now: readAt) == 210)
         #expect(Outage.cut(r, floorPct: 12, back: hours(2), now: readAt) == nil)
-        #expect(Outage.cut(reading(soc: 64, acW: -800, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: hours(3 + 35.0 / 60), now: readAt) == nil)
+        #expect(Outage.cut(reading(soc: 64, acW: -800, offgridW: 820, capacityWh: 3276.8), floorPct: 12, back: back, now: readAt) == nil)
+        #expect(Outage.cut(reading(soc: 64, acW: 820, offgridW: 0, capacityWh: 3276.8), floorPct: 12, back: back, now: readAt) == nil)
     }
 
     @Test(arguments: [(0.0, "0 min"), (40.0 / 60, "40 min"), (2.05, "2 h 03 min"), (10.0, "10 h 00 min")])
