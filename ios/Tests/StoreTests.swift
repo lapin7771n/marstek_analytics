@@ -157,7 +157,7 @@ struct StoreTests {
         let store = store()
         let counter = FetchCounter()
         let now = reading(acW: 400).time
-        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now) { _ in await counter.fetchReading() }
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), line: BatteryLine(), now: now) { _ in await counter.fetchReading() }
         _ = await Refresher.refresh(store, now: now.addingTimeInterval(5 * 60), maxAge: Refresher.widgetMaxAge) { _ in
             await counter.fetchReading()
         }
@@ -169,7 +169,7 @@ struct StoreTests {
         let counter = FetchCounter()
         let now = reading(acW: 400).time
         store.snapshot = Snapshot(reading: reading(acW: 400), error: nil, checkedAt: now)
-        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now.addingTimeInterval(9 * 60)) { _ in
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), line: BatteryLine(), now: now.addingTimeInterval(9 * 60)) { _ in
             await counter.fetchReading()
         }
         #expect(await counter.count == 0)
@@ -180,10 +180,57 @@ struct StoreTests {
         let counter = FetchCounter()
         let now = reading(acW: 400).time
         store.snapshot = Snapshot(reading: reading(acW: 400), error: nil, checkedAt: now)
-        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now.addingTimeInterval(11 * 60)) { _ in
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), line: BatteryLine(), now: now.addingTimeInterval(11 * 60)) { _ in
             await counter.fetchReading()
         }
         #expect(await counter.count == 1)
+    }
+
+    @Test func anAlertRunLeavesTheBatteryAloneWhileTheAppAsks() async {
+        let store = store()
+        let line = BatteryLine()
+        let counter = FetchCounter()
+        let now = reading(acW: 400).time
+        let old = Snapshot(reading: reading(soc: 12, acW: 100, capacityWh: 614.4), error: nil, checkedAt: now.addingTimeInterval(-3600))
+        store.snapshot = old
+        store.alert = AlertState(on: true)
+
+        #expect(await line.claim())
+        let low = await AlertTask.evaluate(store, gate: SharedRefresh(), line: line, now: now) { _ in await counter.fetchReading() }
+        #expect(await counter.count == 0)
+        #expect(low == .reserve(socPct: 12, watts: 100))
+        #expect(store.snapshot == old)
+        #expect(await line.claim() == false)
+
+        await line.release()
+        _ = await AlertTask.evaluate(store, gate: SharedRefresh(), line: line, now: now) { _ in await counter.fetchReading() }
+        #expect(await counter.count == 1)
+        #expect(await line.claim())
+    }
+
+    @Test func historyIsWrittenOnlyWhenASampleIsAdded() async throws {
+        let directory = tempDirectory()
+        let store = Store(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)"), directory: directory)
+        store.settings = BatterySettings(host: "192.168.68.50", port: 30000, floorPct: 12)
+        let file = directory.appending(path: "history.json")
+        let start = reading(acW: 400).time
+        func modified() throws -> Date { try #require(FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date) }
+        func refresh(afterMinutes minutes: Double) async {
+            let at = start.addingTimeInterval(minutes * 60)
+            _ = await Refresher.refresh(store, now: at) { _ in Reading(time: at, socPct: 80, acW: 400, offgridW: 0, capacityWh: 4121, ratedWh: 5120) }
+        }
+
+        await refresh(afterMinutes: 0)
+        let marker = Date(timeIntervalSince1970: 1_000_000)
+        try FileManager.default.setAttributes([.modificationDate: marker], ofItemAtPath: file.path)
+
+        await refresh(afterMinutes: 1)
+        #expect(store.history.samples.count == 1)
+        #expect(try modified() == marker)
+
+        await refresh(afterMinutes: 5)
+        #expect(store.history.samples.count == 2)
+        #expect(try modified() > marker)
     }
 
     @Test func anAlertRunRemembersItNotified() async {
@@ -191,8 +238,8 @@ struct StoreTests {
         store.alert = AlertState(on: true)
         let now = reading(acW: 400).time
         store.snapshot = Snapshot(reading: reading(soc: 12, acW: 100, capacityWh: 614.4), error: nil, checkedAt: now)
-        let first = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now) { _ in reading(acW: 400) }
-        let second = await AlertTask.evaluate(store, gate: SharedRefresh(), now: now) { _ in reading(acW: 400) }
+        let first = await AlertTask.evaluate(store, gate: SharedRefresh(), line: BatteryLine(), now: now) { _ in reading(acW: 400) }
+        let second = await AlertTask.evaluate(store, gate: SharedRefresh(), line: BatteryLine(), now: now) { _ in reading(acW: 400) }
         #expect(first == .reserve(socPct: 12, watts: 100))
         #expect(second == nil)
     }

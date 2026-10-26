@@ -170,6 +170,7 @@ final class Store {
             save(history, "history")
             return
         }
+        if let existing = try? Data(contentsOf: file), existing == data { return }
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try data.write(to: file, options: .atomic)
