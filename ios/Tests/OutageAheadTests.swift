@@ -17,10 +17,11 @@ struct OutageAheadTests {
     }
 
     @Test func aShortOutageWarnsThirtyMinutesBefore() throws {
+        // usable (4198.4 - 614.4) / 1.09 = 3288.07 Wh; 750 W with the 1.1 margin is 825 W, so it runs out 3.9855 h after 12:00.
         let warning = try #require(check())
         #expect(warning.fireAt == kyiv("2026-10-15 11:30"))
-        #expect(warning.runsOutAt == kyiv("2026-10-15 16:00"))
-        #expect(warning.shortMinutes == 60)
+        #expect(abs(warning.runsOutAt.timeIntervalSince(kyiv("2026-10-15 15:59").addingTimeInterval(8))) <= 1)
+        #expect(warning.shortMinutes == 61)
         #expect(warning.cutW == 160)
         #expect(warning.loadW == 750)
         #expect(warning.fromModel == false)
@@ -30,8 +31,12 @@ struct OutageAheadTests {
 
     @Test func anOutageTheBatteryLastsIsQuiet() {
         #expect(check(read(offgridW: 400)) == nil)
-        let lastsToTheMinute = Reading(time: now, socPct: 82, acW: 600, offgridW: 600, capacityWh: 4210.71, ratedWh: 5120)
+        // 4212 Wh leaves 3300.2 Wh usable; 600 W with the margin is 660 W, which lasts the 5 h with 3 s to spare.
+        let lastsToTheMinute = Reading(time: now, socPct: 82, acW: 600, offgridW: 600, capacityWh: 4212, ratedWh: 5120)
         #expect(check(lastsToTheMinute) == nil)
+        // 4205.4 Wh leaves 3294.5 Wh usable: 30 s short of the 5 h, under the minute `verdict` also forgives.
+        let thirtySecondsShort = Reading(time: now, socPct: 82, acW: 600, offgridW: 600, capacityWh: 4205.4, ratedWh: 5120)
+        #expect(check(thirtySecondsShort) == nil)
     }
 
     @Test func onlyAnOutageAheadWithinSixHoursWarns() {
@@ -64,7 +69,7 @@ struct OutageAheadTests {
     @Test func theTextFollowsTheSourceOfTheLoad() throws {
         let fallback = try #require(check())
         let modelled = try #require(check(model: flatModel(watts: 750), recentW: 750))
-        #expect(fallback.title.contains("60 min"))
+        #expect(fallback.title.contains("61 min"))
         #expect(modelled.body.contains("Forecast from your usage"))
         #expect(!fallback.body.contains("Forecast from your usage"))
         #expect(fallback.body.contains("At the current 750 W"))

@@ -49,10 +49,18 @@ enum AlertTask {
     static func evaluate(
         _ store: Store = Store(),
         gate: SharedRefresh = .shared,
+        line: BatteryLine = .shared,
         now: Date = .now,
         fetch: @escaping @Sendable (BatterySettings) async throws -> Reading = AlertTask.fetchOnce
     ) async -> LowBattery? {
-        let snapshot = await gate.run { await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge, fetch: fetch) }
+        // One request in flight: a busy line means the app is asking the battery, so use the stored snapshot.
+        let snapshot: Snapshot
+        if await line.claim() {
+            snapshot = await gate.run { await Refresher.refresh(store, now: now, maxAge: Refresher.widgetMaxAge, fetch: fetch) }
+            await line.release()
+        } else {
+            snapshot = store.snapshot ?? Snapshot(reading: nil, error: nil, checkedAt: now)
+        }
         var state = store.alert
         let low = LowBatteryAlert.check(snapshot, floorPct: store.settings.floorPct, state: &state, now: now)
         store.alert = state

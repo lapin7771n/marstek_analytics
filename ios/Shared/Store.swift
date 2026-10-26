@@ -166,10 +166,13 @@ final class Store {
     }
 
     private func saveHistory(_ history: History) {
-        guard let directory, let file = historyFile, let data = try? JSONEncoder().encode(history) else {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        guard let directory, let file = historyFile, let data = try? encoder.encode(history) else {
             save(history, "history")
             return
         }
+        if let existing = try? Data(contentsOf: file), existing == data { return }
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try data.write(to: file, options: .atomic)

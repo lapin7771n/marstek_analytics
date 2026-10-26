@@ -10,16 +10,24 @@ struct OutageActivityAttributes: ActivityAttributes {
         var lasts: Bool
     }
 
-    // Built from the stored snapshot only: it never asks the battery.
-    static func state(_ snapshot: Snapshot?, floorPct: Int, powerBack: Date?, now: Date) -> ContentState? {
+    // Built from the stored snapshot only: it never asks the battery. `outageStart` is nil when the user set the time by hand.
+    static func state(_ snapshot: Snapshot?, floorPct: Int, powerBack: Date?, outageStart: Date?, now: Date) -> ContentState? {
         guard let r = snapshot?.reading, let powerBack,
-              r.acW > 0, now.timeIntervalSince(r.time) < Face.staleAfter,
+              outageStart.map({ $0 <= now }) ?? true,
+              r.offgridW > QuickEstimate.idleW, now.timeIntervalSince(r.time) < Face.staleAfter,
               let outage = Outage.verdict(r, floorPct: floorPct, powerBack: powerBack, now: now) else { return nil }
         let runsOutAt: Date? = switch outage {
         case let .short(runsOut, _, _): runsOut
-        case .lasts: QuickEstimate.estimate(r, floorPct: Double(floorPct)).hours.map { r.time.addingTimeInterval($0 * 3600) }
+        case .lasts: Outage.runsOutAt(r, floorPct: floorPct, load: r.offgridW, from: r.time)
         }
-        return ContentState(socPct: r.socPct, loadW: Int(r.acW.rounded()), runsOutAt: runsOutAt, back: outage.back, lasts: outage.lasts)
+        return ContentState(socPct: r.socPct, loadW: Int(r.offgridW.rounded()), runsOutAt: runsOutAt, back: outage.back, lasts: outage.lasts)
+    }
+
+    // The start of the YASNO outage the stored end time belongs to; nil when the user set the end time by hand.
+    static func outageStart(_ store: Store, now: Date) -> Date? {
+        guard store.powerBackFromSchedule, let schedule = store.schedule, schedule.key == store.outageGroup?.key,
+              let days = schedule.days, case let .off(start, _) = Schedule.answer(days, now: now) else { return nil }
+        return start
     }
 }
 
