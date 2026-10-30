@@ -1,0 +1,14 @@
+#!/bin/bash
+# prev: Blender preview on the PC (6 frames, half size), pulled to $1 as a sheet.
+set -eu
+here="$(cd "$(dirname "$0")/.." && pwd)"; cd "$here"
+out="$1"
+bin/pc sync
+bin/pc exec "npx tsx scripts/cues.ts >/dev/null"
+bin/pc bg prev "\$HOME/Mortiflix/tools/blender/blender-5.2.2-linux-x64/blender --factory-startup -b --python-exit-code 1 -P blender/ring.py -- --cycles-device CUDA --preview" >/dev/null
+bin/pc wait prev
+bin/pc exec 'grep -E "^(FRAME|LAYER)|Error" logs/prev.log | head -12'
+mkdir -p "$out"; rm -f "$out"/f_*.jpg
+bin/pc pull public/3d/preview/ring/ "$out/"
+set --; for f in "$out"/f_*.jpg; do set -- "$@" -i "$f"; done
+ffmpeg -y -loglevel error "$@" -filter_complex "hstack=$(ls "$out"/f_*.jpg | wc -l)" "$out/sheet.png"

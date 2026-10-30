@@ -1,0 +1,10 @@
+#!/bin/bash
+# render [props JSON]: Remotion render at 60 fps on the PC, then mux the audio into out/battery-eta-reel.mp4 and pull it back.
+set -eu
+here="$(cd "$(dirname "$0")/.." && pwd)"; cd "$here"
+props="${1:-{\}}"
+bin/pc sync
+bin/pc bg render "npx --no-install remotion render src/index.ts BatteryEtaReel out/video.mp4 --codec h264 --crf 15 --pixel-format yuv420p --color-space bt709 --concurrency 6 --props='$props' && ffmpeg -y -loglevel error -i out/video.mp4 -i public/audio/BatteryEtaReel.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k -ar 48000 -movflags +faststart -shortest out/battery-eta-reel.mp4 && ls -la out"
+bin/pc wait render
+mkdir -p ../out
+bin/pc pull out/battery-eta-reel.mp4 ../out/
