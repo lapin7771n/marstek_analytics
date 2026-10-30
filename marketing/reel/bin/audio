@@ -1,0 +1,6 @@
+#!/bin/bash
+# audio: on the PC, write cues, synthesize the sound effects, the music bed and the final mix to public/audio/BatteryEtaReel.wav
+set -eu
+here="$(cd "$(dirname "$0")/.." && pwd)"; cd "$here"
+bin/pc sync
+bin/pc exec "npx tsx scripts/cues.ts && uv run --quiet --with numpy python scripts/sound.py public/audio/BatteryEtaReel.cues.json public/audio/sfx.wav && uv run --quiet --with numpy --with scipy python scripts/music.py public/audio/BatteryEtaReel.cues.json public/audio/sfx.wav public/audio/BatteryEtaReel.wav && ffmpeg -y -loglevel error -i public/audio/BatteryEtaReel.wav -c:a libmp3lame -b:a 192k public/audio/BatteryEtaReel.mp3 && ls -la public/audio"

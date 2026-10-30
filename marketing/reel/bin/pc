@@ -1,0 +1,27 @@
+#!/bin/bash
+# pc sync | exec <cmd> | bg <name> <cmd> | wait <name> | pull <remote-path> <local-dir> — all rendering runs on the PC (WSL).
+set -eu
+host="${REEL_RENDER_HOST:-gd-wsl}"
+remote="marstek-reel"
+here="$(cd "$(dirname "$0")/.." && pwd)"
+pre='export PATH=$HOME/.local/bin:$PATH; '
+blender='$HOME/Mortiflix/tools/blender/blender-5.2.2-linux-x64/blender'
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  sync)
+    ssh -o ConnectTimeout=10 "$host" "mkdir -p $remote/logs"
+    rsync -a --delete --exclude node_modules --exclude public/3d --exclude public/audio --exclude out --exclude logs "$here/" "$host:$remote/" ;;
+  exec) ssh "$host" "${pre}cd $remote && $*" ;;
+  bg)
+    name="$1"; shift
+    ssh "$host" "tmux has-session -t '=$name' 2>/dev/null && { echo 'session $name is running' >&2; exit 1; }; true"
+    ssh "$host" "mkdir -p $remote/logs; rm -f $remote/logs/$name.exit; tmux new-session -d -s '$name' \"\$HOME/.local/bin/gd-awake bash -c '${pre}cd \$HOME/$remote && { $* ; } 2>&1 | tee logs/$name.log; echo \\\${PIPESTATUS[0]} > logs/$name.exit'\""
+    echo "started tmux $name on $host; watch: ssh $host tail -f $remote/logs/$name.log" ;;
+  wait)
+    name="$1"
+    while ssh -o ConnectTimeout=10 "$host" "tmux has-session -t '=$name'" 2>/dev/null; do sleep 5; done
+    echo "exit: $(ssh "$host" "cat $remote/logs/$name.exit 2>/dev/null || echo missing")" ;;
+  blender) echo "$blender" ;;
+  pull) mkdir -p "$2"; rsync -a "$host:$remote/$1" "$2" ;;
+  *) echo "usage: pc sync|exec|bg|wait|pull" >&2; exit 2 ;;
+esac

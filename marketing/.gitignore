@@ -1,0 +1,13 @@
+node_modules/
+out/
+reel/out/
+reel/public/3d/
+reel/public/audio/
+reel/frames/
+reel/.frames/
+*.sheet.png
+screenshots/raw/
+screenshots/out/
+screenshots/html/
+screenshots/fonts/
+screenshots/art/

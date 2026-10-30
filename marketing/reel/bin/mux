@@ -1,0 +1,6 @@
+#!/bin/bash
+# mux: on the PC, encode out/video.mp4 (Remotion, silent) with the mixed audio into out/battery-eta-reel.mp4, then pull it.
+set -eu
+here="$(cd "$(dirname "$0")/.." && pwd)"; cd "$here"
+bin/pc exec "ffmpeg -y -loglevel error -i out/video.mp4 -i public/audio/BatteryEtaReel.wav -map 0:v -map 1:a -c:v libx264 -preset slow -crf 19 -profile:v high -pix_fmt yuv420p -color_primaries bt709 -color_trc bt709 -colorspace bt709 -r 60 -c:a aac -b:a 256k -ar 48000 -af apad -shortest -movflags +faststart out/battery-eta-reel.mp4 && ls -la out/battery-eta-reel.mp4"
+bin/pc pull out/battery-eta-reel.mp4 ../out/

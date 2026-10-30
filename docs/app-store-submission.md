@@ -136,15 +136,18 @@ Battery ETA — незалежний застосунок. Компанія Mars
 
 ## Screenshots
 
-Sets: iPhone 6.3" (1206 × 2622) and iPad 13" (2064 × 2752), per language. Files: `app-store/screenshots/<locale>/<device>-<n>.png`. The app runs against a fake battery at about 50 % and 620 W, with a seeded blackout day and YASNO group 3.1.
+Upload these with version 1.2: they show the Live Activity and the week view, which are not in 1.1. App Store Connect scales the 6.9" set down, and the 6.3" set is also provided.
 
-| File | en-US caption | uk caption | Screen |
-| --- | --- | --- | --- |
-| iphone-1, ipad-1 | How long will the battery last? | Скільки протримає батарея? | Now card with EMPTY IN, Power back at with the LASTS verdict |
-| iphone-2 | Your day in one chart | Увесь день на одному графіку | Today chart and numbers |
-| iphone-3, ipad-2 | Set up in a minute. No account. | Налаштування за хвилину. Без акаунта. | How to connect guide |
+Sets, in `app-store/screenshots/uk/`: iPhone 6.3" (`iphone-<n>.png`, 1206 × 2622), iPhone 6.9" (`iphone-6.9-<n>.png`, 1320 × 2868) and iPad 13" (`ipad-<n>.png`, 2064 × 2752). Source: `marketing/screenshots/`. `seed.py` and `fake_battery.py` feed the simulator demo data, and `compose.py` builds the frames on the PC. The en-US set shows version 1.1.
 
-Widget shots are missing. Take the Home Screen and Lock Screen widgets on a real iPhone and add them as shots 2 and 3.
+| Shot | Caption | Screen |
+| --- | --- | --- |
+| iphone-1, ipad-1 | Чи вистачить Marstek до кінця відключення? | Home with ВИСТАЧИТЬ |
+| iphone-2 | Скаже, скільки вимкнути, щоб вистачило | Home with СЯДЕ О and how much load to cut |
+| iphone-3 | Час роботи на екрані блокування | Live Activity on the Lock Screen |
+| iphone-4 | Заряд і відлік видно без застосунку | Home Screen widget and Dynamic Island |
+| iphone-5, ipad-2 | Заряд і витрати за весь тиждень | Week view |
+| iphone-6, ipad-3 | Готово за хвилину. Без акаунта й реклами. | How to connect guide |
 
 ## App Privacy
 
