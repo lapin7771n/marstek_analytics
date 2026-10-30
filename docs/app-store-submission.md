@@ -1,10 +1,6 @@
 # Battery ETA — App Store submission kit
 
-App Store Connect app 6822926943. First release: version 1.1, build 4. Checked against App Store Connect and the App Review Guidelines on 2026-10-16. Competitors: [app-store/competitors.md](app-store/competitors.md).
-
-## Left for the owner
-
-Press Add for Review, then Submit, on the version page.
+App Store Connect app 6822926943. Version 1.2, build 2: Waiting for Review, released automatically to all users after approval. Live: version 1.1. Checked against App Store Connect on 2026-10-30. Competitors: [app-store/competitors.md](app-store/competitors.md).
 
 ## App information
 
@@ -38,16 +34,36 @@ Neither list repeats a word from the name or subtitle. Search ranks only the nam
 
 en-US:
 
-> Will the battery last until the power is back? Battery ETA reads your Marstek Venus E 3.0 over Wi‑Fi and shows the time left on your Home Screen and Lock Screen.
+> Will your Marstek battery last until the power comes back? Battery ETA shows the time left: in the app, in widgets and on the Lock Screen.
 
 uk:
 
-> Чи вистачить батареї, доки не дадуть світло? Battery ETA зчитує дані з Marstek Venus E 3.0 через Wi‑Fi і показує час роботи на Початковому екрані та екрані блокування.
+> Чи вистачить батареї Marstek до кінця відключення? Battery ETA показує, скільки часу лишилося: у застосунку, у віджетах і на екрані блокування.
+
+## What's New
+
+en-US:
+
+```
+• New home screen: charge and time left at a glance, settings moved to their own screen
+• Week: energy charged and used over 7 days
+• A warning 30 minutes before a scheduled YASNO outage if the battery won't last (addresses in Kyiv)
+• Live Activity during an outage: a countdown on the Lock Screen and in the Dynamic Island
+```
+
+uk:
+
+```
+• Новий головний екран: заряд і час роботи видно одразу, налаштування винесено окремо
+• Тиждень: скільки заряджено й витрачено за 7 днів
+• Попередження за 30 хв до відключення за графіком YASNO, якщо батареї не вистачить (адреси в Києві)
+• Live Activity під час відключення: відлік на екрані блокування і в Dynamic Island
+```
 
 ## Description — en-US
 
 ```
-Know how long your home battery will last before the power comes back.
+Find out if your Marstek battery will last until the end of the outage.
 
 Battery ETA reads your Marstek Venus E 3.0 over your home Wi‑Fi and turns the numbers into one answer: the time left at the current load. While the battery charges, it shows the time until full.
 
@@ -59,6 +75,7 @@ TIME LEFT
 
 POWER BACK AT
 • Enter when the grid returns and get a plain answer: "Lasts until 18:00, 1 h 20 min to spare" or "Runs out at 16:40, 40 min short"
+• If it falls short, the app tells you how many watts to cut
 • In Kyiv, pick your address once and the time fills in from the YASNO outage schedule
 
 WIDGETS
@@ -66,11 +83,16 @@ WIDGETS
 • Lock Screen: round gauge or a line with time left
 • See the numbers during an outage without opening the app
 
-TODAY
+DURING AN OUTAGE
+• Live Activity: a countdown on the Lock Screen and in the Dynamic Island
+
+TODAY AND WEEK
 • A chart of today's charge and hourly power
 • Energy charged and used, and time on battery
+• The same totals over the last 7 days
 
 ALERTS
+• A warning 30 minutes before a scheduled YASNO outage if the battery won't last (addresses in Kyiv)
 • A notification when less than 30 minutes are left, and when the battery reaches the reserve
 
 SET UP IN A MINUTE
@@ -92,7 +114,7 @@ Battery ETA is an independent app. It is not made by, endorsed by or affiliated 
 ## Description — uk
 
 ```
-Дізнайтеся, чи вистачить домашньої батареї, доки не дадуть світло.
+Дізнайтеся, чи вистачить батареї Marstek до кінця відключення.
 
 Battery ETA зчитує дані з Marstek Venus E 3.0 через домашню мережу Wi‑Fi і зводить цифри до однієї відповіді: скільки батарея протримає за поточного навантаження. Під час заряджання застосунок показує, коли вона зарядиться повністю.
 
@@ -104,18 +126,23 @@ Battery ETA зчитує дані з Marstek Venus E 3.0 через домашн
 
 КОЛИ ДАДУТЬ СВІТЛО
 • Вкажіть, коли повернеться світло, і отримайте просту відповідь: «Вистачить до 18:00, запас 1 год 20 хв» або «Сяде о 16:40, бракує 40 хв»
+• Якщо не вистачає, застосунок скаже, на скільки ват зменшити навантаження
 • У Києві виберіть адресу один раз, і час заповниться з графіка відключень YASNO
+
+ПІД ЧАС ВІДКЛЮЧЕННЯ
+• Live Activity: відлік на екрані блокування і в Dynamic Island
 
 ВІДЖЕТИ
 • Початковий екран: кільце заряду або заряд із часом роботи
 • Екран блокування: круглий індикатор або рядок із часом роботи
 • Цифри перед очима під час відключення, без відкриття застосунку
 
-СЬОГОДНІ
+СЬОГОДНІ Й ТИЖДЕНЬ
 • Графік заряду й погодинної потужності за день
-• Скільки заряджено, скільки витрачено і скільки часу працювали від батареї
+• Скільки заряджено й витрачено за день і за 7 днів, скільки часу працювали від батареї
 
 СПОВІЩЕННЯ
+• Попередження за 30 хв до відключення за графіком YASNO, якщо батареї не вистачить
 • Сповіщення, коли лишається менше 30 хвилин і коли батарея доходить до резерву
 
 НАЛАШТУВАННЯ ЗА ХВИЛИНУ
@@ -136,9 +163,9 @@ Battery ETA — незалежний застосунок. Компанія Mars
 
 ## Screenshots
 
-Upload these with version 1.2: they show the Live Activity and the week view, which are not in 1.1. App Store Connect scales the 6.9" set down, and the 6.3" set is also provided.
+Version 1.2 uses the 6.3" and iPad 13" sets below in both uk and en-US. App Store Connect scales them for other sizes. The 6.9" set is spare.
 
-Sets, in `app-store/screenshots/uk/`: iPhone 6.3" (`iphone-<n>.png`, 1206 × 2622), iPhone 6.9" (`iphone-6.9-<n>.png`, 1320 × 2868) and iPad 13" (`ipad-<n>.png`, 2064 × 2752). Source: `marketing/screenshots/`. `seed.py` and `fake_battery.py` feed the simulator demo data, and `compose.py` builds the frames on the PC. The en-US set shows version 1.1.
+Sets, in `app-store/screenshots/uk/`: iPhone 6.3" (`iphone-<n>.png`, 1206 × 2622), iPhone 6.9" (`iphone-6.9-<n>.png`, 1320 × 2868) and iPad 13" (`ipad-<n>.png`, 2064 × 2752). Source: `marketing/screenshots/`. `seed.py` and `fake_battery.py` feed the simulator demo data, and `compose.py` builds the frames on the PC.
 
 | Shot | Caption | Screen |
 | --- | --- | --- |
@@ -166,27 +193,23 @@ Answer None or No to every question. Expected result: 4+.
 
 - Sign-in required: No
 - Contact: Mykyta Lapin, nikita.lapin.201248@gmail.com and a phone
-- Attachment: `battery-eta-demo.mp4`, iPhone then iPad
+- Attachment: `battery-eta-demo-1.2.mp4`, in App Store Connect only. Version 1.1 holds `battery-eta-demo.mp4`, recorded with a real battery
 
 Notes:
 
 ```
 Battery ETA reads a Marstek Venus E 3.0 home battery over the local Wi‑Fi network (UDP to the battery's IP address, port 30000). It needs the physical battery on the same network, so without one the app shows "NO LINK" after "Save and check". There is no login and no server.
 
-The attached video shows the app with a real battery.
+The attached video was recorded in the iOS Simulator on build 1.2 (2) with demo data: a local test server on 127.0.0.1 answers ES.GetStatus the way the battery does, and the chart history and outage schedule are seeded. The video attached to version 1.1 shows setup with a real battery (Find battery, Save and check).
 
-iPhone, 0:00–1:00:
-1. The first-launch guide, then Find battery picks the Venus E 3.0 on this Wi‑Fi.
-2. Save and check: the live reading with charge, power and FULL IN while the battery charges.
-3. Power back at: the address finds the YASNO outage group, and Grid returns sets when power comes back.
-4. The low-battery alert asks for notification permission.
-5. The ALLOW LAN row opens the app's page in Settings, where Local Network access is switched.
+What the video shows, 0:00–1:24:
+1. 0:00: the new home screen. Charge, EMPTY IN, and Grid returns with the answer "Lasts until 00:00".
+2. 0:15: the Week tab with energy charged and used over 7 days.
+3. 0:20: Settings, moved to its own screen: Find battery, Save and check, Low-battery alert, Outage ahead.
+4. 0:55: a lower charge: "Runs out", minutes short, and how many watts to cut.
+5. 1:00: the Live Activity countdown in the Dynamic Island, then on the Lock Screen with the iOS permission prompt.
 
-iPad, 1:00–1:26:
-1. Adding the Battery and ETA widget to the Home Screen.
-2. The widget and the app show the same live reading.
-
-The Lock Screen widgets, circular and rectangular, show the same reading.
+"Outage ahead" sends a local notification 30 minutes before a scheduled YASNO outage if the battery will not last. The video does not show this notification firing.
 
 The app only reads status (the battery's ES.GetStatus method) and never changes battery settings. The Address screen looks up the user's outage group from the public YASNO schedule API for Kyiv; location is used once, only when the user taps "Use my location".
 ```
