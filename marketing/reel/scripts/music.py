@@ -163,7 +163,7 @@ mono_add(red0, sour, 0.012, 0.3)
 
 music = np.stack([L, R], axis=1)
 peak = np.max(np.abs(music))
-music = music / peak * 0.62
+music = music / peak * 0.74
 
 sfx_wav = wave.open(sys.argv[2], "rb")
 frames = np.frombuffer(sfx_wav.readframes(sfx_wav.getnframes()), dtype="<i2").astype(np.float64) / 32768
@@ -171,7 +171,7 @@ sfx = frames.reshape(-1, 2)
 sfx_wav.close()
 mix = music.copy()
 n = min(len(mix), len(sfx))
-mix[:n] += sfx[:n] * 0.62
+mix[:n] += sfx[:n] * 0.40
 
 # end: fade the bed over the last 0.9 s
 fade = np.ones(len(mix))
